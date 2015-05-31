@@ -1,0 +1,13 @@
+cluster.name: elasticsearch
+node.name: "$hostname"
+
+node.master: true
+node.data: false
+
+index.number_of_replicas: 0
+bootstrap.mlockall: true
+http.max_content_length: 256mb
+discovery.zen.ping.multicast.enabled: false
+discovery.zen.ping.unicast.hosts: ["10.0.0.40"]
+
+action.destructive_requires_name: true

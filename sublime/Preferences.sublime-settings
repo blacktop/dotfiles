@@ -1,0 +1,38 @@
+{
+	"color_scheme": "Packages/Sail Color Scheme/Sail.tmTheme",
+	"default_encoding": "UTF-8",
+	"default_line_ending": "unix",
+	"font_size": 14.0,
+	"file_exclude_patterns":
+	[
+		".DS_Store",
+		"Desktop.ini",
+		"*.pyc",
+		"._*",
+		"Thumbs.db",
+		".Spotlight-V100",
+		".Trashes"
+	],
+	"folder_exclude_patterns":
+	[
+		".git",
+		"node_modules"
+	],
+	"rulers":
+	[
+		80
+	],
+	"ignored_packages":
+	[
+		"Anaconda",
+		"Markdown",
+		"MarkdownEditing",
+		"Vintage",
+		"Markdown Preview",
+		"SideBarEnhancements"
+	],
+	"show_encoding": true,
+	"trim_trailing_white_space_on_save": true,
+	"word_wrap": true,		
+	"theme": "Spacegray.sublime-theme"
+}

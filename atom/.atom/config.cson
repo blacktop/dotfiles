@@ -1,0 +1,95 @@
+"*":
+  "exception-reporting":
+    userId: "2ee6fe21-acbc-04e1-7698-919547653491"
+  welcome:
+    showOnStartup: false
+  metrics:
+    userId: "01fdced32307f85c25a6305438950624ffcc3c41"
+  editor:
+    fontSize: 12
+    softWrap: true
+    invisibles:
+      {}
+    preferredLineLength: 120
+    autoIndentOnPaste: false
+    fontFamily: "dejavu mono"
+    confirmCheckoutHeadRevision: false
+  core:
+    ignoredNames: [
+      ".git"
+      ".hg"
+      ".svn"
+      ".DS_Store"
+      "Thumbs.db"
+      ".idea"
+      ".vagrant"
+      "*.pyc"
+    ]
+    disabledPackages: [
+      "linter-pylint"
+      "linter-python-pep8"
+      "linter-python-pyflakes"
+      "linter"
+      "tool-bar-main"
+    ]
+    themes: [
+      "one-dark-ui"
+      "neutron-syntax"
+    ]
+  "python-isort":
+    isortPath: "/usr/local/bin/isort"
+  "go-plus":
+    goInstallation: "/usr/local/opt/go/libexec/bin"
+    goPath: "~/src/go"
+  "tree-view":
+    hideIgnoredNames: true
+  "highlight-line":
+    hideHighlightOnSelect: true
+    opacity: "25"
+  "highlight-selected":
+    hideHighlightOnSelectedWord: true
+  minimap:
+    plugins:
+      "highlight-selected": true
+      "git-diff": true
+  "linter-pep8":
+    pep8ExecutablePath: "/usr/local/bin/pep8"
+  "linter-pyflakes":
+    pyflakesExecutablePath: "/usr/local/bin/pyflakes"
+  "linter-flake8":
+    executableDir: "/usr/local/bin/"
+  linter:
+    lintDebug: true
+  "linter-python-pep8":
+    pep8DirToExecutable: "/usr/local/bin/"
+  "linter-python-pyflakes":
+    pyflakesDirToExecutable: "/usr/local/bin/"
+  "atom-beautify":
+    python_autopep8_path: "/usr/local/bin/autopep8"
+    _analyticsUserId: "3af22967-6ada-4f3e-842d-46b921cc0a72"
+    analytics: false
+  "autocomplete-plus":
+    {}
+  "atom-python-yapf":
+    yapfPath: "/usr/local/bin/yapf"
+    formatOnSave: true
+  "python-yapf":
+    yapfPath: "/usr/local/bin/yapf"
+    yapfStyle: "{based_on_style: google, column_limit: 120}"
+  "tool-bar":
+    iconSize: "16px"
+    position: "Left"
+  "flex-tool-bar":
+    {}
+  "git-projects":
+    rootPath: "~/src"
+  hex:
+    {}
+  "git-plus":
+    {}
+".bro.source":
+  editor:
+    preferredLineLength: 120
+".diff.source":
+  editor:
+    preferredLineLength: 120

@@ -1,0 +1,26 @@
+{
+	"in_process_packages":
+	[
+	],
+	"installed_packages":
+	[
+		"Alignment",
+		"Anaconda",
+		"BracketHighlighter",
+		"Dockerfile Syntax Highlighting",
+		"Dotfiles Syntax Highlighting",
+		"Emmet",
+		"Git",
+		"GitGutter",
+		"GitHub Flavored Markdown Preview",
+		"GoSublime",
+		"Markdown Extended",
+		"Markdown Preview",
+		"MarkdownEditing",
+		"Package Control",
+		"Pretty JSON",
+		"Sail Color Scheme",
+		"SideBarEnhancements",
+		"Theme - Spacegray"
+	]
+}

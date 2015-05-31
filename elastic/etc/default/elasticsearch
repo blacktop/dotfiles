@@ -1,0 +1,2 @@
+ES_HEAP_SIZE=15g
+MAX_LOCKED_MEMORY=unlimited
