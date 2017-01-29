@@ -1,0 +1,36 @@
+// Place your settings in this file to overwrite the default settings
+{
+    "telemetry.enableTelemetry": false,
+    "python.formatting.provider": "yapf",
+    "python.formatting.yapfPath": "/usr/local/bin/yapf",
+    "terminal.integrated.fontFamily": "Hack",
+    "terminal.integrated.fontSize": 10,
+    "terminal.external.osxExec": "iTerm.app",
+    "editor.renderIndentGuides": false,
+    "editor.tabCompletion": true,
+    "editor.scrollBeyondLastLine": false,
+    "files.associations": {
+        "Vagrantfile": "ruby"
+    },
+    "editor.renderWhitespace": "none",
+    "workbench.editor.showIcons": true,
+    "go.buildOnSave": true,
+    "go.lintOnSave": true,
+    "go.vetOnSave": true,
+    "go.buildTags": "",
+    "go.buildFlags": [],
+    "go.lintTool": "golint",
+    "go.lintFlags": [],
+    "go.vetFlags": [],
+    "go.coverOnSave": false,
+    "go.useCodeSnippetsOnFunctionSuggest": false,
+    "editor.formatOnSave": true,
+    "go.formatTool": "goreturns",
+    "go.formatFlags": [],
+    "go.goroot": "/usr/local/opt/go/libexec",
+    "go.gopath": "/Users/blacktop/go",
+    "go.gocodeAutoBuild": true,
+    "editor.fontFamily": "Fira Code",
+    "editor.fontSize": 12,
+    "editor.fontLigatures": true
+}

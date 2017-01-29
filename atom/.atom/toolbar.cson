@@ -1,45 +1,90 @@
+# This file is used by Flex Tool Bar to create buttons on your Tool Bar.
+# For more information how to use this package and create your own buttons,
+#   read the documentation on https://atom.io/packages/flex-tool-bar
+
 [
-  {
-    type: "url"
-    icon: "octoface"
-    url: "http://github.com/blacktop"
-    tooltip: "Github Page"
-  }
-  {
-    type: "spacer"
-  }
-  {
-    type: "button"
-    icon: "document"
-    callback: "application:new-file"
-    tooltip: "New File"
-    iconset: "ion"
-    mode: "dev"
-  }
-  {
-    type: "button"
-    icon: "columns"
-    iconset: "fa"
-    callback: ["pane:split-right"]
-  }
-  {
-    type: "button"
-    icon: "git-commit"
-    callback: "git-plus:menu"
-    style:
-      color: "#3cd675"
-  }
-  {
-    type: "button"
-    icon: "checklist"
-    callback: "python-yapf:formatCode"
-    style:
-      color: "#e3c631"
-  }
-  {
-    type: "button"
-    icon: "markdown"
-    callback: "markdown-preview:toggle"
-    hide: "!markdown"
-  }
+ {
+   type: "button"
+   icon: "atom-original"
+   iconset: "devicon"
+   callback: "settings-view:open"
+   tooltip: "settings"
+   style:
+     color: "#af70ff"
+ }
+ {
+   type: "spacer"
+ }
+ {
+   type: "button"
+   icon: "columns"
+   iconset: "fa"
+   callback: "tree-view:toggle"
+   tooltip: "tree-view"
+ }
+ {
+   type: "button"
+   icon: "document"
+   callback: "application:new-file"
+   tooltip: "New File"
+   iconset: "ion"
+   mode: "dev"
+ }
+ {
+   type: "button"
+   icon: "git-commit"
+   callback: "git-plus:menu"
+   tooltip: "git-commit"
+   style:
+     color: "#2e8a50"
+ }
+ {
+   type: "button"
+   icon: "checklist"
+   callback: "python-yapf:formatCode"
+   tooltip: "YAPF"
+   hide: "!python"
+   style:
+     color: "#e3c631"
+ }
+ {
+   type: "button"
+   icon: "markdown"
+   callback: "markdown-preview:toggle"
+   tooltip: "Markdown Preview"
+   hide: "!markdown"
+ }
+ {
+   type: "button"
+   icon: "terminal"
+   callback: "atom-terminal:open-project-root"
+   tooltip: "Open iTerm"
+   style:
+     color: "#2e7cd7"
+ }
+ # {
+ #   type: "button"
+ #   icon: "hubot"
+ #   callback: "gulp-control:toggle"
+ #   tooltip: "Toggle Gulp"
+ #   style:
+ #     color: "#dd1212"
+ #   show: {
+ #     pattern: 'gulpfile.js'
+ #     options: {
+ #       maxDepth: 2
+ #     }
+ #   }
+ # }
+ # {
+ #   type: "spacer"
+ # }
+ {
+   type: "button"
+   icon: "gear"
+   callback: "flex-tool-bar:edit-config-file"
+   tooltip: "Edit Tool Bar"
+   style:
+     color: "#888888"
+ }
 ]
