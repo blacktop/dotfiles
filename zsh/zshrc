@@ -87,6 +87,7 @@ export HOMEBREW_EDITOR=atom
 
 # Malice
 function domalice () {docker-machine create -d digitalocean --digitalocean-region "sfo1" --digitalocean-size "1gb" malice;eval $(docker-machine env malice)}
+fileinfo(){ for x in *; do echo "$(file $x) [md5: $(gmd5sum $x | awk '{ print $1 }')]"; done; }
 
 # Github
 export GITHUB_ACCESS_TOKEN=
@@ -104,6 +105,25 @@ dockerup(){
 }
 export DOCKER_HIDE_LEGACY_COMMANDS=1
 export DIGITALOCEAN_ACCESS_TOKEN=
+
+startswarm(){
+  local NUM_NODES=3
+  local LEADER_NODE=node1
+
+  for NODE in $(seq 1 $NUM_NODES); do
+    docker-machine start node$NODE
+  done;
+
+  docker-machine ssh $LEADER_NODE docker node ls
+}
+
+stopswarm(){
+  local NUM_NODES=3
+
+  for NODE in $(seq 1 $NUM_NODES); do
+    docker-machine stop node$NODE
+  done;
+}
 
 # zsh movement
 bindkey -e
