@@ -86,8 +86,8 @@ export NVM_DIR="$HOME/.nvm"
 export HOMEBREW_EDITOR=atom
 
 # Malice
-function domalice () {docker-machine create -d digitalocean --digitalocean-region "sfo1" --digitalocean-size "1gb" malice;eval $(docker-machine env malice)}
-fileinfo(){ for x in *; do echo "$(file $x) [md5: $(gmd5sum $x | awk '{ print $1 }')]"; done; }
+function domalice(){ docker-machine create -d digitalocean --digitalocean-region "sfo1" --digitalocean-size "1gb" malice;eval $(docker-machine env malice) }
+function fileinfo(){ for x in *; do echo "$(file $x) [md5: $(gmd5sum $x | awk '{ print $1 }')]"; done; }
 
 # Github
 export GITHUB_ACCESS_TOKEN=
