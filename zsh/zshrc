@@ -94,15 +94,6 @@ export GITHUB_ACCESS_TOKEN=
 
 # Docker
 alias dcc='docker-clean stop'
-dockerup(){
-  pulls=0
-  while true; do
-      docker pull $1 >/dev/null
-      pulls=$((pulls + 1 ))
-      echo -ne "Downloaded $pulls times!"\\r
-      sleep 1
-  done
-}
 export DOCKER_HIDE_LEGACY_COMMANDS=1
 export DIGITALOCEAN_ACCESS_TOKEN=
 
