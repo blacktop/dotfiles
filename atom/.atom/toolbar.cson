@@ -32,9 +32,9 @@
  }
  {
    type: "button"
-   icon: "git-commit"
-   callback: "git-plus:menu"
-   tooltip: "git-commit"
+   icon: "file-symlink-directory"
+   callback: "tree-view:show-in-file-manager"
+   tooltip: "Show in Finder"
    style:
      color: "#2e8a50"
  }

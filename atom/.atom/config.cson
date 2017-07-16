@@ -2,7 +2,23 @@
   "atom-terminal":
     app: "/Applications/iTerm.app"
     surpressDirectoryArgument: false
+  "atom-ternjs":
+    inlineFnCompletionDocumentation: true
+    useSnippets: true
   core:
+    customFileTypes:
+      "source.ini": [
+        ".buckconfig"
+        ".hgrc"
+        ".flowconfig"
+      ]
+      "source.json": [
+        ".arcconfig"
+        "BUCK.autodeps"
+      ]
+      "source.python": [
+        "BUCK"
+      ]
     disabledPackages: [
       "linter-markdown"
     ]
@@ -14,21 +30,22 @@
       "._*"
       "Thumbs.db"
       ".idea"
-      ".vagrant"
-      "*.pyc"
     ]
     telemetryConsent: "no"
     themes: [
-      "nord-atom-ui"
+      "one-dark-ui"
       "nord-atom-syntax"
     ]
+    titleBar: "custom"
   editor:
-    fontFamily: "Hack"
-    fontSize: 11
+    fontFamily: "Fira Code"
+    fontSize: 9
     preferredLineLength: 120
     softWrap: true
   "exception-reporting":
     userId: ""
+  "file-types":
+    "^Dockerfile\\..*$": "source.dockerfile"
   "flex-tool-bar": {}
   "git-plus":
     general:
@@ -37,16 +54,24 @@
     gopath: "~/go"
   "go-plus":
     currentPanelHeight: "14.904761904761903vh"
+    panel:
+      currentHeight: "1.4591439688715953vh"
     panelDisplayMode: "closed"
     test:
       coverageDisplayMode: "gutter"
       coverageHighlightMode: "disabled"
   "linter-docker": {}
+  "linter-ui-default":
+    panelHeight: 69
+    showPanel: true
+  "python-yapf":
+    yapfStyle: "{based_on_style: chromium, indent_width: 4, COLUMN_LIMIT: 120}"
   "tool-bar":
     fullWidth: false
     iconSize: "16px"
     position: "Left"
   "tree-view":
     hideIgnoredNames: true
+    hideVcsIgnoredFiles: true
   welcome:
     showOnStartup: false
