@@ -54,7 +54,7 @@ DEFAULT_USER=`whoami`
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(zsh-autosuggestions git docker docker-compose brew cask tmux go httpie node npm nvm nmap osx vault vagrant)
+plugins=(zsh-autosuggestions git docker docker-compose brew cask tmux go httpie node npm nvm nmap osx vault vagrant wd)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -74,6 +74,7 @@ fpath=(/usr/local/share/zsh-completions $fpath)
 # Golang
 export GOPATH=~/go
 export PATH=$PATH:$GOPATH/bin
+alias cdgo='CDPATH=.:$GOPATH/src/github.com:$GOPATH/src/golang.org:$GOPATH/src
 
 # NodeJS
 export NVM_DIR="$HOME/.nvm"
@@ -83,6 +84,12 @@ export NVM_DIR="$HOME/.nvm"
 # export WORKON_HOME=$HOME/.virtualenvs
 # export PROJECT_HOME=$HOME/Devel
 # source /usr/local/bin/virtualenvwrapper.sh
+
+# YouTube
+alias ytd='youtube-dl -x --embed-thumbnail --audio-format mp3 --audio-quality 0'
+
+# Exiftool
+alias estrip='exiftool -all='
 
 # Homebrew
 export HOMEBREW_EDITOR=atom
