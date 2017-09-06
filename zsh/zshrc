@@ -173,7 +173,7 @@ bindkey '^[e' end-of-line
 export GREP_COLOR='1;33'
 
 # aliases
-alias brewu='brew update;brew upgrade;brew cleanup;brew prune;brew doctor;brew cu --dry;apm upgrade -c false'
+alias brewu='brew update;brew upgrade;brew cleanup;brew prune;brew doctor;brew cu;apm upgrade -c false'
 
 if [[ $platform == 'linux' ]]; then
   alias ll='ls -alh --color=auto'
