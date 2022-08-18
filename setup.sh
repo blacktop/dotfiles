@@ -56,6 +56,11 @@ code --install-extension --force vadimcn.vscode-lldb
 code --install-extension --force tinkertrain.theme-panda
 code --install-extension --force wmaurer.change-case
 
+# git
+git config --global core.editor "code -w -n"
+git config --global pull.rebase true
+git config --global rebase.autoStash true
+
 # fish
 bash fish/setup.sh
 # tmux
