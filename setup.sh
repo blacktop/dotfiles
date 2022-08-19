@@ -63,6 +63,9 @@ git config --global core.editor "code -w -n"
 git config --global pull.rebase true
 git config --global rebase.autoStash true
 
+# python
+pip3 install -U pip setuptools virtualenv pipenv pytest nose pyflakes isort black --user
+
 # fish
 fish/setup.sh
 # tmux
