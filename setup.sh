@@ -56,6 +56,8 @@ code --install-extension vadimcn.vscode-lldb --force
 code --install-extension tinkertrain.theme-panda --force
 code --install-extension wmaurer.change-case --force
 
+cp $(dirname "$0")/init/vscode_settings.json "$HOME/Library/Application\ Support/Code/User/settings.json"
+
 # git
 git config --global core.editor "code -w -n"
 git config --global pull.rebase true
