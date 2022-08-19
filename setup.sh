@@ -62,12 +62,12 @@ git config --global pull.rebase true
 git config --global rebase.autoStash true
 
 # fish
-bash fish/setup.sh
+fish/setup.sh
 # tmux
-bash tmux/setup.sh
+tmux/setup.sh
 # neovim
-bash nvim/setup.sh
+nvim/setup.sh
 # rust
-bash rust/setup.sh
+rust/setup.sh
 
 echo ✨ Done! ✨

@@ -1,10 +1,8 @@
 #!/bin/sh
 set -o errexit -o nounset
 
-TPM_DIR="$HOME/.config/tmux/plugins/tpm"
-
 if [ ! -d "$HOME/.config/tmux/plugins/tpm" ]; then
-    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
+    git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 fi
 
-cp tmux.conf ~/.tmux.conf
+cp $(dirname "$0")/tmux.conf "$HOME/.tmux.conf"

@@ -6,7 +6,7 @@ export PATH="$HOME/.cargo/bin:$PATH"
 COMPLETIONS_DIR="$HOME/.config/fish/completions"
 
 if ! command -v rustup >/dev/null; then
-    curl https://sh.rustup.rs -sSf | sh
+    rustup-init -y # rustup-init was installed by Homebrew
 fi
 
 set -x
