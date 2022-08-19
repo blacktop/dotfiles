@@ -40,21 +40,21 @@ code --install-extension christian-kohler.path-intellisense --force
 code --install-extension ms-python.python --force
 code --install-extension ms-python.vscode-pylance --force
 code --install-extension ms-toolsai.jupyter --force
-code --install-extension --force Equinusocio.vsc-community-material-theme
-code --install-extension --force equinusocio.vsc-material-theme-icons
-code --install-extension --force golang.go
-code --install-extension --force johnpapa.vscode-peacock
-code --install-extension --force miguelsolorio.fluent-icons
-code --install-extension --force ms-vscode.cpptools
-code --install-extension --force ms-vscode.hexeditor
-code --install-extension --force redhat.vscode-xml
-code --install-extension --force redhat.vscode-yaml
-code --install-extension --force rust-lang.rust-analyzer
-code --install-extension --force serayuzgur.crates
-code --install-extension --force tamasfe.even-better-toml
-code --install-extension --force vadimcn.vscode-lldb
-code --install-extension --force tinkertrain.theme-panda
-code --install-extension --force wmaurer.change-case
+code --install-extension Equinusocio.vsc-community-material-theme --force
+code --install-extension equinusocio.vsc-material-theme-icons --force
+code --install-extension golang.go --force
+code --install-extension johnpapa.vscode-peacock --force
+code --install-extension miguelsolorio.fluent-icons --force
+code --install-extension ms-vscode.cpptools --force
+code --install-extension ms-vscode.hexeditor --force
+code --install-extension redhat.vscode-xml --force
+code --install-extension redhat.vscode-yaml --force
+code --install-extension rust-lang.rust-analyzer --force
+code --install-extension serayuzgur.crates --force
+code --install-extension tamasfe.even-better-toml --force
+code --install-extension vadimcn.vscode-lldb --force
+code --install-extension tinkertrain.theme-panda --force
+code --install-extension wmaurer.change-case --force
 
 # git
 git config --global core.editor "code -w -n"
