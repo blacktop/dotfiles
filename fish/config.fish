@@ -18,10 +18,10 @@ if test -e ~/.config/fish/locals.fish
     source ~/.config/fish/locals.fish
 end
 
-fish_add_path /Users/blacktop/Library/Python/3.10/bin
-fish_add_path /Users/blacktop/go/bin
+fish_add_path ~/Library/Python/3.10/bin
+fish_add_path ~/go/bin
 fish_add_path /opt/homebrew/opt/openjdk/bin
-fish_add_path /Users/blacktop/.cargo/bin
+fish_add_path ~/.cargo/bin
 
 # alias
 alias l 'exa -l -g --git'
@@ -34,6 +34,7 @@ set -x HOMEBREW_NO_INSECURE_REDIRECT 1
 
 set -x TERM xterm-256color
 set -x GREP_COLOR '1;33'
+set -x CLICOLOR 1
 
 # Prefer US English and use UTF-8.
 set -x  LANG 'en_US.UTF-8'
