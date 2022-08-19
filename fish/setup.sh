@@ -13,3 +13,4 @@ fish -c "fisher install pure-fish/pure"
 fish -c "fisher install franciscolourenco/done"
 
 cp $(dirname "$0")/config.fish "$HOME/.config/fish/config.fish"
+cp -r $(dirname "$0")/functions "$HOME/.config/fish/functions"

@@ -12,4 +12,6 @@ fi
 mkdir -p "$HOME/.config/nvim"
 cp $(dirname "$0")/init.vim "$HOME/.config/nvim/init.vim"
 
+pip3 install --user neovim
+
 nvim +PlugUpdate +PlugUpgrade +qall
