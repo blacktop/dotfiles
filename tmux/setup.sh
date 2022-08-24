@@ -1,7 +1,7 @@
 #!/bin/sh
 set -o errexit -o nounset
 
-if [ ! -d "$HOME/.config/tmux/plugins/tpm" ]; then
+if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
     git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 fi
 
