@@ -31,7 +31,7 @@ fi
 
 if [ -d "/Applications/Xcode-beta.app" ]; then
     running "Setting Xcode-beta.app as default Xcode"
-    $(sudo xcode-select -p /Applications/Xcode-beta.app)
+    sudo xcode-select -s /Applications/Xcode-beta.app
 fi
 
 if [[ $(brew --version) ]] ; then
