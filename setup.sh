@@ -13,7 +13,7 @@ export COL_MAGENTA=$ESC_SEQ"35;01m"
 export COL_CYAN=$ESC_SEQ"36;01m"
 
 function info() {
-    echo -en "$COL_BLUE[info]$COL_RESET - "$1
+    echo -e "$COL_BLUE[info]$COL_RESET - "$1
 }
 function running() {
     echo -en "$COL_YELLOW ⇒ $COL_RESET"$1": \n"
@@ -22,22 +22,22 @@ function running() {
 running "Configuring macOS"
 
 if [[ $(xcode-select --version) ]]; then
-  echo Xcode command tools already installed
+  info "Xcode command tools already installed"
 else
-  echo "Installing Xcode commandline tools"
+  running "Installing Xcode commandline tools"
   $(xcode-select --install)
 fi
 
 if [ -f "/Applications/Xcode-beta.app" ]; then
-    echo "Setting Xcode-beta.app as default Xcode"
+    running "Setting Xcode-beta.app as default Xcode"
     sudo xcode-select -p /Applications/Xcode-beta.app
 fi
 
 if [[ $(brew --version) ]] ; then
-    echo "Attempting to update Homebrew from version $(brew --version)"
+    running "Attempting to update Homebrew from version $(brew --version)"
     brew update
 else
-    echo "Attempting to install Homebrew"
+    running "Attempting to install Homebrew"
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 fi
 
@@ -47,7 +47,7 @@ export HOMEBREW_CASK_OPTS="--appdir=/Applications"
 
 brew update; brew upgrade --cask; brew cleanup || true
 
-info "Effective Homebrew version"
+info "Homebrew Version"
 brew --version
 
 brew bundle --file=Brewfile || true
