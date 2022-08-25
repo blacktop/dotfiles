@@ -1,15 +1,33 @@
-
-
 #!/usr/bin/env bash
-echo Configuring mac
 
 set -e
+
+# Colors
+export ESC_SEQ="\x1b["
+export COL_RESET=$ESC_SEQ"39;49;00m"
+export COL_RED=$ESC_SEQ"31;01m"
+export COL_GREEN=$ESC_SEQ"32;01m"
+export COL_YELLOW=$ESC_SEQ"33;01m"
+export COL_BLUE=$ESC_SEQ"34;01m"
+export COL_MAGENTA=$ESC_SEQ"35;01m"
+export COL_CYAN=$ESC_SEQ"36;01m"
+
+function running() {
+    echo -en "$COL_YELLOW ⇒ $COL_RESET"$1": "
+}
+
+running Configuring mac
 
 if [[ $(xcode-select --version) ]]; then
   echo Xcode command tools already installed
 else
   echo "Installing Xcode commandline tools"
   $(xcode-select --install)
+fi
+
+if [ -f "/Applications/Xcode-beta.app" ]; then
+    echo "Setting Xcode-beta.app as default Xcode"
+    sudo xcode-select -p /Applications/Xcode-beta.app
 fi
 
 if [[ $(brew --version) ]] ; then
