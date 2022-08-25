@@ -13,11 +13,11 @@ export COL_MAGENTA=$ESC_SEQ"35;01m"
 export COL_CYAN=$ESC_SEQ"36;01m"
 
 function running() {
-    echo -en "$COL_MAGENTA ⇒ $COL_RESET"$1": \n"
+    echo -e "$COL_MAGENTA ⇒ $COL_RESET"$1
 }
 
 function info() {
-    echo -e "$COL_BLUE[info]$COL_RESET - "$1
+    echo -e "$COL_BLUE[info]$COL_RESET" $1
 }
 
 running "Configuring macOS"
@@ -29,9 +29,9 @@ else
   $(xcode-select --install)
 fi
 
-if [ -f "/Applications/Xcode-beta.app" ]; then
+if [ -d "/Applications/Xcode-beta.app" ]; then
     running "Setting Xcode-beta.app as default Xcode"
-    sudo xcode-select -p /Applications/Xcode-beta.app
+    $(sudo xcode-select -p /Applications/Xcode-beta.app)
 fi
 
 if [[ $(brew --version) ]] ; then
@@ -53,30 +53,29 @@ brew --version
 
 brew bundle --file=Brewfile || true
 
-# git
-running "Configuring git"
-git config --global core.editor "code -w -n"
-git config --global pull.rebase true
-git config --global rebase.autoStash true
-
 # python
 running "Installing pip packages"
 pip3 install -U pip setuptools virtualenv pipenv pytest nose pyflakes isort black --user
 
-# VSCode
-running "Setup VSCode"
+# git
+git/setup.sh
+# vscode
 vscode/setup.sh
 # fish
-running "Setup fish"
 fish/setup.sh
 # tmux
-running "Setup tmux"
 tmux/setup.sh
 # neovim
-running "Setup neovim"
 nvim/setup.sh
 # rust
-running "Setup Rust"
 rust/setup.sh
+
+# macOS
+echo "Do you like $(gum style --foreground "#FF9400" "Conifigure macOS defaults?")"
+CHOICE=$(gum choose --item.foreground 250 "Yes" "No")
+if [[ "$CHOICE" == "Yes" ]]; then
+    echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Running 'config-osx.sh'")"
+    exec ./config-osx.sh
+fi
 
 echo ✨ Done! ✨

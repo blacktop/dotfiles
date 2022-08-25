@@ -1,6 +1,8 @@
 #!/bin/sh
 set -o errexit -o nounset
 
+echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Setup Neovim")"
+
 VIM_PLUG="$HOME/.vim/autoload/plug.vim"
 
 if [ ! -f "$VIM_PLUG" ]; then

@@ -1,6 +1,7 @@
-
 #!/bin/sh
 set -o errexit -o nounset
+
+echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Setup Rust")"
 
 export PATH="$HOME/.cargo/bin:$PATH"
 COMPLETIONS_DIR="$HOME/.config/fish/completions"
