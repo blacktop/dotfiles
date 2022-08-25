@@ -29,4 +29,4 @@ fish -c "fisher install franciscolourenco/done"
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Setup fish config..."
 cp $(dirname "$0")/config.fish "$HOME/.config/fish/config.fish"
-cp -r $(dirname "$0")/functions "$HOME/.config/fish/functions"
+cp -r $(dirname "$0")/functions/* "$HOME/.config/fish/functions/"
