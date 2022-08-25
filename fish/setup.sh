@@ -2,6 +2,7 @@
 set -o errexit -o nounset
 
 if [ "$SHELL" == "$(brew --prefix)/bin/fish" ]; then
+    running "Set fish as default shell..."
     echo "$(brew --prefix)/bin/fish" | sudo tee -a /etc/shells
     chsh -s "$(brew --prefix)/bin/fish"
 fi

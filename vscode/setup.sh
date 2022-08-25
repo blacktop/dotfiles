@@ -25,4 +25,4 @@ code --install-extension vadimcn.vscode-lldb --force
 code --install-extension tinkertrain.theme-panda --force
 code --install-extension wmaurer.change-case --force
 
-cp $(dirname "$0")/init/vscode_settings.json "$HOME/Library/Application Support/Code/User/settings.json"
+cp $(dirname "$0")/vscode_settings.json "$HOME/Library/Application Support/Code/User/settings.json"
