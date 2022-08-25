@@ -71,7 +71,7 @@ nvim/setup.sh
 rust/setup.sh
 
 # macOS
-echo "Do you like $(gum style --foreground "#FF9400" "Conifigure macOS defaults?")"
+echo "$(gum style --bold --foreground "#FF9400" "[choose]") $(gum style --bold "Configure macOS defaults?)"
 CHOICE=$(gum choose --item.foreground 250 "Yes" "No")
 if [[ "$CHOICE" == "Yes" ]]; then
     echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Running 'config-osx.sh'")"
