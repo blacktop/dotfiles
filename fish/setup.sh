@@ -3,7 +3,7 @@ set -o errexit -o nounset
 
 echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Setup Fish")"
 
-if [ "$SHELL" == "$(brew --prefix)/bin/fish" ]; then
+if [ "$SHELL" != "$(brew --prefix)/bin/fish" ]; then
     echo "$(gum style --bold --foreground "#FF9400" "[choose]") $(gum style --bold "Set fish as default shell?)"
     CHOICE=$(gum choose --item.foreground 250 "Yes" "No")
     if [[ "$CHOICE" == "Yes" ]]; then

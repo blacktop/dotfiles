@@ -30,8 +30,10 @@ else
 fi
 
 if [ -d "/Applications/Xcode-beta.app" ]; then
-    running "Setting Xcode-beta.app as default Xcode"
-    sudo xcode-select -s /Applications/Xcode-beta.app
+    if [ "$(xcode-select -p)" != "/Applications/Xcode-beta.app/Contents/Developer" ]; then
+        running "Setting Xcode-beta.app as default Xcode"
+        sudo xcode-select -s /Applications/Xcode-beta.app
+    fi
 fi
 
 if [[ $(brew --version) ]] ; then
