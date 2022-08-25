@@ -12,11 +12,12 @@ export COL_BLUE=$ESC_SEQ"34;01m"
 export COL_MAGENTA=$ESC_SEQ"35;01m"
 export COL_CYAN=$ESC_SEQ"36;01m"
 
+function running() {
+    echo -en "$COL_MAGENTA ⇒ $COL_RESET"$1": \n"
+}
+
 function info() {
     echo -e "$COL_BLUE[info]$COL_RESET - "$1
-}
-function running() {
-    echo -en "$COL_YELLOW ⇒ $COL_RESET"$1": \n"
 }
 
 running "Configuring macOS"
