@@ -109,7 +109,7 @@ if has('nvim')
     " example:
     " pip3.6 install -U neovim
     let g:python_host_prog = '/usr/bin/python'
-    let g:python3_host_prog = '/usr/bin/python3'
+    let g:python3_host_prog = '/opt/homebrew/bin/python3'
 endif
 
 if (has("termguicolors"))
