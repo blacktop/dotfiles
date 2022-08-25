@@ -1,12 +1,12 @@
 #!/bin/sh
 set -o errexit -o nounset
 
-echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Setup VSCode")"
+echo "$(gum style --bold --foreground "#6F08B2" " ⇒") $(gum style --bold "Setup VSCode")"
 
-echo "$(gum style --bold --foreground "#BE05D0" "  · ") $(gum style --bold "Create VSCode cli 'code' alias")"
+echo "$(gum style --bold --foreground "#BE05D0" "  -") Create VSCode cli 'code' alias"
 ln -sf /Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code $(brew --prefix)/bin/code
 
-echo "$(gum style --bold --foreground "#BE05D0" "  · ") $(gum style --bold "Install VSCode plugins...")"
+echo "$(gum style --bold --foreground "#BE05D0" "  -") Install VSCode plugins..."
 code --install-extension alefragnani.Bookmarks --force
 code --install-extension alexcvzz.vscode-sqlite --force
 code --install-extension christian-kohler.path-intellisense --force
@@ -29,5 +29,5 @@ code --install-extension vadimcn.vscode-lldb --force
 code --install-extension tinkertrain.theme-panda --force
 code --install-extension wmaurer.change-case --force
 
-echo "$(gum style --bold --foreground "#BE05D0" "  · ") $(gum style --bold "Configure VSCode settings...")"
+echo "$(gum style --bold --foreground "#BE05D0" "  -") Configure VSCode settings..."
 cp $(dirname "$0")/vscode_settings.json "$HOME/Library/Application Support/Code/User/settings.json"

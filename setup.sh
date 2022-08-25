@@ -74,7 +74,7 @@ rust/setup.sh
 
 # macOS
 echo "$(gum style --bold --foreground "#FF9400" "[choose]") $(gum style --bold "Configure macOS defaults?")"
-CHOICE=$(gum choose --selected.foreground "#FF9400" --item.foreground "#F7BA00" "Yes" "No")
+CHOICE=$(gum choose --cursor.foreground "#FF9400" --item.foreground "#F7BA00" "Yes" "No")
 if [[ "$CHOICE" == "Yes" ]]; then
     echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Running 'config-osx.sh'")"
     exec ./config-osx.sh
