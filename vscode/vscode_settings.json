@@ -54,7 +54,7 @@
   ],
   "python.formatting.blackArgs": ["\"--line-length=120\""],
   "terminal.integrated.defaultProfile.osx": "fish",
-  "terminal.integrated.fontFamily": "MesloLGLDZ Nerd Font",
+  "terminal.integrated.fontFamily": "MesloLGL Nerd Font Mono",
   "terminal.integrated.shellIntegration.enabled": true,
   "terminal.integrated.shellIntegration.history": 10000,
   "window.experimental.commandCenter": true,
