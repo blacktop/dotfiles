@@ -1,0 +1,130 @@
+apps:
+  pages:
+  - number: 1
+    items:
+    - App Store
+    - Weather
+    - Mail
+    - Safari
+    - Messages
+    - FaceTime
+    - Maps
+    - Find My
+    - Podcasts
+    - Music
+    - Calendar
+    - Home
+    - Clock
+    - System Settings
+    - folder: Other
+      pages:
+      - number: 1
+        items:
+        - Time Machine
+        - Font Book
+        - Mission Control
+        - Image Capture
+        - VoiceOver Utility
+        - AirPort Utility
+        - Migration Assistant
+        - Terminal
+        - Activity Monitor
+        - Console
+        - Keychain Access
+        - System Information
+        - Automator
+        - Script Editor
+        - Disk Utility
+        - Screenshot
+        - Bluetooth File Exchange
+        - Audio MIDI Setup
+        - Dictionary
+        - Grapher
+        - Chess
+        - Voice Memos
+        - Digital Color Meter
+        - ColorSync Utility
+        - Preview
+        - XQuartz
+    - folder: Video
+      pages:
+      - number: 1
+        items:
+        - QuickTime Player
+        - TV
+    - folder: Photography
+      pages:
+      - number: 1
+        items:
+        - Photos
+        - Photo Booth
+    - folder: Productivity
+      pages:
+      - number: 1
+        items:
+        - Reminders
+        - Notes
+        - TextEdit
+        - Freeform
+        - Contacts
+        - Stickies
+        - Shortcuts
+    - folder: Reference
+      pages:
+      - number: 1
+        items:
+        - Books
+        - News
+        - Stocks
+    - folder: Utilities
+      pages:
+      - number: 1
+        items:
+        - Calculator
+        - Siri
+        - Rectangle
+    - folder: Developer Tools
+      pages:
+      - number: 1
+        items:
+        - Visual Studio Code
+        - Insomnia
+        - GitHub Desktop
+        - Docker
+        - iTerm
+    - folder: Security
+      pages:
+      - number: 1
+        items:
+        - BlockBlock Helper
+        - KnockKnock
+        - LuLu
+        - Netiquette
+        - OverSight
+        - ReiKey
+        - GPG Keychain
+        - Viscosity
+    - 010 Editor
+widgets:
+  pages: []
+dock_items:
+- Launchpad
+- Safari
+- Messages
+- Mail
+- Maps
+- Photos
+- FaceTime
+- Calendar
+- Contacts
+- Reminders
+- Notes
+- Freeform
+- TV
+- Music
+- News
+- App Store
+- System Settings
+- ============
+- Downloads
+desktop: {}

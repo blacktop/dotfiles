@@ -87,11 +87,9 @@ brew "zsh-syntax-highlighting"
 brew "anchore/syft/syft"
 # Mine
 brew "blacktop/tap/apfs"
-brew "blacktop/tap/go"
 brew "blacktop/tap/graboid"
 brew "blacktop/tap/ipsw"
 brew "blacktop/tap/lporg"
-brew "blacktop/tap/wait-for-es"
 # XCode
 brew "robotsandpencils/made/xcodes"
 

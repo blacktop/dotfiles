@@ -72,6 +72,9 @@ nvim/setup.sh
 # rust
 rust/setup.sh
 
+# Organize Launchpad
+lporg load init/launchpad.yaml
+
 # macOS
 echo "$(gum style --bold --foreground "#FF9400" "[choose]") $(gum style --bold "Configure macOS defaults?")"
 CHOICE=$(gum choose --cursor.foreground "#FF9400" --item.foreground "#F7BA00" "Yes" "No")
