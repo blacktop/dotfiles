@@ -92,6 +92,8 @@ apps:
         - GitHub Desktop
         - Docker
         - iTerm
+        - 010 Editor
+        - DB Browser for SQLite
     - folder: Security
       pages:
       - number: 1
@@ -104,7 +106,6 @@ apps:
         - ReiKey
         - GPG Keychain
         - Viscosity
-    - 010 Editor
 widgets:
   pages: []
 dock_items:
