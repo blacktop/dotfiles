@@ -21,6 +21,7 @@ end
 fish_add_path -a $HOME/Library/Python/3.10/bin
 fish_add_path -a $HOME/go/bin
 fish_add_path -a /opt/homebrew/opt/openjdk/bin
+fish_add_path -a /opt/homebrew/opt/ruby/bin
 fish_add_path -a $HOME/.cargo/bin
 
 # alias
