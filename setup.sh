@@ -29,6 +29,9 @@ else
   $(xcode-select --install)
 fi
 
+running "Installing Rosetta 2"
+softwareupdate --install-rosetta --agree-to-license
+
 if [ -d "/Applications/Xcode-beta.app" ]; then
     if [ "$(xcode-select -p)" != "/Applications/Xcode-beta.app/Contents/Developer" ]; then
         running "Setting Xcode-beta.app as default Xcode"
