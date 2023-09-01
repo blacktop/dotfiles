@@ -3,16 +3,16 @@ apps:
   - number: 1
     items:
     - App Store
-    - Weather
-    - Mail
     - Safari
-    - Messages
+    - Mail
+    - Calendar
     - FaceTime
+    - Messages
     - Maps
     - Find My
-    - Podcasts
     - Music
-    - Calendar
+    - Podcasts
+    - Weather
     - Home
     - Clock
     - System Settings
@@ -20,9 +20,11 @@ apps:
       pages:
       - number: 1
         items:
+        - Grapher
         - Time Machine
         - Font Book
         - Mission Control
+        - Chess
         - Image Capture
         - VoiceOver Utility
         - AirPort Utility
@@ -35,17 +37,17 @@ apps:
         - Automator
         - Script Editor
         - Disk Utility
+        - Digital Color Meter
+        - ColorSync Utility
         - Screenshot
         - Bluetooth File Exchange
         - Audio MIDI Setup
         - Dictionary
-        - Grapher
-        - Chess
         - Voice Memos
-        - Digital Color Meter
-        - ColorSync Utility
         - Preview
         - XQuartz
+        - Print Center
+        - Screen Sharing
     - folder: Video
       pages:
       - number: 1
@@ -90,6 +92,7 @@ apps:
         - Visual Studio Code
         - Insomnia
         - GitHub Desktop
+        - Xcode-beta
         - Docker
         - iTerm
         - 010 Editor
@@ -109,23 +112,5 @@ apps:
 widgets:
   pages: []
 dock_items:
-- Launchpad
-- Safari
-- Messages
-- Mail
-- Maps
-- Photos
-- FaceTime
-- Calendar
-- Contacts
-- Reminders
-- Notes
-- Freeform
-- TV
-- Music
-- News
-- App Store
-- System Settings
 - ============
-- Downloads
 desktop: {}
