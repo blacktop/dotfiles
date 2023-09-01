@@ -70,10 +70,10 @@ vscode/setup.sh
 fish/setup.sh
 # tmux
 tmux/setup.sh
-# neovim
-nvim/setup.sh
 # rust
 rust/setup.sh
+# neovim
+nvim/setup.sh || true
 
 # Create Dev folders
 mkdir -p ~/Developer/Github
