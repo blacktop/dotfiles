@@ -166,6 +166,16 @@ defaults write com.apple.dock wvous-tr-modifier -int 0
 # Safari & WebKit                                                             #
 ###############################################################################
 
+# Launch Safari to populate the defaults
+/Applications/Safari.app/Contents/MacOS/Safari &
+sleep 10
+kill -9 %1
+
+# Enable Safari's remote automation and "Develop" menu
+# sudo safaridriver --enable
+defaults write com.apple.Safari.SandboxBroker ShowDevelopMenu -bool true
+defaults write com.apple.Safari IncludeDevelopMenu -bool true
+
 # Privacy: don’t send search queries to Apple
 defaults write com.apple.Safari UniversalSearchEnabled -bool false
 defaults write com.apple.Safari SuppressSearchSuggestions -bool true
@@ -357,6 +367,12 @@ cp "$(dirname "$0")/init/com.googlecode.iterm2.plist" ~/.config/iterm2/Config/co
 defaults write com.googlecode.iterm2.plist PrefsCustomFolder -string "~/.config/iterm2/Config"
 # Tell iTerm2 to use the custom preferences in the directory
 defaults write com.googlecode.iterm2.plist LoadPrefsFromCustomFolder -bool true
+
+####################
+# TouchID for sudo #
+####################
+sudo cp /etc/pam.d/sudo_local.template /etc/pam.d/sudo_local
+sudo sed -i'' -e '/^#auth /s/^#//g' /etc/pam.d/sudo_local
 
 ###############################################################################
 # Kill affected applications                                                  #
