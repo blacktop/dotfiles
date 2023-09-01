@@ -32,6 +32,7 @@ defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false
 ###############################################################################
 
 # Trackpad: enable tap to click for this user and for the login screen
+defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true
 defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
 defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
 defaults write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
@@ -45,12 +46,29 @@ defaults write com.apple.BluetoothAudioAgent "Apple Bitpool Min (editable)" -int
 # Enable full keyboard access for all controls
 # (e.g. enable Tab in modal dialogs)
 defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
+# Spelling/Capitalization/Automatic period substitution
+defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled -bool false
+defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
+defaults write NSGlobalDomain NSAutomaticPeriodSubstitutionEnabled -bool false
+
+defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
 
 # Use scroll gesture with the Ctrl (^) modifier key to zoom
 defaults write com.apple.universalaccess closeViewScrollWheelToggle -bool true
 defaults write com.apple.universalaccess HIDScrollZoomModifierMask -int 262144
 # Follow the keyboard focus while zoomed in
 defaults write com.apple.universalaccess closeViewZoomFollowsFocus -bool true
+
+###############################################################################
+# Accessibility                                                                      #
+###############################################################################
+
+# Enable Speak this
+defaults write com.apple.Accessibility AccessibilityEnabled -bool true
+defaults write com.apple.Accessibility ApplicationAccessibilityEnabled -int 1
+defaults write com.apple.Accessibility SpeakThisEnabled -int 1
+defaults write com.apple.Accessibility SpeechVoiceIdentifierForLanguage '{2 = {en = com.apple.ttsbundle.gryphon-neural_Simone_en-US_premium;};}'
+defaults write com.apple.speech.synthesis.general.prefs SpokenUIUseSpeakingHotKeyCombo -int 2101
 
 ###############################################################################
 # Screen                                                                      #
@@ -109,6 +127,9 @@ sudo chflags nohidden /Volumes
 ###############################################################################
 
 # Minimize windows into their application’s icon
+defaults write com.apple.dock largesize -int 128
+defaults write com.apple.dock tilesize -int 16
+defaults write com.apple.dock magnification -bool true
 defaults write com.apple.dock minimize-to-application -bool true
 
 # Don’t automatically rearrange Spaces based on most recent use
