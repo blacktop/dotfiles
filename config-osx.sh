@@ -69,7 +69,9 @@ defaults write com.apple.speech.synthesis.general.prefs SpokenUIUseSpeakingHotKe
 defaults write com.apple.Accessibility AccessibilityEnabled -int 1
 defaults write com.apple.Accessibility ApplicationAccessibilityEnabled -int 1
 defaults write com.apple.Accessibility SpeakThisEnabled -int 1
-defaults write com.apple.Accessibility SpeechVoiceIdentifierForLanguage '{2 = {en = com.apple.ttsbundle.siri_Aaron_en-US_compact;};}'
+defaults write com.apple.Accessibility SpeechVoiceIdentifierForLanguage '{2 = {en = com.apple.ttsbundle.gryphon-neural_Simone_en-US_premium;};}'
+defaults write com.apple.speech.voice.prefs SelectedVoiceID -int 1089198033
+defaults write com.apple.speech.voice.prefs SelectedVoiceName -string "simone (Enhanced)"
 
 ###############################################################################
 # Screen                                                                      #
