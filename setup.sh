@@ -30,7 +30,7 @@ else
 fi
 
 running "Installing Rosetta 2"
-softwareupdate --install-rosetta --agree-to-license
+sudo softwareupdate --install-rosetta --agree-to-license
 
 if [ -d "/Applications/Xcode-beta.app" ]; then
     if [ "$(xcode-select -p)" != "/Applications/Xcode-beta.app/Contents/Developer" ]; then
