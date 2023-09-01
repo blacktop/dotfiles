@@ -64,10 +64,10 @@ defaults write com.apple.universalaccess closeViewZoomFollowsFocus -bool true
 ###############################################################################
 
 # Enable Speak this
-defaults write com.apple.Accessibility AccessibilityEnabled -bool true
+defaults write com.apple.Accessibility AccessibilityEnabled -int 1
 defaults write com.apple.Accessibility ApplicationAccessibilityEnabled -int 1
 defaults write com.apple.Accessibility SpeakThisEnabled -int 1
-defaults write com.apple.Accessibility SpeechVoiceIdentifierForLanguage '{2 = {en = com.apple.ttsbundle.gryphon-neural_Simone_en-US_premium;};}'
+defaults write com.apple.Accessibility SpeechVoiceIdentifierForLanguage '{2 = {en = com.apple.ttsbundle.siri_Aaron_en-US_compact};}'
 defaults write com.apple.speech.synthesis.general.prefs SpokenUIUseSpeakingHotKeyCombo -int 2101
 
 ###############################################################################
