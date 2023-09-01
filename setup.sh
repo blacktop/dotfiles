@@ -39,9 +39,9 @@ if [ -d "/Applications/Xcode-beta.app" ]; then
     fi
 fi
 
-if [[ $(brew --version) ]] ; then
-    running "Attempting to update Homebrew from version $(brew --version)"
-    brew update
+if [[ $(/opt/homebrew/bin/brew --version) ]] ; then
+    running "Attempting to update Homebrew from version $(/opt/homebrew/bin/brew --version)"
+    /opt/homebrew/bin/brew update
 else
     running "Attempting to install Homebrew"
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -74,6 +74,11 @@ tmux/setup.sh
 nvim/setup.sh
 # rust
 rust/setup.sh
+
+# Create Dev folders
+mkdir -p ~/Developer/Github
+mkdir -p ~/Developer/Work
+mkdir -p ~/Developer/XCode
 
 # Organize Launchpad
 lporg load init/launchpad.yaml
