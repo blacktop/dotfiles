@@ -80,8 +80,8 @@ mkdir -p ~/Developer/Github
 mkdir -p ~/Developer/Work
 mkdir -p ~/Developer/XCode
 
-# Organize Launchpad
-lporg load init/launchpad.yaml
+# Organize Launchpad/Dock
+lporg load init/lporg.yml
 
 # macOS
 echo "$(gum style --bold --foreground "#FF9400" "[choose]") $(gum style --bold "Configure macOS defaults?")"
