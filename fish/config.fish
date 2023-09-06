@@ -47,3 +47,18 @@ set -x  MANPAGER 'less -X'
 # Avoid issues with `gpg` as installed via Homebrew.
 # https://stackoverflow.com/a/42265848/96656
 set -x GPG_TTY $(tty);
+
+function expand-dot-to-parent-directory-path -d 'expand ... to ../.. etc'
+    # Get commandline up to cursor
+    set -l cmd (commandline --cut-at-cursor)
+
+    # Match last line
+    switch $cmd[-1]
+        case '*..'
+            commandline --insert '/.'
+        case '*'
+            commandline --insert '.'
+    end
+end
+
+bind . 'expand-dot-to-parent-directory-path'
