@@ -1,19 +1,37 @@
 {
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true
+  },
+  "accessibility.dimUnfocused.enabled": true,
   "atomKeymap.promptV3Features": true,
-  "editor.scrollBeyondLastLine": false,
-  "editor.multiCursorModifier": "ctrlCmd",
-  "editor.formatOnPaste": true,
+  "black-formatter.args": [
+    "--line-length",
+    "100"
+  ],
+  "diffEditor.diffAlgorithm": "advanced",
+  "diffEditor.experimental.showMoves": true,
+  "diffEditor.hideUnchangedRegions.enabled": true,
+  "editor.experimental.stickyScroll.enabled": true,
   "editor.fontFamily": "'FiraCode Nerd Font Mono', Menlo, Monaco, 'Courier New', monospace",
   "editor.fontLigatures": true,
+  "editor.formatOnPaste": true,
   "editor.inlineSuggest.enabled": true,
-  "editor.experimental.stickyScroll.enabled": true,
-  "go.toolsManagement.autoUpdate": true,
-  "git.confirmSync": false,
+  "editor.multiCursorModifier": "ctrlCmd",
+  "editor.scrollBeyondLastLine": false,
+  "files.trimTrailingWhitespace": true,
   "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.enableSmartCommit": true,
   "git.experimental.mergeEditor": true,
   "git.mergeEditor": true,
-  "git.enableSmartCommit": true,
-  "files.trimTrailingWhitespace": true,
+  "gitlens.codeLens.enabled": false,
+  "gitlens.hovers.changesDiff": "hunk",
+  "gitlens.hovers.currentLine.changes": false,
+  "gitlens.hovers.currentLine.over": "line",
+  "gitlens.telemetry.enabled": false,
+  "go.toolsManagement.autoUpdate": true,
+  "json.sortOnSave.enable": true,
   "peacock.favoriteColors": [
     {
       "name": "Angular Red",
@@ -52,15 +70,23 @@
       "value": "#42b883"
     }
   ],
-  "python.formatting.blackArgs": ["\"--line-length=120\""],
+  "python.analysis.autoFormatStrings": true,
+  "python.experiments.optInto": [
+    "pythonTerminalEnvVarActivation"
+  ],
+  "python.languageServer": "Jedi",
+  "redhat.telemetry.enabled": false,
+  "telemetry.telemetryLevel": "off",
+  "terminal.integrated.cursorStyle": "line",
   "terminal.integrated.defaultProfile.osx": "fish",
+  "terminal.integrated.enableImages": true,
+  "terminal.integrated.experimentalImageSupport": true,
   "terminal.integrated.fontFamily": "MesloLGL Nerd Font Mono",
+  "terminal.integrated.hideOnStartup": "whenEmpty",
   "terminal.integrated.shellIntegration.enabled": true,
   "terminal.integrated.shellIntegration.history": 10000,
   "window.experimental.commandCenter": true,
   "workbench.colorTheme": "Community Material Theme Palenight",
   "workbench.iconTheme": "eq-material-theme-icons-palenight",
-  "workbench.productIconTheme": "fluent-icons",
-  "telemetry.telemetryLevel": "off",
-  "redhat.telemetry.enabled": false
+  "workbench.productIconTheme": "fluent-icons"
 }

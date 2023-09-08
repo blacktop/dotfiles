@@ -38,6 +38,8 @@ code --install-extension yzane.markdown-pdf --force
 code --install-extension dnicolson.binary-plist --force
 code --install-extension llvm-vs-code-extensions.vscode-clangd --force
 code --install-extension spmeesseman.vscode-taskexplorer --force
+code --install-extension ms-python.black-formatter --force
+code --install-extension GitHub.vscode-codeql --force
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Configure VSCode settings..."
 cp $(dirname "$0")/vscode_settings.json "$HOME/Library/Application Support/Code/User/settings.json"
