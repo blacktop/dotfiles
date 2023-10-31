@@ -81,7 +81,7 @@ mkdir -p ~/Developer/Work
 mkdir -p ~/Developer/XCode
 
 # Organize Launchpad/Dock
-lporg load init/lporg.yml
+lporg load --config init/lporg.yml --no-backup --yes
 
 # macOS
 echo "$(gum style --bold --foreground "#FF9400" "[choose]") $(gum style --bold "Configure macOS defaults?")"
