@@ -33,7 +33,6 @@ code --install-extension tinkertrain.theme-panda --force
 code --install-extension wmaurer.change-case --force
 code --install-extension ms-vscode.atom-keybindings --force
 code --install-extension yzhang.markdown-all-in-one --force
-code --install-extension joaompinto.vscode-graphviz --force
 code --install-extension yzane.markdown-pdf --force
 code --install-extension dnicolson.binary-plist --force
 code --install-extension llvm-vs-code-extensions.vscode-clangd --force
