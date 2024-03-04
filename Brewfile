@@ -100,6 +100,8 @@ brew "blacktop/tap/ipsw"
 brew "blacktop/tap/lporg"
 # XCode
 brew "robotsandpencils/made/xcodes"
+# Tart
+brew "cirruslabs/cli/tart"
 
 # Casks
 cask "010-editor"
