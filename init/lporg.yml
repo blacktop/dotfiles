@@ -109,6 +109,7 @@ apps:
                 - ReiKey
                 - GPG Keychain
                 - Viscosity
+                - Tunnelblick
         - folder: RE
           pages:
             - number: 1
