@@ -1,12 +1,13 @@
 #
 # Auto-generated using `brew bundle --dump --describe`.
 #
-tap "anchore/syft"
-tap "blacktop/tap"
-tap "buo/cask-upgrade"
 tap "homebrew/bundle"
 tap "homebrew/cask-fonts"
 tap "homebrew/services"
+tap "anchore/syft"
+tap "blacktop/tap"
+tap "buo/cask-upgrade"
+tap "cirruslabs/cli"
 tap "robotsandpencils/made"
 
 brew "argp-standalone"
