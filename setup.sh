@@ -60,7 +60,7 @@ brew bundle --file=Brewfile || true
 
 # python
 running "Installing pip packages"
-pip3 install -U pip setuptools virtualenv pipenv pytest nose pyflakes isort black --user
+pip3 install --break-system-packages -U pip setuptools virtualenv pipenv pytest nose pyflakes isort black --user
 
 # git
 git/setup.sh

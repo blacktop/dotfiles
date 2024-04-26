@@ -16,5 +16,5 @@ mkdir -p "$HOME/.config/nvim"
 cp $(dirname "$0")/init.vim "$HOME/.config/nvim/init.vim"
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Update neovim plugins..."
-pip3 install --user neovim
+pip3 install --break-system-packages --user neovim
 nvim +PlugUpdate +PlugUpgrade +qall
