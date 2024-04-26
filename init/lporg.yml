@@ -116,6 +116,7 @@ apps:
                 - Binary Ninja
                 - ida
                 - ida64
+                - Ghidra
 widgets:
   pages: []
 dock_items:
