@@ -14,9 +14,12 @@ code --install-extension ms-python.python --force
 code --install-extension ms-python.vscode-pylance --force
 code --install-extension ms-toolsai.jupyter --force
 code --install-extension eamodio.gitlens --force
-code --install-extension Equinusocio.vsc-community-material-theme --force
+code --install-extension whizkydee.material-palenight-theme --force
+code --install-extension Tyriar.theme-sapphire --force
+code --install-extension BeardedBear.beardedtheme --force
 code --install-extension equinusocio.vsc-material-theme-icons --force
 code --install-extension golang.go --force
+code --install-extension ziglang.vscode-zig --force
 code --install-extension jgclark.vscode-todo-highlight --force
 code --install-extension johnpapa.vscode-peacock --force
 code --install-extension miguelsolorio.fluent-icons --force
@@ -39,6 +42,11 @@ code --install-extension llvm-vs-code-extensions.vscode-clangd --force
 code --install-extension spmeesseman.vscode-taskexplorer --force
 code --install-extension ms-python.black-formatter --force
 code --install-extension GitHub.vscode-codeql --force
+code --install-extension trailofbits.sarif-explorer --force
+code --install-extension trailofbits.weaudit --force
+code --install-extension moshfeu.compare-folders --force
+code --install-extension foxundermoon.shell-format --force
+code --install-extension sswg.swift-lang --force
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Configure VSCode settings..."
 cp $(dirname "$0")/vscode_settings.json "$HOME/Library/Application Support/Code/User/settings.json"
