@@ -86,7 +86,7 @@
   "terminal.integrated.shellIntegration.enabled": true,
   "terminal.integrated.shellIntegration.history": 10000,
   "window.experimental.commandCenter": true,
-  "workbench.colorTheme": "Community Material Theme Palenight",
+  "workbench.colorTheme": "Palenight Theme",
   "workbench.iconTheme": "eq-material-theme-icons-palenight",
   "workbench.productIconTheme": "fluent-icons"
 }
