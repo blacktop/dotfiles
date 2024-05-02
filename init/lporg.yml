@@ -110,14 +110,14 @@ apps:
                 - GPG Keychain
                 - Viscosity
                 - Tunnelblick
-        - folder: RE
-          pages:
-            - number: 1
-              items:
-                - Binary Ninja
-                - ida
-                - ida64
-                - Ghidra
+        # - folder: RE
+        #   pages:
+        #     - number: 1
+        #       items:
+        #         - Binary Ninja
+        #         - ida
+        #         - ida64
+        #         - Ghidra
 widgets:
   pages: []
 dock_items:
