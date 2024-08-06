@@ -21,12 +21,14 @@ if [ ! -f "$FISHER" ]; then
 fi
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Installing fisher packages..."
-fish -c "fisher install barnybug/docker-fish-completion"
-fish -c "fisher install jethrokuan/fzf"
-fish -c "fisher install derphilipp/enter-docker-fzf"
 fish -c "fisher install pure-fish/pure"
-fish -c "fisher install franciscolourenco/done"
+fish -c "fisher install catppuccin/fish"
+fish -c "fisher install jethrokuan/fzf"
+fish -c "fisher install jorgebucaran/autopair.fish"
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Setup fish config..."
 cp $(dirname "$0")/config.fish "$HOME/.config/fish/config.fish"
 cp -r $(dirname "$0")/functions/* "$HOME/.config/fish/functions/"
+cp -r $(dirname "$0")/themes/* "$HOME/.config/fish/themes/"
+
+fish -c "fish_config theme choose Catppuccin\ Mocha"

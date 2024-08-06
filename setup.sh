@@ -74,6 +74,8 @@ tmux/setup.sh
 rust/setup.sh
 # neovim
 nvim/setup.sh || true
+# ghostty
+ghostty/setup.sh
 
 # Create Dev folders
 mkdir -p ~/Developer/Github

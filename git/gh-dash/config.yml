@@ -1,0 +1,78 @@
+# yaml-language-server: $schema=https://dlvhdr.github.io/gh-dash/configuration/gh-dash/schema.json
+prSections:
+  - title: My Pull Requests
+    filters: is:open author:@me
+  - title: Needs My Review
+    filters: is:open review-requested:@me -author:app/dependabot
+  - title: ipsw
+    filters: is:open user:ipsw -author:app/dependabot
+  - title: ipsw [bots]
+    filters: is:pr is:open user:ipsw author:app/dependabot
+  - title: blacktop
+    filters: is:open user:blacktop -author:app/dependabot
+  - title: blacktop [bots]
+    filters: is:pr is:open user:blacktop author:app/dependabot
+issuesSections:
+  - title: My Issues
+    filters: is:open author:@me
+  - title: Assigned
+    filters: is:open assignee:@me
+  - title: blacktop
+    filters: is:open user:blacktop
+defaults:
+  preview:
+    open: true
+    width: 60
+  prsLimit: 25
+  issuesLimit: 25
+  view: prs
+  layout:
+    prs:
+      repo:
+        grow: true
+        width: 25
+        hidden: false
+    issues:
+      repo:
+        grow: true
+        width: 25
+        hidden: false
+repoPaths:
+  blacktop/*: ~/Developer/Mine/blacktop/*
+pager:
+  diff: delta
+keybindings:
+  prs:
+    - key: c
+      command: >
+        tmux new-window -c {{.RepoPath}} '
+          gh pr checkout {{.PrNumber}} &&
+          nvim -c ":DiffviewOpen master...{{.HeadRefName}}"
+        '
+    - key: v
+      command: >
+        cd {{.RepoPath}} &&
+        code . &&
+        gh pr checkout {{.PrNumber}}
+    - key: N
+      command: >
+        gh pr comment --repo {{.RepoName}} {{.PrNumber}} --body "@dependabot rebase"
+    - key: M
+      command: >
+        gh pr review --repo {{.RepoName}} {{.PrNumber}} --approve &&
+        gh pr comment --repo {{.RepoName}} {{.PrNumber}} --body "@dependabot squash and merge"
+theme:
+  colors:
+    text:
+      primary: "#cdd6f4"
+      secondary: "#89b4fa"
+      inverted: "#11111b"
+      faint: "#bac2de"
+      warning: "#f38ba8"
+      success: "#a6e3a1"
+    background:
+      selected: "#313244"
+    border:
+      primary: "#89b4fa"
+      secondary: "#45475a"
+      faint: "#313244"

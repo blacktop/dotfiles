@@ -9,6 +9,7 @@ tap "blacktop/tap"
 tap "buo/cask-upgrade"
 tap "cirruslabs/cli"
 tap "robotsandpencils/made"
+tap "charmbracelet/tap"
 
 brew "argp-standalone"
 brew "sqlite"
@@ -45,6 +46,7 @@ brew "goreleaser"
 brew "gradle"
 brew "graphviz"
 brew "gum"
+brew "glow"
 brew "httpie"
 brew "hugo"
 brew "imagemagick"
@@ -103,6 +105,11 @@ brew "blacktop/tap/lporg"
 brew "robotsandpencils/made/xcodes"
 # Tart
 brew "cirruslabs/cli/tart"
+# Charm
+brew "charmbracelet/tap/mods"
+brew "charmbracelet/tap/vhs"
+brew "charmbracelet/tap/freeze"
+
 
 # Casks
 cask "010-editor"

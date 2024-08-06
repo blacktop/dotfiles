@@ -24,10 +24,11 @@ fish_add_path -a /opt/homebrew/opt/openjdk/bin
 fish_add_path -a /opt/homebrew/opt/ruby/bin
 fish_add_path -a $HOME/.cargo/bin
 
-# alias
-alias l 'exa -l -g --git'
-# Shows all timestamps in their full glory
-alias lf 'exa -guUmhl --git --time-style long-iso'
+# alias #########################################
+# tmux
+alias ta 'tmux new -A -s default'
+# git AI
+alias gcai 'git --no-pager diff | mods 'write a commit message for this patch. also write the long commit message. use semantic commits. break the lines at 80 chars' >.git/gcai; git commit -a -F .git/gcai -e'
 
 # homebrew
 set -x HOMEBREW_CASK_OPTS '--appdir=~/Applications --fontdir=~/Library/Fonts --require-sha'
