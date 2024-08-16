@@ -11,3 +11,5 @@ fi
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Configure tmux..."
 cp $(dirname "$0")/tmux.conf "$HOME/.tmux.conf"
 exec ~/.tmux/plugins/tpm/bin/install_plugins
+# Fix nord-tmux plugin hostname
+cp $(dirname "$0")/nord/* ~/.tmux/plugins/nord-tmux/src
