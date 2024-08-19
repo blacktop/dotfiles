@@ -28,6 +28,7 @@ brew "cmake"
 brew "coreutils"
 brew "curl", link: true
 brew "dasel"
+brew "displayplacer"
 brew "dive"
 brew "dnscrypt-proxy"
 brew "exiftool"
