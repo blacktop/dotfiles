@@ -76,6 +76,8 @@ rust/setup.sh
 nvim/setup.sh || true
 # ghostty
 ghostty/setup.sh
+# bat
+bat/setup.sh
 
 # Create Dev folders
 mkdir -p ~/Developer/Github

@@ -1,0 +1,341 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/syntax.html
+name: Scheme
+comment: |
+  The foldings do not currently work the way I want them to. This
+          may be a limitation of the way they are applied rather than the
+          regexps in use. Nonetheless, the foldings will end on the last
+          identically indented blank line following an s-expression. Not
+          ideal perhaps, but it works. Also, the #illegal pattern never
+          matches an unpaired ( as being illegal. Why?! -- Rob Rix
+
+          Ok, hopefully this grammar works better on quoted stuff now.  It
+          may break for fancy macros, but should generally work pretty
+          smoothly.  -- Jacob Rus
+
+          I have attempted to get this under control but because of the way folding
+          and indentation interact in Textmate, I am not sure if it is possible. In the
+          meantime, I have implemented Python-style folding anchored at newlines.
+          Additionally, I have made some minor improvements to the numeric constant
+          highlighting. Next up is square bracket expressions, I guess, but that
+          should be trivial. -- ozy`
+file_extensions:
+  - scm
+  - sch
+  - sb
+scope: source.scheme
+contexts:
+  main:
+    - include: comment
+    - include: sexp
+    - include: string
+    - include: language-functions
+    - include: quote
+    - include: illegal
+    - include: constants
+  comment:
+    - match: (;).*$\n?
+      scope: comment.line.semicolon.scheme
+      captures:
+        1: punctuation.definition.comment.scheme
+  constants:
+    - match: "#[t|f]"
+      scope: constant.language.boolean.scheme
+    - match: '\b(allow)\b'
+      scope: true.constant.language.scheme
+    - match: '\b(deny)\b'
+      scope: false.constant.language.language
+    - match: '(?<=[\(\s])((#e|#i)?[0-9]+(\.[0-9]+)?|(#x)[0-9a-fA-F]+|(#o)[0-7]+|(#b)[01]+)(?=[\s;()''",\[\]])'
+      scope: constant.numeric.scheme
+  illegal:
+    - match: '[()\[\]]'
+      scope: invalid.illegal.parenthesis.scheme
+  language-functions:
+    - match: |-
+        (?x)
+        (?<=(\s|\(|\[)) # preceded by space or (
+        ( do|or|and|else|quasiquote|begin|if|case|set!|
+          cond|let|unquote|define|let\*|unquote-splicing|delay|import|
+          letrec|with-filter|regex|with)
+        (?=(\s|\())
+      scope: keyword.control.scheme
+    - match: |-
+        (?x)
+          (?<=(\s|\()) # preceded by space or (
+          ( char-alphabetic|char-lower-case|char-numeric|
+            char-ready|char-upper-case|char-whitespace|
+            (?:char|string)(?:-ci)?(?:=|<=?|>=?)|
+            atom|boolean|bound-identifier=|char|complex|
+            identifier|integer|symbol|free-identifier=|inexact|
+            eof-object|exact|list|(?:input|output)-port|pair|
+            real|rational|zero|vector|negative|odd|null|string|
+            eq|equal|eqv|even|number|positive|procedure
+          )
+          (\?)    # name ends with ? sign
+          (?=(\s|\()) # followed by space or (
+      comment: |
+        These functions run a test, and return a boolean
+                                answer.
+      scope: support.function.boolean-test.scheme
+    - match: |-
+        (?x)
+          (?<=(\s|\()) # preceded by space or (
+          ( char->integer|exact->inexact|inexact->exact|
+            integer->char|symbol->string|list->vector|
+            list->string|identifier->symbol|vector->list|
+            string->list|string->number|string->symbol|
+            number->string
+          )
+          (?=(\s|\()) # followed by space or (
+      comment: These functions change one type into another.
+      scope: support.function.convert-type.scheme
+    - match: |-
+        (?x)
+          (?<=(\s|\()) # preceded by space or (
+          ( set-(?:car|cdr)|         # set car/cdr
+            (?:vector|string)-(?:fill|set) # fill/set string/vector
+          )
+          (!)     # name ends with ! sign
+          (?=(\s|\()) # followed by space or (
+      comment: |
+        These functions are potentially dangerous because
+                                they have side-effects which could affect other
+                                parts of the program.
+      scope: support.function.with-side-effects.scheme
+    - match: |-
+        (?x)
+        (?<=(\s|\()) # preceded by space or (
+        ( >=?|<=?|=|[*/+-])
+        (?=(\s|\()) # followed by space or (
+      comment: +, -, *, /, =, >, etc.
+      scope: keyword.operator.arithmetic.scheme
+    - match: |-
+        (?x)
+                    (?<=(\s|\()) # preceded by space or (
+                    ( append|apply|approximate|
+                      call-with-current-continuation|call/cc|catch|
+                      construct-identifier|define-syntax|display|foo|
+                      for-each|force|cd|gen-counter|gen-loser|
+                      generate-identifier|last-pair|length|let-syntax|
+                      letrec-syntax|list|list-ref|list-tail|load|log|
+                      macro|magnitude|map|map-streams|max|member|memq|
+                      memv|min|newline|nil|not|peek-char|rationalize|
+                      read|read-char|return|reverse|sequence|substring|
+                      syntax|syntax-rules|transcript-off|transcript-on|
+                      truncate|unwrap-syntax|values-list|write|write-char|
+
+                      # cons, car, cdr, etc
+                      cons|c(a|d){1,4}r|
+
+                      # unary math operators
+                      abs|acos|angle|asin|assoc|assq|assv|atan|ceiling|
+                      cos|floor|round|sin|sqrt|tan|
+                      (?:real|imag)-part|numerator|denominator
+
+                      # other math operators
+                      modulo|exp|expt|remainder|quotient|lcm|
+
+                      # ports / files
+                      call-with-(?:input|output)-file|
+                      (?:close|current)-(?:input|output)-port|
+                      with-(?:input|output)-from-file|
+                      open-(?:input|output)-file|
+
+                      # char-«foo»
+                      char-(?:downcase|upcase|ready)|
+
+                      # make-«foo»
+                      make-(?:polar|promise|rectangular|string|vector)
+
+                      # string-«foo», vector-«foo»
+                      string(?:-(?:append|copy|length|ref))?|
+                      vector(?:-length|-ref)
+                    )
+                    (?=(\s|\()) # followed by space or (
+
+      scope: support.function.general.scheme
+    - match: |-
+        (?x)
+          (?<=(\()) # preceded by (
+          (
+            # nullary operators
+            list|newline
+          )
+          (?=(\))) # followed by )
+      scope: support.function.general.scheme.nullary
+  quote:
+    - match: |-
+        (?x)
+          (')\s*
+          ([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*)
+      scope: constant.other.symbol.scheme
+      captures:
+        1: punctuation.section.quoted.symbol.scheme
+    - match: |-
+        (?x)
+          (')\s*
+          ((\()\s*(\)))
+      scope: constant.other.empty-list.schem
+      captures:
+        1: punctuation.section.quoted.empty-list.scheme
+        2: meta.expression.scheme
+        3: punctuation.section.expression.begin.scheme
+        4: punctuation.section.expression.end.scheme
+    - match: (')\s*
+      comment: quoted double-quoted string or s-expression
+      captures:
+        1: punctuation.section.quoted.scheme
+      push:
+        - meta_scope: string.other.quoted-object.scheme
+        - match: '(?=[\s()])|(?<=\n)'
+          pop: true
+        - include: quoted
+  quote-sexp:
+    - match: (?<=\()\s*(quote)\b\s*
+      comment: |
+        Something quoted with (quote «thing»).  In this case «thing»
+                        will not be evaluated, so we are considering it a string.
+      captures:
+        1: keyword.control.quote.scheme
+      push:
+        - meta_content_scope: string.other.quote.scheme
+        - match: '(?=[\s)])|(?<=\n)'
+          pop: true
+        - include: quoted
+  quoted:
+    - include: string
+    - match: (\()
+      captures:
+        1: punctuation.section.expression.begin.scheme
+      push:
+        - meta_scope: meta.expression.scheme
+        - match: (\))
+          captures:
+            1: punctuation.section.expression.end.scheme
+          pop: true
+        - include: quoted
+    - include: quote
+    - include: illegal
+  sexp:
+    - match: (\()
+      captures:
+        1: punctuation.section.expression.begin.scheme
+      push:
+        - meta_scope: meta.expression.scheme
+        - match: (\))(\n)?
+          captures:
+            1: punctuation.section.expression.end.scheme
+            2: meta.after-expression.scheme
+          pop: true
+        - include: comment
+        - include: constants
+        - match: |-
+            (?x)
+              (?<=\()       # preceded by (
+              (define|define-once|with|with-filter)\s+   # define
+              (\()          # list of parameters
+                ([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*)
+                ((\s+
+                  ([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*|[._])
+                 )*
+                )\s*
+              (\))
+          captures:
+            1: keyword.control.scheme
+            2: punctuation.definition.function.scheme
+            3: entity.name.function.scheme
+            4: variable.parameter.function.scheme
+            7: punctuation.definition.function.scheme
+          push:
+            - meta_scope: meta.declaration.procedure.scheme
+            - match: (?=\))
+              captures:
+                1: keyword.control.scheme
+                2: punctuation.definition.function.scheme
+                3: entity.name.function.scheme
+                4: variable.parameter.function.scheme
+                7: punctuation.definition.function.scheme
+              pop: true
+            - include: comment
+            - include: constants
+            - include: sexp
+            - include: illegal
+        - match: |-
+            (?x)
+              (?<=\() # preceded by (
+              (lambda)\s+
+              (\() # opening paren
+              ((?:
+                ([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*|[._])
+                \s+
+              )*(?:
+                ([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*|[._])
+              )?)
+              (\)) # closing paren
+          comment: |
+            Not sure this one is quite correct.  That \s* is
+                                    particularly troubling
+          captures:
+            1: keyword.control.scheme
+            2: punctuation.definition.variable.scheme
+            3: variable.parameter.scheme
+            6: punctuation.definition.variable.scheme
+          push:
+            - meta_scope: meta.declaration.procedure.scheme
+            - match: (?=\))
+              captures:
+                1: keyword.control.scheme
+                2: punctuation.definition.variable.scheme
+                3: variable.parameter.scheme
+                6: punctuation.definition.variable.scheme
+              pop: true
+            - include: comment
+            - include: constants
+            - include: sexp
+            - include: illegal
+        - match: '(?<=\()(define)\s([[:alnum:]][[:alnum:]!$%&*+-./:<=>?@^_~]*)\s*.*?'
+          captures:
+            1: keyword.control.scheme
+            2: variable.other.scheme
+          push:
+            - meta_scope: meta.declaration.variable.scheme
+            - match: (?=\))
+              captures:
+                1: keyword.control.scheme
+                2: variable.other.scheme
+              pop: true
+            - include: comment
+            - include: constants
+            - include: sexp
+            - include: illegal
+        - include: quote-sexp
+        - include: quote
+        - include: language-functions
+        - include: string
+        - include: constants
+        - match: '(?<=[\(\s])(#\\)(space|newline|tab)(?=[\s\)])'
+          scope: constant.character.named.scheme
+        - match: '(?<=[\(\s])(#\\)x[0-9A-F]{2,4}(?=[\s\)])'
+          scope: constant.character.hex-literal.scheme
+        - match: '(?<=[\(\s])(#\\).(?=[\s\)])'
+          scope: constant.character.escape.scheme
+        - match: '(?<=[ ()])\.(?=[ ()])'
+          comment: |
+            the . in (a . b) which conses together two elements
+                                    a and b. (a b c) == (a . (b . (c . nil)))
+          scope: punctuation.separator.cons.scheme
+        - include: sexp
+        - include: illegal
+  string:
+    - match: (")
+      captures:
+        1: punctuation.definition.string.begin.scheme
+      push:
+        - meta_scope: string.quoted.double.scheme
+        - match: (")
+          captures:
+            1: punctuation.definition.string.end.scheme
+          pop: true
+        - match: \\.
+          scope: constant.character.escape.scheme
