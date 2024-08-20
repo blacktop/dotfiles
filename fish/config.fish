@@ -92,6 +92,9 @@ set -Ux FZF_DEFAULT_OPTS "\
 # --color=selected-bg:#45475a \
 # --multi"
 
+# zoxide
+zoxide init fish | source
+
 function expand-dot-to-parent-directory-path -d 'expand ... to ../.. etc'
     # Get commandline up to cursor
     set -l cmd (commandline --cut-at-cursor)
