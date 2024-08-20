@@ -29,7 +29,6 @@ set fish_greeting
 fish_config theme choose "TokyoNight Moon"
 # Prompt
 function starship_transient_prompt_func
-    echo
     starship module character
 end
 starship init fish | source
