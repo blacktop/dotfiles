@@ -31,7 +31,7 @@ cp $(dirname "$0")/config.fish "$HOME/.config/fish/config.fish"
 cp -r $(dirname "$0")/functions/* "$HOME/.config/fish/functions/"
 cp -r $(dirname "$0")/themes/* "$HOME/.config/fish/themes/"
 
-fish -c "fish_config theme choose TokyoNight\ Moon"
+fish -c "fish_config theme choose TokyoNight\ Night"
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Setup 🚀 starship prompt config..."
 cp -r $(dirname "$0")/config/starship.toml "$HOME/.config/starship.toml"
