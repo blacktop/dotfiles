@@ -81,6 +81,7 @@ brew "secretive"
 brew "semgrep"
 brew "snapcraft"
 brew "socat"
+brew "starship" # fish prompt
 brew "terminal-notifier"
 brew "wireshark"
 brew "termshark"
