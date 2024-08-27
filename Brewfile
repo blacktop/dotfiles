@@ -139,3 +139,6 @@ cask "viscosity"
 cask "visual-studio-code"
 cask "xquartz"
 cask "db-browser-for-sqlite"
+cask "keycastr" # Show keystrokes
+cask "kap" # Screen recorder
+cask "raycast" # Spotlight on steroids
