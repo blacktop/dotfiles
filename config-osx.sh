@@ -377,6 +377,29 @@ defaults write com.googlecode.iterm2.plist LoadPrefsFromCustomFolder -bool true
 sudo cp /etc/pam.d/sudo_local.template /etc/pam.d/sudo_local
 sudo sed -i'' -e '/^#auth /s/^#//g' /etc/pam.d/sudo_local
 
+###########################
+# Time Machine Exclusions #
+###########################
+/usr/bin/tmutil addexclusion "${HOME}/.cache/"
+/usr/bin/tmutil addexclusion "${HOME}/.cargo/"
+/usr/bin/tmutil addexclusion "${HOME}/.codeql/"
+/usr/bin/tmutil addexclusion "${HOME}/.cursor/"
+/usr/bin/tmutil addexclusion "${HOME}/.diffusionbee/"
+/usr/bin/tmutil addexclusion "${HOME}/.npm/"
+/usr/bin/tmutil addexclusion "${HOME}/.ollama/"
+/usr/bin/tmutil addexclusion "${HOME}/.rustup/"
+/usr/bin/tmutil addexclusion "${HOME}/.swiftpm/"
+/usr/bin/tmutil addexclusion "${HOME}/.tart/"
+/usr/bin/tmutil addexclusion "${HOME}/.vscode/"
+/usr/bin/tmutil addexclusion "${HOME}/go/"
+/usr/bin/tmutil addexclusion "${HOME}/Developer/Github/"
+/usr/bin/tmutil addexclusion "${HOME}/RE/"
+find "${HOME}/Developer" -maxdepth 3 \( -name 'dist' -or -name 'node_modules' \) -not -path "*/Go/*" -not -path "*/.git/*" | while read -r p; do
+	echo "TimeMachine: excluding $p..."
+	/usr/bin/tmutil addexclusion "$p"
+done
+
+
 ###############################################################################
 # Kill affected applications                                                  #
 ###############################################################################
