@@ -49,7 +49,7 @@ fi
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
-export HOMEBREW_CASK_OPTS="--appdir=/Applications"
+# export HOMEBREW_CASK_OPTS="--appdir=/Applications"
 
 brew update; brew upgrade --cask; brew cleanup || true
 
