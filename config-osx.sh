@@ -375,7 +375,9 @@ defaults write com.googlecode.iterm2.plist LoadPrefsFromCustomFolder -bool true
 # TouchID for sudo #
 ####################
 sudo cp /etc/pam.d/sudo_local.template /etc/pam.d/sudo_local
-sudo sed -i'' -e '/^#auth /s/^#//g' /etc/pam.d/sudo_local
+echo "auth       optional       /opt/homebrew/lib/pam/pam_reattach.so ignore_ssh" | sudo tee -a /etc/pam.d/sudo_local > /dev/null
+echo "auth       sufficient     pam_tid.so" | sudo tee -a /etc/pam.d/sudo_local > /dev/null
+# sudo sed -i'' -e '/^#auth /s/^#//g' /etc/pam.d/sudo_local
 
 ###########################
 # Time Machine Exclusions #
