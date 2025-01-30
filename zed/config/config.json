@@ -1,0 +1,91 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run the `open default settings` command
+// from the command palette or from `Zed` application menu.
+{
+    "assistant": {
+        "default_model": {
+            "model": "claude-3-5-sonnet-latest",
+            "provider": "zed.dev"
+        },
+        "enabled": true,
+        "provider": null,
+        "version": "2"
+    },
+    "language_models": {
+        "ollama": {
+            "low_speed_timeout_in_seconds": 10
+        }
+    },
+    "copilot": {
+        "disabled_globs": [
+            ".env",
+            ".vscode"
+        ]
+    },
+    "auto_install_extensions": {
+        "assembly": true,
+        "catppuccin": true,
+        "csv": true,
+        "fish": true,
+        "html": true,
+        "log": true,
+        "make": true,
+        "markdown-oxide": true,
+        "nix": true,
+        "nord": true,
+        "palenight": true,
+        "scheme": true,
+        "svelte": true,
+        "swift": true,
+        "tokyo-night": true,
+        "toml": true,
+        "xml": true,
+        "zig": true
+    },
+    "base_keymap": "Atom",
+    "buffer_font_family": "OperatorMono Nerd Font Mono",
+    "buffer_font_features": {
+        "calt": true,
+        "liga": true,
+        "titl": true
+    },
+    "buffer_font_size": 12,
+    "file_types": {
+        "Scheme": [
+            "sb",
+            "in"
+        ]
+    },
+    // "vim_mode": true,
+    "language_overrides": {
+        "JSON": {
+            "tab_size": 2
+        },
+        "Rust": {
+            "format_on_save": "language_server",
+            "preferred_line_length": 120,
+            "soft_wrap": "preferred_line_length"
+        }
+    },
+    "preferred_line_length": 120,
+    "soft_wrap": "preferred_line_length",
+    "tabs": {
+        "file_icons": true
+    },
+    "telemetry": {
+        "diagnostics": false,
+        "metrics": false
+    },
+    "terminal": {
+        "blinking": "off",
+        "font_family": "OperatorMono Nerd Font Mono",
+        "font_size": 10
+    },
+    "theme": "Tokyo Night Storm",
+    "ui_font_size": 12
+}

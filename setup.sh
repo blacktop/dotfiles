@@ -76,6 +76,8 @@ rust/setup.sh
 nvim/setup.sh || true
 # ghostty
 ghostty/setup.sh
+# zed
+zed/setup.sh
 # bat
 bat/setup.sh
 
