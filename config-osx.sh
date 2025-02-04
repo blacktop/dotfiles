@@ -382,19 +382,23 @@ echo "auth       sufficient     pam_tid.so" | sudo tee -a /etc/pam.d/sudo_local 
 ###########################
 # Time Machine Exclusions #
 ###########################
+/usr/bin/tmutil addexclusion "${HOME}/.bun/"
 /usr/bin/tmutil addexclusion "${HOME}/.cache/"
 /usr/bin/tmutil addexclusion "${HOME}/.cargo/"
 /usr/bin/tmutil addexclusion "${HOME}/.codeql/"
 /usr/bin/tmutil addexclusion "${HOME}/.cursor/"
 /usr/bin/tmutil addexclusion "${HOME}/.diffusionbee/"
+/usr/bin/tmutil addexclusion "${HOME}/.lmstudio/"
 /usr/bin/tmutil addexclusion "${HOME}/.npm/"
 /usr/bin/tmutil addexclusion "${HOME}/.ollama/"
 /usr/bin/tmutil addexclusion "${HOME}/.rustup/"
+/usr/bin/tmutil addexclusion "${HOME}/.semgrep/"
 /usr/bin/tmutil addexclusion "${HOME}/.swiftpm/"
 /usr/bin/tmutil addexclusion "${HOME}/.tart/"
 /usr/bin/tmutil addexclusion "${HOME}/.vscode/"
 /usr/bin/tmutil addexclusion "${HOME}/go/"
 /usr/bin/tmutil addexclusion "${HOME}/Developer/Github/"
+/usr/bin/tmutil addexclusion "${HOME}/Developer/SDKs/"
 /usr/bin/tmutil addexclusion "${HOME}/RE/"
 find "${HOME}/Developer" -maxdepth 3 \( -name 'dist' -or -name 'node_modules' \) -not -path "*/Go/*" -not -path "*/.git/*" | while read -r p; do
 	echo "TimeMachine: excluding $p..."
