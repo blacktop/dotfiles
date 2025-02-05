@@ -140,6 +140,9 @@ defaults write com.apple.dock mru-spaces -bool false
 # Don’t show recent applications in Dock
 defaults write com.apple.dock show-recents -bool false
 
+# Don't pad windows when rearranging
+defaults write com.apple.dock "TiledWindowsHaveMargins" -bool false
+
 # Hot corners
 # Possible values:
 #  0: no-op
