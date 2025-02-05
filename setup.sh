@@ -80,6 +80,8 @@ ghostty/setup.sh
 zed/setup.sh
 # bat
 bat/setup.sh
+# ollama
+ollama/setup.sh
 
 # Create Dev folders
 mkdir -p ~/Developer/Github
