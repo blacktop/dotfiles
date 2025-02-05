@@ -13,41 +13,43 @@ apps:
         - Music
         - Podcasts
         - Weather
-        - Home
         - Clock
+        - Home
+        - iPhone Mirroring
+        - Passwords
         - System Settings
         - folder: Other
           pages:
             - number: 1
               items:
-                - Grapher
-                - Time Machine
+                - Dictionary
                 - Font Book
+                - Screen Sharing
                 - Mission Control
-                - Chess
+                - Time Machine
+                - Preview
+                - Screenshot
                 - Image Capture
-                - VoiceOver Utility
-                - AirPort Utility
-                - Migration Assistant
-                - Terminal
-                - Activity Monitor
-                - Console
-                - Keychain Access
-                - System Information
-                - Automator
-                - Script Editor
-                - Disk Utility
                 - Digital Color Meter
                 - ColorSync Utility
-                - Screenshot
-                - Bluetooth File Exchange
-                - Audio MIDI Setup
-                - Dictionary
-                - Voice Memos
-                - Preview
-                - XQuartz
+                - Grapher
+                - VoiceOver Utility
                 - Print Center
-                - Screen Sharing
+                - Automator
+                - Script Editor
+                - Audio MIDI Setup
+                - Bluetooth File Exchange
+                - Disk Utility
+                - System Information
+                - Activity Monitor
+                - Console
+                - Terminal
+                - AirPort Utility
+                - Migration Assistant
+                - Tips
+                - Chess
+                - Voice Memos
+                - XQuartz
         - folder: Video
           pages:
             - number: 1
@@ -71,6 +73,9 @@ apps:
                 - Contacts
                 - Stickies
                 - Shortcuts
+                - Kap
+                - KeyCastr
+                - Raycast
         - folder: Reference
           pages:
             - number: 1
@@ -92,11 +97,12 @@ apps:
                 - Visual Studio Code
                 - Insomnia
                 - GitHub Desktop
-                - Xcode-beta
-                - Docker
+                - Obsidian
                 - iTerm
-                - 010 Editor
+                - Zed
+                - Ghostty
                 - DB Browser for SQLite
+                - TablePlus
         - folder: Security
           pages:
             - number: 1
@@ -108,20 +114,26 @@ apps:
                 - OverSight
                 - ReiKey
                 - GPG Keychain
-                - Viscosity
-                - Tunnelblick
-        # - folder: RE
-        #   pages:
-        #     - number: 1
-        #       items:
-        #         - Binary Ninja
-        #         - ida
-        #         - ida64
-        #         - Ghidra
+        - folder: RE
+          pages:
+            - number: 1
+              items:
+                - Ghidra
+                - BinDiff
+                # - Binary Ninja
+                # - ida
+                # - ida64
+                - 010 Editor
+        - folder: AI
+          pages:
+            - number: 1
+              items:
+                - LM Studio
+                - Ollama
 widgets:
   pages: []
 dock_items:
-  apps:
+   apps:
     - /System/Applications/Launchpad.app
     - /System/Applications/App Store.app
     - /System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app
