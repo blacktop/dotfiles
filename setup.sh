@@ -82,6 +82,8 @@ zed/setup.sh
 bat/setup.sh
 # ollama
 ollama/setup.sh
+# zig
+zig/setup.sh
 
 # Create Dev folders
 mkdir -p ~/Developer/Github
