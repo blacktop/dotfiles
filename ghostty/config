@@ -3,29 +3,59 @@
 # https://github.com/ghostty-org/ghostty/blob/main/src/config/Config.zig
 #
 
+keybind = ctrl+shift+j=write_screen_file:paste
+keybind = super+f=write_screen_file:open
+keybind = global:cmd+alt+s=toggle_quick_terminal
+
+window-save-state = always
 window-decoration = true
 window-theme = "dark"
+# macos-titlebar-style = hidden
 macos-option-as-alt = true
+macos-auto-secure-input = true
+macos-secure-input-indication= true
+# mouse-hide-while-typing = true
 confirm-close-surface = false
 quit-after-last-window-closed = true
+scrollback-limit = 100_000_000
+keybind = super+shift+home=scroll_to_top
 
+# Shell
 shell-integration = fish
+shell-integration-features = cursor,no-sudo,title
+
+# Clipboard (ask, allow or deny)
+clipboard-read = ask
+clipboard-trim-trailing-spaces = true
+clipboard-paste-protection = true
+clipboard-paste-bracketed-safe = true
 
 # Theme
 # theme = nord
-theme = tokyonight
+theme = tokyonight-storm
 # theme = catppuccin-mocha
-#theme = catppuccin-frappe
+# theme = catppuccin-frappe
+# theme = rose-pine-moon
+
+# green
+# palette = 2=#3e8fb0
+# palette = 10=#3e8fb0
+# blue
+# palette = 4=#9ccfd8
+# palette = 12=#9ccfd8
 
 # Style
 background-opacity = 0.9
+unfocused-split-opacity = 0.7
 background-blur-radius = 20
 
 cursor-style-blink = true
 cursor-style = bar
 
 # Default font
-font-family             = "MonoLisa Nerd Font"
+font-family             = "Cousine Nerd Font Mono"
+# font-family             = "OperatorMono Nerd Font Mono"
+# font-family             = "MonoLisa Nerd Font"
 # font-style              = "Medium"
 # Bold
 # font-family-bold        = "MonoLisa Nerd Font Mono"
@@ -37,7 +67,7 @@ font-family             = "MonoLisa Nerd Font"
 # font-family-bold-italic = "MonoLisa Nerd Font Mono"
 # font-style-bold-italic  = "ExtraBold Italic"
 
-font-size = 12
+font-size = 13
 font-thicken = true
 font-feature = zero
 # font-feature = ss01
