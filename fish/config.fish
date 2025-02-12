@@ -24,13 +24,13 @@ set -xg EDITOR (which code) -w
 
 # STYLE #########################################
 set fish_greeting
-fish_config theme choose "TokyoNight Moon"
+fish_config theme choose "TokyoNight\ Moon"
 # Prompt
-function starship_transient_prompt_func
-    starship module character
-end
-starship init fish | source
-enable_transience
+set hydro_color_pwd brcyan
+set hydro_color_git brmagenta
+set hydro_color_error brred
+set hydro_color_prompt brgreen
+set hydro_color_duration bryellow
 
 # alias #########################################
 alias l 'eza -l -g --git'

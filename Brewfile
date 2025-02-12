@@ -98,7 +98,7 @@ brew "semgrep"
 brew "snapcraft"
 brew "socat"
 brew "sqlite"
-brew "starship" # fish prompt
+# brew "starship" # fish prompt
 brew "terminal-notifier"
 brew "termshark"
 brew "tmux"
