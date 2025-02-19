@@ -1,14 +1,10 @@
 #
 # Auto-generated using `brew bundle --dump --describe`.
 #
-tap "anchore/syft"
 tap "blacktop/tap"
 tap "buo/cask-upgrade"
-tap "charmbracelet/tap"
-tap "cirruslabs/cli"
 tap "homebrew/bundle"
 tap "homebrew/services"
-tap "robotsandpencils/made"
 
 brew "argp-standalone"
 brew "aria2"
@@ -129,13 +125,13 @@ brew "blacktop/tap/apfs"
 brew "blacktop/tap/ipsw"
 brew "blacktop/tap/lporg"
 # XCode
-brew "robotsandpencils/made/xcodes"
+brew "xcodes"
 # Tart
-brew "cirruslabs/cli/tart"
+brew "tart"
 # Charm
-brew "charmbracelet/tap/mods"
-brew "charmbracelet/tap/vhs"
-brew "charmbracelet/tap/freeze"
+brew "mods"
+brew "vhs"
+brew "freeze"
 
 
 # Casks
