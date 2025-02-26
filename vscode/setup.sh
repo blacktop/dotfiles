@@ -17,7 +17,6 @@ code --install-extension christian-kohler.path-intellisense --force
 code --install-extension dnicolson.binary-plist --force
 code --install-extension eamodio.gitlens --force
 code --install-extension enkia.tokyo-night --force
-code --install-extension equinusocio.vsc-material-theme-icons --force
 code --install-extension fill-labs.dependi --force
 code --install-extension foxundermoon.shell-format --force
 code --install-extension GitHub.copilot --force
