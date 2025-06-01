@@ -24,7 +24,7 @@ set -xg EDITOR (which code) -w
 
 # STYLE #########################################
 set fish_greeting
-fish_config theme choose "TokyoNight\ Moon"
+fish_config theme choose "TokyoNight Moon"
 # Prompt
 set hydro_color_pwd brcyan
 set hydro_color_git brmagenta
