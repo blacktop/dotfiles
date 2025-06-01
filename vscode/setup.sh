@@ -45,7 +45,7 @@ code --install-extension redhat.vscode-xml --force
 code --install-extension redhat.vscode-yaml --force
 code --install-extension rust-lang.rust-analyzer --force
 code --install-extension spmeesseman.vscode-taskexplorer --force
-code --install-extension sswg.swift-lang --force
+code --install-extension swiftlang.swift-vscode --force
 code --install-extension svelte.svelte-vscode --force
 code --install-extension tamasfe.even-better-toml --force
 code --install-extension tauri-apps.tauri-vscode --force
