@@ -133,7 +133,7 @@ apps:
 widgets:
   pages: []
 dock_items:
-   apps:
+  apps:
     - /System/Applications/Launchpad.app
     - /System/Applications/App Store.app
     - /System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app
