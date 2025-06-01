@@ -3,8 +3,7 @@
 #
 tap "blacktop/tap"
 tap "buo/cask-upgrade"
-tap "homebrew/bundle"
-tap "homebrew/services"
+tap "cirruslabs/cli"
 
 brew "argp-standalone"
 brew "aria2"
@@ -129,9 +128,7 @@ brew "xcodes"
 # Tart
 brew "tart"
 # Charm
-brew "mods"
 brew "vhs"
-brew "freeze"
 
 
 # Casks
