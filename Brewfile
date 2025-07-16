@@ -137,6 +137,7 @@ cask "blacktop/tap/ghidra-app"
 cask "bindiff"
 cask "blockblock"
 cask "codeql"
+cask "container" # macOS linux container manager
 cask "db-browser-for-sqlite"
 # cask "docker"
 cask "font-cousine-nerd-font"
