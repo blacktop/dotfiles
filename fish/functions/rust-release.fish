@@ -9,6 +9,12 @@ function rust-release --description 'Bump version, generate changelog, tag, push
     set -l notes_file ''
     set -l dry_run 0
 
+    # git-cliff config (default to `-c github`, overridable via env)
+    set -l cliff_args -c github
+    if set -q RUST_RELEASE_GIT_CLIFF_CONFIG
+        set cliff_args -c $RUST_RELEASE_GIT_CLIFF_CONFIG
+    end
+
     set -l mode_arg ''
     for arg in $argv
         switch $arg
@@ -130,19 +136,35 @@ function rust-release --description 'Bump version, generate changelog, tag, push
         printf '  current version: %s\n' $current_version
         printf '  target version:  %s\n' $new_version
         printf '  changelog file:  %s\n' $changelog
+        if test (count $cliff_args) -gt 0
+            if set -q RUST_RELEASE_GIT_CLIFF_CONFIG
+                set -l cliff_cfg $RUST_RELEASE_GIT_CLIFF_CONFIG
+            else
+                set -l cliff_cfg github
+            end
+            printf '  git-cliff config: %s\n' $cliff_cfg
+        end
         printf '\nWould perform these steps:\n'
         if test -n "$requested_version"
             printf '  - cargo set-version --manifest-path %s %s\n' $manifest_path $requested_version
         else
             printf '  - cargo set-version --manifest-path %s --bump %s\n' $manifest_path $bump_mode
         end
-        printf '  - git-cliff --unreleased --bump --prepend %s\n' $changelog
+        if test (count $cliff_args) -gt 0
+            printf '  - git-cliff %s %s --unreleased --bump --prepend %s\n' $cliff_args[1] $cliff_args[2] $changelog
+        else
+            printf '  - git-cliff --unreleased --bump --prepend %s\n' $changelog
+        end
         printf '  - git add %s and %s (and Cargo.lock if tracked)\n' $manifest_path $changelog
         printf '  - git commit -m "chore: release v%s"\n' $new_version
         printf '  - git tag v%s\n' $new_version
         printf '  - cargo publish --manifest-path %s\n' $manifest_path
         printf '  - git push && git push --tags\n'
-        printf '  - git-cliff --tag v%s | gh release create v%s ...\n' $new_version $new_version
+        if test (count $cliff_args) -gt 0
+            printf '  - git-cliff %s %s --tag v%s | gh release create v%s ...\n' $cliff_args[1] $cliff_args[2] $new_version $new_version
+        else
+            printf '  - git-cliff --tag v%s | gh release create v%s ...\n' $new_version $new_version
+        end
         return 0
     end
 
@@ -152,7 +174,7 @@ function rust-release --description 'Bump version, generate changelog, tag, push
         command cargo set-version --manifest-path $manifest_path --bump $bump_mode; or return $status
     end
 
-    command git-cliff --unreleased --bump --prepend $changelog; or return $status
+    command git-cliff $cliff_args --unreleased --bump --prepend $changelog; or return $status
 
     set -l package_line_after (command cargo metadata --no-deps --format-version 1 --manifest-path $manifest_path \
         | command jq -r '.packages[0] | [.manifest_path, .version] | @tsv')
@@ -194,7 +216,7 @@ function rust-release --description 'Bump version, generate changelog, tag, push
         return 1
     end
 
-    if not command git-cliff --tag "v$crate_version" > $notes_file
+    if not command git-cliff $cliff_args --tag "v$crate_version" > $notes_file
         set -l cliff_status $status
         command rm -f -- $notes_file
         return $cliff_status
