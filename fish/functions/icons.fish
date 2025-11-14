@@ -2,7 +2,7 @@ function icons -d "Translates program names to icons, so we an use them in our t
     switch $argv[1]
         case ack fd find fzf grep rg
             echo 
-        case atop htop btop top
+        case atop htop top
             echo 
         case bash fish zsh sh ash
             echo 
@@ -12,10 +12,14 @@ function icons -d "Translates program names to icons, so we an use them in our t
             echo 
         case cp duplicate
             echo 
+        case crush
+            echo ♥
         case mv
             echo 󰉒
         case curl http pint lynx wget w3m
             echo 
+        case diff
+            echo 
         case docker docker-compose podman
             echo 
         case lf ls nnn ranger lsd
