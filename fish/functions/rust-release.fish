@@ -161,9 +161,9 @@ function rust-release --description 'Bump version, generate changelog, tag, push
         printf '  - cargo publish --manifest-path %s\n' $manifest_path
         printf '  - git push && git push --tags\n'
         if test (count $cliff_args) -gt 0
-            printf '  - git-cliff %s %s --tag v%s | gh release create v%s ...\n' $cliff_args[1] $cliff_args[2] $new_version $new_version
+            printf '  - git-cliff %s %s --latest | gh release create v%s ...\n' $cliff_args[1] $cliff_args[2] $new_version
         else
-            printf '  - git-cliff --tag v%s | gh release create v%s ...\n' $new_version $new_version
+            printf '  - git-cliff --latest | gh release create v%s ...\n' $new_version
         end
         return 0
     end
@@ -216,7 +216,7 @@ function rust-release --description 'Bump version, generate changelog, tag, push
         return 1
     end
 
-    if not command git-cliff $cliff_args --tag "v$crate_version" > $notes_file
+    if not command git-cliff $cliff_args --latest > $notes_file
         set -l cliff_status $status
         command rm -f -- $notes_file
         return $cliff_status
