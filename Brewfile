@@ -134,7 +134,7 @@ brew "vhs"
 # Casks
 cask "010-editor"
 cask "blacktop/tap/ghidra-app"
-cask "bindiff"
+# cask "bindiff"
 cask "blockblock"
 cask "codeql"
 cask "container" # macOS linux container manager
@@ -146,7 +146,7 @@ cask "font-hack-nerd-font"
 cask "font-meslo-lg-nerd-font"
 cask "ghostty@tip"
 cask "github"
-cask "gpg-suite-no-mail"
+# cask "gpg-suite-no-mail"
 cask "iterm2"
 cask "kap" # Screen recorder
 cask "keycastr" # Show keystrokes
