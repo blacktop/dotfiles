@@ -128,7 +128,7 @@ brew "blacktop/tap/xpost"
 # XCode
 brew "xcodes"
 # Tart
-brew "tart"
+# brew "tart"
 # Charm
 brew "vhs"
 
