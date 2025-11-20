@@ -81,17 +81,21 @@ zed/setup.sh
 # bat
 bat/setup.sh
 # ollama
-ollama/setup.sh
+# ollama/setup.sh
+# LM Studio
+lmstudio/lms.sh
 # zig
-zig/setup.sh
+# zig/setup.sh
 
 # Create Dev folders
 mkdir -p ~/Developer/Github
 mkdir -p ~/Developer/Work
 mkdir -p ~/Developer/XCode
 
-# Organize Launchpad/Dock
-lporg load --config init/lporg.yml --no-backup --yes
+if [[ $(sw_vers -productVersion | cut -d . -f 1) -lt 26 ]]; then
+  # Organize Launchpad/Dock (pre macOS 26.x)
+  lporg load --config init/lporg.yml --no-backup --yes
+fi
 
 # macOS
 echo "$(gum style --bold --foreground "#FF9400" "[choose]") $(gum style --bold "Configure macOS defaults?")"

@@ -147,15 +147,13 @@ cask "font-meslo-lg-nerd-font"
 cask "ghostty@tip"
 cask "github"
 # cask "gpg-suite-no-mail"
-cask "iterm2"
+# cask "iterm2"
 cask "kap" # Screen recorder
 cask "keycastr" # Show keystrokes
 cask "knockknock"
-cask "lm-studio"
 cask "lulu"
 cask "netiquette"
 cask "obsidian"
-cask "ollama"
 cask "oversight"
 cask "raycast" # Spotlight on steroids
 cask "rectangle"
