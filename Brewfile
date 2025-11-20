@@ -17,6 +17,7 @@ brew "ca-certificates"
 brew "capstone"
 brew "clang-format"
 brew "cmake"
+brew "container" # macOS linux container manager
 brew "coreutils"
 brew "curl", link: true
 brew "dasel"
@@ -137,7 +138,6 @@ cask "blacktop/tap/pdf"
 # cask "bindiff"
 cask "blockblock"
 cask "codeql"
-cask "container" # macOS linux container manager
 cask "db-browser-for-sqlite"
 # cask "docker"
 cask "font-cousine-nerd-font"
