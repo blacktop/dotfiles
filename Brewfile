@@ -3,7 +3,6 @@
 #
 tap "blacktop/tap"
 tap "buo/cask-upgrade"
-tap "cirruslabs/cli"
 
 brew "argp-standalone"
 brew "aria2"
@@ -127,8 +126,6 @@ brew "blacktop/tap/mcp-tts"
 brew "blacktop/tap/xpost"
 # XCode
 brew "xcodes"
-# Tart
-# brew "tart"
 # Charm
 brew "vhs"
 
