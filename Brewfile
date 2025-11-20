@@ -121,8 +121,10 @@ brew "zsh-completions"
 brew "zsh-syntax-highlighting"
 # Mine
 brew "blacktop/tap/apfs"
+brew "blacktop/tap/go-hypervisor"
 brew "blacktop/tap/ipsw"
-brew "blacktop/tap/lporg"
+brew "blacktop/tap/mcp-tts"
+brew "blacktop/tap/xpost"
 # XCode
 brew "xcodes"
 # Tart
@@ -134,6 +136,7 @@ brew "vhs"
 # Casks
 cask "010-editor"
 cask "blacktop/tap/ghidra-app"
+cask "blacktop/tap/pdf"
 # cask "bindiff"
 cask "blockblock"
 cask "codeql"

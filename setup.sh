@@ -94,6 +94,7 @@ mkdir -p ~/Developer/XCode
 
 if [[ $(sw_vers -productVersion | cut -d . -f 1) -lt 26 ]]; then
   # Organize Launchpad/Dock (pre macOS 26.x)
+  brew install blacktop/tap/lporg
   lporg load --config init/lporg.yml --no-backup --yes
 fi
 
