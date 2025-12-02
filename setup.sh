@@ -106,4 +106,12 @@ if [[ "$CHOICE" == "Yes" ]]; then
     exec ./config-osx.sh
 fi
 
+# Offline profile
+echo "$(gum style --bold --foreground "#FF9400" "[choose]") $(gum style --bold "Apply offline firewall (Tailscale-only + update window)?")"
+OFFLINE_CHOICE=$(gum choose --cursor.foreground "#FF9400" --item.foreground "#F7BA00" "Yes" "No")
+if [[ "$OFFLINE_CHOICE" == "Yes" ]]; then
+    echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Enabling offline pf profile")"
+    ./offline/offline-firewall.sh enable
+fi
+
 echo ✨ Done! ✨

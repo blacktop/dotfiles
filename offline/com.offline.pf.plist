@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.offline.pf</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/sbin/pfctl</string>
+        <string>-e</string>
+        <string>-f</string>
+        <string>/etc/pf.offline.conf</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <false/>
+    <key>StandardErrorPath</key>
+    <string>/var/log/offline-pf.log</string>
+    <key>StandardOutPath</key>
+    <string>/var/log/offline-pf.log</string>
+</dict>
+</plist>
