@@ -80,12 +80,14 @@ function asm --description 'Assemble AArch64 instruction to hex bytes using llvm
             # Format 2: "0xb5 0x0a 0x20 0xd9" (with 0x prefix, space-separated)
             echo (string join ' ' -- $bytes4)
         case 'compact'
-            # Format 3: "b50a20d9" (continuous, no 0x)
+            # Format 3: "9ad9640a" (little-endian word, no 0x)
             set -l clean_bytes (string replace -r '^0x' '' -- $bytes4)
-            echo (string join '' -- $clean_bytes)
+            # Reverse byte order for little-endian 32-bit word
+            echo (string join '' -- $clean_bytes[4] $clean_bytes[3] $clean_bytes[2] $clean_bytes[1])
         case '0x-compact'
-            # Format 4: "0xb50a20d9" (continuous with 0x prefix)
+            # Format 4: "0x9ad9640a" (little-endian word with 0x prefix)
             set -l clean_bytes (string replace -r '^0x' '' -- $bytes4)
-            echo "0x"(string join '' -- $clean_bytes)
+            # Reverse byte order for little-endian 32-bit word
+            echo "0x"(string join '' -- $clean_bytes[4] $clean_bytes[3] $clean_bytes[2] $clean_bytes[1])
     end
 end
