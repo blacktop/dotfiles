@@ -32,5 +32,6 @@ fi
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Download LM Studio Models..."
 $HOME/.lmstudio/bin/lms get --yes openai/gpt-oss-20b
 $HOME/.lmstudio/bin/lms get --yes qwen/qwen3-coder-30b
+$HOME/.lmstudio/bin/lms get --yes mistralai/ministral-3-14b-reasoning
 $HOME/.lmstudio/bin/lms get --yes google/gemma-3-27b
 $HOME/.lmstudio/bin/lms get --yes bytedance/seed-oss-36b
