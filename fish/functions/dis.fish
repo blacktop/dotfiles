@@ -35,22 +35,26 @@ function dis --description 'Disassemble AArch64 hex bytes to instruction(s) usin
     # Detect format and normalize to "0xXX 0xXX" format
     # Format 1: "b5 0a 20 d9" (space-separated, no 0x)
     # Format 2: "0xb5 0x0a 0x20 0xd9" (space-separated with 0x)
-    # Format 3: "b50a20d9" (continuous hex string)
-    # Format 4: "0xb50a20d9" (continuous hex string with 0x prefix)
+    # Format 3: "b50a20d9" (continuous hex string - little-endian uint32)
+    # Format 4: "0xb50a20d9" (continuous hex string with 0x prefix - little-endian uint32)
 
     if string match -q -r '^0x[0-9a-fA-F]+$' -- $normalized_bytes
-        # Format 4: Single continuous hex string with 0x prefix
+        # Format 4: Single continuous hex string with 0x prefix (little-endian uint32)
         # Remove 0x prefix and split into byte pairs
         set -l hex_only (string replace '0x' '' -- $normalized_bytes)
         set -l byte_pairs (string match -r -a '..' -- $hex_only)
-        set normalized_bytes (string join ' ' -- (for byte in $byte_pairs; echo "0x$byte"; end))
+        # Reverse byte order for little-endian 32-bit word, then add 0x prefix
+        set -l reversed_bytes $byte_pairs[-1..1]
+        set normalized_bytes (string join ' ' -- (for byte in $reversed_bytes; echo "0x$byte"; end))
     else if string match -q -r '^[0-9a-fA-F]+$' -- $normalized_bytes
-        # Format 3: Single continuous hex string without 0x
-        # Split into byte pairs and add 0x prefix
+        # Format 3: Single continuous hex string without 0x (little-endian uint32)
+        # Split into byte pairs and reverse for little-endian
         set -l byte_pairs (string match -r -a '..' -- $normalized_bytes)
-        set normalized_bytes (string join ' ' -- (for byte in $byte_pairs; echo "0x$byte"; end))
+        # Reverse byte order for little-endian 32-bit word, then add 0x prefix
+        set -l reversed_bytes $byte_pairs[-1..1]
+        set normalized_bytes (string join ' ' -- (for byte in $reversed_bytes; echo "0x$byte"; end))
     else if not string match -q -r '^0x' -- $normalized_bytes
-        # Format 1: Space-separated bytes without 0x prefix
+        # Format 1: Space-separated bytes without 0x prefix (already in correct byte order)
         # Add 0x prefix to each byte
         set -l bytes (string split ' ' -- $normalized_bytes)
         set normalized_bytes (string join ' ' -- (for byte in $bytes; echo "0x$byte"; end))
