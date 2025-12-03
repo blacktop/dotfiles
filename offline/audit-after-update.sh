@@ -10,7 +10,7 @@ echo ""
 echo "=== Update Window Status ==="
 if sudo pfctl -a offline-updates -sr 2>/dev/null | grep -q .; then
   echo "⚠️  WARNING: Update window is still OPEN"
-  echo "   Close with: sudo ~/Developer/Mine/blacktop/dotfiles/offline/offline-firewall.sh close-updates"
+  echo "   Close with: sudo pfctl -a offline-updates -F rules"
 else
   echo "✓ Update window is CLOSED"
 fi

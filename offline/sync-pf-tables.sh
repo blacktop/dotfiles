@@ -2,9 +2,9 @@
 # Sync PF tables with current Tailscale DERP endpoints and update hosts
 set -euo pipefail
 
-# Check for root
+# Check for root - don't preserve environment for security
 if [[ $EUID -ne 0 ]]; then
-  exec sudo -E "$0" "$@"
+  exec sudo "$0" "$@"
 fi
 
 echo "=== Syncing PF Tables ==="

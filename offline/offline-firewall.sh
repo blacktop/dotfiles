@@ -31,7 +31,8 @@ USAGE
 
 need_root() {
   if [[ $EUID -ne 0 ]]; then
-    exec sudo -E "$0" "$@"
+    # Only preserve specific safe variables, not entire environment
+    exec sudo TS_IF="$TS_IF" WAN_IF="$WAN_IF" TS_CIDR="$TS_CIDR" "$0" "$@"
   fi
 }
 
@@ -141,9 +142,47 @@ render_vars() {
   sed -i '' "s|TS_IF_PLACEHOLDER|ts_if = \"$ts_if\"\nwan_if = \"$wan_if\"\nts_cidr = \"$ts_cidr\"|" "$PF_VARS"
 }
 
+verify_script_integrity() {
+  local script="$1"
+  local checksum_file="$BASE_DIR/checksums.sha256"
+
+  if [[ ! -f "$checksum_file" ]]; then
+    echo "⚠️  Warning: No checksum file found at $checksum_file" >&2
+    echo "   Generate with: cd $BASE_DIR && shasum -a 256 *.sh *.conf > checksums.sha256" >&2
+    return 0  # Allow install but warn
+  fi
+
+  local filename=$(basename "$script")
+  local expected=$(grep "$filename" "$checksum_file" | awk '{print $1}')
+
+  if [[ -z "$expected" ]]; then
+    echo "⚠️  Warning: No checksum found for $filename" >&2
+    return 0
+  fi
+
+  local actual=$(shasum -a 256 "$script" | awk '{print $1}')
+
+  if [[ "$expected" != "$actual" ]]; then
+    echo "✗ ERROR: Checksum mismatch for $filename" >&2
+    echo "  Expected: $expected" >&2
+    echo "  Actual:   $actual" >&2
+    echo "  This could indicate file tampering!" >&2
+    return 1
+  fi
+
+  return 0
+}
+
 install_files() {
+  # Verify script integrity before installing
+  verify_script_integrity "$BASE_DIR/sync-pf-tables.sh" || exit 1
+  verify_script_integrity "$BASE_DIR/pf.offline.conf" || exit 1
+  verify_script_integrity "$BASE_DIR/pf.offline-updates.conf" || exit 1
+
   [[ -f "$PF_BASE" ]] || cp "$BASE_DIR/pf.offline.conf" "$PF_BASE"
   [[ -f "$PF_UPDATES" ]] || cp "$BASE_DIR/pf.offline-updates.conf" "$PF_UPDATES"
+  cp "$BASE_DIR/sync-pf-tables.sh" /usr/local/bin/sync-pf-tables.sh
+  chmod +x /usr/local/bin/sync-pf-tables.sh
 }
 
 cmd_enable() {
@@ -155,15 +194,15 @@ cmd_enable() {
 
   # Validate syntax before loading
   echo "Validating pf.conf syntax..."
-  if ! pfctl -nf "$PF_BASE"; then
+  if ! pfctl -nf "$PF_BASE" 2>/dev/null; then
     echo "✗ ERROR: pf.conf syntax validation failed" >&2
     exit 1
   fi
   echo "✓ Syntax validation passed"
 
   pfctl -a offline-updates -F rules 2>/dev/null || true
-  pfctl -f "$PF_BASE"
-  pfctl -E 2>/dev/null || pfctl -e
+  pfctl -f "$PF_BASE" 2>/dev/null
+  pfctl -E 2>/dev/null || pfctl -e 2>/dev/null
 
   logger -t offline-firewall "Offline profile enabled"
 
@@ -190,6 +229,11 @@ cmd_open_updates() {
   fi
 
   pfctl -a offline-updates -f "$PF_UPDATES"
+
+  # Populate the tables with resolved IPs
+  echo "Syncing update tables..."
+  /usr/local/bin/sync-pf-tables.sh || echo "⚠️  Warning: Failed to sync tables, update hosts may not be reachable" >&2
+
   logger -t offline-firewall "Update window opened for ${dur}s"
 
   if [[ $dur -gt 0 ]]; then

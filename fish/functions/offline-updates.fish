@@ -23,6 +23,13 @@ function offline-updates --description 'Open PF offline update window for N seco
         return 1
     end
 
+    # Populate the tables with resolved IPs
+    echo "Syncing update tables..."
+    sudo /usr/local/bin/sync-pf-tables.sh
+    or begin
+        echo "⚠️  Warning: Failed to sync tables, update hosts may not be reachable" >&2
+    end
+
     # Log to system log
     logger -t offline-updates "Update window opened for $duration seconds"
 
