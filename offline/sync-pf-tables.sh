@@ -38,7 +38,14 @@ resolve_hosts() {
 # --- Tailscale DERP endpoints ---
 echo "Fetching Tailscale DERP endpoints..."
 DERP_HOSTS=$(curl -sf https://controlplane.tailscale.com/derpmap/default 2>/dev/null | \
-  python3 -c 'import json,sys; data=json.load(sys.stdin); print("\n".join([r["HostName"] for r in data["Regions"].values()]))' || echo "")
+  python3 -c '
+import json,sys
+data=json.load(sys.stdin)
+for region in data["Regions"].values():
+    for node in region.get("Nodes", []):
+        if "HostName" in node:
+            print(node["HostName"])
+' || echo "")
 
 CORE_HOSTS=(
   "login.tailscale.com"
