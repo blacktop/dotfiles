@@ -139,7 +139,7 @@ render_vars() {
   [[ -n "$ts_cidr" ]] || { echo "✗ Could not detect Tailscale address; pass --ts-cidr" >&2; exit 1; }
 
   write_vars
-  sed -i '' "s|TS_IF_PLACEHOLDER|ts_if = \"$ts_if\"\nwan_if = \"$wan_if\"\nts_cidr = \"$ts_cidr\"|" "$PF_VARS"
+  sed -i '' "s|TS_IF_PLACEHOLDER|ts_if = $ts_if\nwan_if = $wan_if\nts_cidr = $ts_cidr|" "$PF_VARS"
 }
 
 verify_script_integrity() {
