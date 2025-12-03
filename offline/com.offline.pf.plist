@@ -14,10 +14,7 @@
     <key>RunAtLoad</key>
     <true />
     <key>KeepAlive</key>
-    <dict>
-        <key>NetworkState</key>
-        <true />
-    </dict>
+    <false />
     <key>StandardErrorPath</key>
     <string>/var/log/offline-pf.log</string>
     <key>StandardOutPath</key>
