@@ -24,6 +24,7 @@ Flags (optional overrides):
   --ts-if <if>      Tailscale utun interface
   --wan-if <if>     Primary WAN interface (en0/en1)
   --ts-cidr <cidr>  This host's Tailscale address (e.g. 100.80.10.5/32)
+  --lan-ip <ip>     LAN IP address on WAN interface (e.g. 192.168.1.100)
 
 Defaults are auto-detected; pass overrides if detection is wrong.
 USAGE
@@ -32,7 +33,7 @@ USAGE
 need_root() {
   if [[ $EUID -ne 0 ]]; then
     # Only preserve specific safe variables, not entire environment
-    exec sudo TS_IF="$TS_IF" WAN_IF="$WAN_IF" TS_CIDR="$TS_CIDR" "$0" "$@"
+    exec sudo TS_IF="$TS_IF" WAN_IF="$WAN_IF" TS_CIDR="$TS_CIDR" LAN_IP="$LAN_IP" "$0" "$@"
   fi
 }
 
@@ -105,15 +106,24 @@ detect_wan_if() {
   route -n get default 2>/dev/null | awk '/interface:/{print $2; exit}'
 }
 
+detect_lan_ip() {
+  local wan_if=${1:-$(detect_wan_if)}
+  if [[ -n "$wan_if" ]]; then
+    ifconfig "$wan_if" 2>/dev/null | awk '/inet / {print $2; exit}'
+  fi
+}
+
 parse_flags() {
   TS_IF=${TS_IF:-""}
   WAN_IF=${WAN_IF:-""}
   TS_CIDR=${TS_CIDR:-""}
+  LAN_IP=${LAN_IP:-""}
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --ts-if) TS_IF="$2"; shift 2 ;;
       --wan-if) WAN_IF="$2"; shift 2 ;;
       --ts-cidr) TS_CIDR="$2"; shift 2 ;;
+      --lan-ip) LAN_IP="$2"; shift 2 ;;
       --help|-h) usage; exit 0 ;;
       *) CMD="$1"; shift; CMD_ARGS=("$@"); break ;;
     esac
@@ -133,13 +143,15 @@ render_vars() {
   local ts_if=${TS_IF:-$(detect_ts_if)}
   local wan_if=${WAN_IF:-$(detect_wan_if)}
   local ts_cidr=${TS_CIDR:-$(detect_ts_cidr)}
+  local lan_ip=${LAN_IP:-$(detect_lan_ip "$wan_if")}
 
   [[ -n "$ts_if" ]] || { echo "✗ Could not detect Tailscale interface; pass --ts-if" >&2; exit 1; }
   [[ -n "$wan_if" ]] || { echo "✗ Could not detect WAN interface; pass --wan-if" >&2; exit 1; }
   [[ -n "$ts_cidr" ]] || { echo "✗ Could not detect Tailscale address; pass --ts-cidr" >&2; exit 1; }
+  [[ -n "$lan_ip" ]] || { echo "✗ Could not detect LAN IP; pass --lan-ip" >&2; exit 1; }
 
   write_vars
-  sed -i '' "s|TS_IF_PLACEHOLDER|ts_if = \"$ts_if\"\nwan_if = \"$wan_if\"\nts_cidr = \"$ts_cidr\"|" "$PF_VARS"
+  sed -i '' "s|TS_IF_PLACEHOLDER|ts_if = \"$ts_if\"\nwan_if = \"$wan_if\"\nts_cidr = \"$ts_cidr\"\nlan_ip = \"$lan_ip\"|" "$PF_VARS"
 }
 
 verify_script_integrity() {
@@ -211,6 +223,7 @@ cmd_enable() {
   echo "  ts_if=$(grep ts_if "$PF_VARS" | awk '{print $3}' | tr -d '"')"
   echo "  wan_if=$(grep wan_if "$PF_VARS" | awk '{print $3}' | tr -d '"')"
   echo "  ts_cidr=$(grep ts_cidr "$PF_VARS" | awk '{print $3}' | tr -d '"')"
+  echo "  lan_ip=$(grep lan_ip "$PF_VARS" | awk '{print $3}' | tr -d '"')"
   echo ""
   echo "⚠️  IMPORTANT: pf must be re-enabled on each reboot"
   echo "   Consider installing the launch daemon:"

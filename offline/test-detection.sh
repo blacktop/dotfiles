@@ -106,15 +106,30 @@ else
 fi
 echo ""
 
+# Test LAN IP detection
+echo "6. LAN IP (on WAN interface):"
+if [[ -n "$WAN_IF" ]]; then
+  LAN_IP=$(ifconfig "$WAN_IF" 2>/dev/null | awk '/inet / {print $2; exit}')
+  if [[ -n "$LAN_IP" ]]; then
+    echo "   ✓ Detected: $LAN_IP"
+  else
+    echo "   ✗ NOT FOUND - no IPv4 address on $WAN_IF"
+  fi
+else
+  LAN_IP=""
+  echo "   ✗ Skipped - no WAN interface"
+fi
+echo ""
+
 # Summary
 echo "=== Summary ==="
 echo ""
-if [[ -n "$TS_IF" && -n "$TS_CIDR" && -n "$WAN_IF" ]]; then
+if [[ -n "$TS_IF" && -n "$TS_CIDR" && -n "$WAN_IF" && -n "$LAN_IP" ]]; then
   echo "✓ All values detected successfully!"
   echo ""
   echo "You can run offline-firewall.sh without any flags, or explicitly:"
   echo ""
-  echo "  ./offline-firewall.sh enable --ts-if $TS_IF --ts-cidr $TS_CIDR --wan-if $WAN_IF"
+  echo "  ./offline-firewall.sh enable --ts-if $TS_IF --ts-cidr $TS_CIDR --wan-if $WAN_IF --lan-ip $LAN_IP"
   echo ""
 else
   echo "✗ Some values could not be detected:"
@@ -122,6 +137,7 @@ else
   [[ -z "$TS_IF" ]] && echo "  --ts-if    (Tailscale interface not found)"
   [[ -z "$TS_CIDR" ]] && echo "  --ts-cidr  (Tailscale IP not found)"
   [[ -z "$WAN_IF" ]] && echo "  --wan-if   (WAN interface not found)"
+  [[ -z "$LAN_IP" ]] && echo "  --lan-ip   (LAN IP not found)"
   echo ""
   echo "You'll need to pass these manually."
 fi
