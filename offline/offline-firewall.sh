@@ -36,7 +36,14 @@ need_root() {
 }
 
 detect_ts_if() {
-  tailscale status --json 2>/dev/null | python3 - <<'PY'
+  # Try tailscale CLI first (works on Linux and some macOS setups)
+  local ts_cmd="tailscale"
+  if ! command -v tailscale &>/dev/null; then
+    ts_cmd="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+  fi
+
+  local tun
+  tun=$("$ts_cmd" status --json 2>/dev/null | python3 -c "
 import json,sys
 try:
     data=json.load(sys.stdin)
@@ -45,22 +52,52 @@ try:
         print(tun)
 except Exception:
     pass
-PY
+" 2>/dev/null)
+
+  if [[ -n "$tun" ]]; then
+    echo "$tun"
+    return
+  fi
+
+  # Fallback for macOS system extension: find utun with 100.x.x.x IP
+  ifconfig 2>/dev/null | awk '
+    /^utun[0-9]+:/ { iface=$1; sub(/:$/, "", iface) }
+    /inet 100\./ { print iface; exit }
+  '
 }
 
 detect_ts_cidr() {
-  tailscale status --json 2>/dev/null | python3 - <<'PY'
+  local ts_cmd="tailscale"
+  if ! command -v tailscale &>/dev/null; then
+    ts_cmd="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+  fi
+
+  local cidr
+  cidr=$("$ts_cmd" status --json 2>/dev/null | python3 -c "
 import json,sys
 try:
     data=json.load(sys.stdin)
-    addrs=data.get('Self',{}).get('Addresses') or []
+    addrs=data.get('Self',{}).get('TailscaleIPs') or data.get('Self',{}).get('Addresses') or []
     for a in addrs:
         if a.startswith('100.'):
-            print(f"{a}/32")
+            ip = a.split('/')[0]
+            print(f'{ip}/32')
             break
 except Exception:
     pass
-PY
+" 2>/dev/null)
+
+  if [[ -n "$cidr" ]]; then
+    echo "$cidr"
+    return
+  fi
+
+  # Fallback: get IP from the Tailscale utun interface
+  local ts_if
+  ts_if=$(detect_ts_if)
+  if [[ -n "$ts_if" ]]; then
+    ifconfig "$ts_if" 2>/dev/null | awk '/inet 100\./ { print $2"/32"; exit }'
+  fi
 }
 
 detect_wan_if() {
