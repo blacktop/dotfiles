@@ -64,6 +64,7 @@ brew "llvm"
 brew "loc"
 brew "luajit-openresty"
 brew "lzfse"
+brew "mole" # Deep clean and optimize your Mac
 brew "moreutils"
 brew "neovim"
 brew "ninja"
