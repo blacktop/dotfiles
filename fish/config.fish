@@ -3,12 +3,17 @@ if status is-interactive
 end
 
 fish_add_path -a $HOME/Library/Python/3.13/bin
+fish_add_path -a $HOME/Library/Python/3.14/bin
 fish_add_path -a $HOME/go/bin
 fish_add_path -a /opt/homebrew/bin
 fish_add_path -a /opt/homebrew/sbin
 fish_add_path -a /opt/homebrew/opt/openjdk/bin
 fish_add_path -a /opt/homebrew/opt/ruby/bin
+fish_add_path -a /opt/homebrew/opt/llvm/bin
 fish_add_path -a $HOME/.cargo/bin
+fish_add_path -a $HOME/.local/bin
+fish_add_path -a $HOME/.lmstudio/bin # LM Studio CLI (lms)
+
 # fish_add_path -a $HOME/.modular/pkg/packages.modular.com_mojo/bin
 
 if test -e /opt/homebrew/bin/brew
@@ -25,6 +30,7 @@ set -xg EDITOR (which code) -w
 # STYLE #########################################
 set fish_greeting
 fish_config theme choose "TokyoNight Moon"
+# fish_config theme choose "Rosé Pine Moon"
 # Prompt
 set hydro_color_pwd brcyan
 set hydro_color_git brmagenta
@@ -104,6 +110,9 @@ set -Ux FZF_DEFAULT_OPTS "\
 
 # zoxide
 zoxide init fish | source
+
+# shell history
+# atuin init fish | source
 
 function expand-dot-to-parent-directory-path -d 'expand ... to ../.. etc'
     # Get commandline up to cursor
