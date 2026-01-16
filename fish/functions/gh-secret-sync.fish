@@ -7,10 +7,12 @@ function gh-secret-sync -d "Sync TAP_GITHUB_TOKEN secret to multiple repos"
     set -l repos \
         blacktop/bottle-bomb \
         blacktop/clim8 \
+        blacktop/darwin-dyld-build \
         blacktop/fluxy \
         blacktop/go-foundationmodels \
         blacktop/go-gitfamous \
         blacktop/go-hypervisor \
+        blacktop/lifx \
         blacktop/mcp-tts \
         blacktop/xpost
 
