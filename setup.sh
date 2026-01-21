@@ -86,6 +86,8 @@ bat/setup.sh
 lmstudio/lms.sh
 # zig
 # zig/setup.sh
+# AI CLI agents (Claude Code, Codex, etc.)
+ai/setup.sh
 
 # Create Dev folders
 mkdir -p ~/Developer/Github
