@@ -3,6 +3,7 @@
 #
 tap "blacktop/tap"
 tap "buo/cask-upgrade"
+tap "oven-sh/bun"
 
 brew "argp-standalone"
 brew "aria2"
@@ -12,7 +13,7 @@ brew "binutils"
 brew "binwalk"
 brew "bison"
 brew "btop"
-brew "bun"
+brew "oven-sh/bun/bun"
 brew "ca-certificates"
 brew "capstone"
 brew "clang-format"

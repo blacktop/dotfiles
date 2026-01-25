@@ -1,0 +1,82 @@
+model = "gpt-5.2-codex"
+model_reasoning_effort = "high"
+tool_output_token_limit = 25000
+# Leave room for native compaction near the 272–273k context window.
+# Formula: 273000 - (tool_output_token_limit + 15000)
+# With tool_output_token_limit=25000 ⇒ 273000 - (25000 + 15000) = 233000
+model_auto_compact_token_limit = 233000
+# model_reasoning_summary = "detailed"
+# model_verbosity = "medium"
+# show_raw_agent_reasoning = true
+
+[features]
+ghost_commit = false
+apply_patch_freeform = true
+view_image_tool = true
+web_search_request = true
+#tui2 = true
+skills = true
+unified_exec = true
+shell_snapshot = true
+steer = true
+collab = true
+
+[tui]
+notifications = true
+
+# same as `--sandbox workspace-write`
+sandbox_mode = "workspace-write"
+
+# Extra settings that only apply when `sandbox = "workspace-write"`.
+[sandbox_workspace_write]
+# By default, the cwd for the Codex session will be writable as well as $TMPDIR
+# (if set) and /tmp (if it exists). Setting the respective options to `true`
+# will override those defaults.
+exclude_tmpdir_env_var = false
+exclude_slash_tmp = false
+
+# Optional list of _additional_ writable roots beyond $TMPDIR and /tmp.
+writable_roots = [
+  "/Users/blacktop/Library/Caches/go-build",
+  "/Users/blacktop/.cargo",
+  "/Users/blacktop/.rustup",
+]
+
+# Allow the command being run inside the sandbox to make outbound network
+# requests. Disabled by default.
+network_access = true
+
+[projects."/Users/blacktop/Developer/Mine/blacktop"]
+trust_level = "trusted"
+
+[mcp_servers.ida-pro]
+command = "/opt/homebrew/bin/ida-mcp"
+
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp", "--api-key", "API_KEY"]
+
+[mcp_servers.exa]
+args = ["-y", "exa-mcp-server"]
+command = "npx"
+env = { "EXA_API_KEY" = "API_KEY" }
+
+[mcp_servers.mcp_tts]
+command = "mcp-tts"
+args = ["--verbose"]
+
+[mcp_servers.mcp_tts.env]
+ELEVENLABS_API_KEY = "API_KEY"
+OPENAI_API_KEY = "API_KEY"
+
+# [mcp_servers.gemini-cli]
+# args = ["-y", "gemini-mcp-tool"]
+# command = "npx"
+
+# [mcp_servers.claude]
+# command = "claude"
+# args = ["mcp", "serve"]
+
+# [mcp_servers.chrome]
+# command = "npx"
+# args = ["chrome-devtools-mcp@latest"]

@@ -1,0 +1,7 @@
+prefix_rule(pattern=["xcodebuild"], decision="allow")
+prefix_rule(pattern=["cargo", "clippy"], decision="allow")
+prefix_rule(pattern=["cargo", "test"], decision="allow")
+prefix_rule(pattern=["cargo", "build"], decision="allow")
+prefix_rule(pattern=["cargo", "run"], decision="allow")
+prefix_rule(pattern=["cargo", "xtask"], decision="allow")
+prefix_rule(pattern=["cargo", "test"], decision="allow")

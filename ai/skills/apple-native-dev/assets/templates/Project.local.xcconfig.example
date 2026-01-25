@@ -1,0 +1,17 @@
+// Project.local.xcconfig.example
+// Copy to Project.local.xcconfig and fill in your values
+// DO NOT commit Project.local.xcconfig - it contains personal credentials!
+//
+// Setup:
+//   cp Project.local.xcconfig.example Project.local.xcconfig
+//   vim Project.local.xcconfig
+//
+// Find your Team ID:
+//   security find-certificate -c "Apple Development" -p | \
+//     openssl x509 -noout -subject | grep -o 'OU=[^,]*'
+
+// Your Apple Development Team ID (10 characters)
+DEVELOPMENT_TEAM_OVERRIDE = YOUR_TEAM_ID_HERE
+
+// Optional: Override code signing identity
+// CODE_SIGN_IDENTITY = iPhone Developer: Your Name (XXXXXXXXXX)

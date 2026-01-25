@@ -1,0 +1,16 @@
+// Project.xcconfig
+// Base configuration for iOS/macOS app
+// Credentials loaded from optional local file or environment variables
+
+// Include local credentials if present (gitignored)
+#include? "Project.local.xcconfig"
+
+// Development Team - loaded from local file or CI environment
+DEVELOPMENT_TEAM = $(DEVELOPMENT_TEAM_OVERRIDE)
+
+// Code signing configuration
+CODE_SIGN_STYLE = Automatic
+CODE_SIGN_IDENTITY = Apple Development
+
+// Provisioning - let Xcode manage automatically
+PROVISIONING_PROFILE_SPECIFIER =

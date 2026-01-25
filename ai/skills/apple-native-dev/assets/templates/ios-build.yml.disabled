@@ -1,0 +1,95 @@
+# iOS Build Workflow (Disabled)
+# Rename to ios-build.yml when ready to enable CI/CD
+#
+# Required GitHub Secrets:
+#   DEVELOPMENT_TEAM      - Apple Team ID (10 chars)
+#   CERTIFICATES_P12_B64  - Base64-encoded .p12 certificate
+#   CERTIFICATES_P12_PASS - Password for .p12
+
+name: iOS Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Sources/**'
+      - 'Apps/**'
+      - 'Package.swift'
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+  DERIVED_DATA: .build/DerivedData
+
+jobs:
+  build:
+    name: Build iOS App
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: cd Apps/MyApp && xcodegen generate
+
+      # Unsigned simulator build
+      - name: Build for Simulator
+        run: |
+          xcodebuild -project Apps/MyApp/MyApp.xcodeproj \
+            -scheme MyApp \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -derivedDataPath ${{ env.DERIVED_DATA }} \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      # Uncomment for signed builds (requires secrets)
+      # - name: Import Certificates
+      #   uses: apple-actions/import-codesign-certs@v2
+      #   with:
+      #     p12-file-base64: ${{ secrets.CERTIFICATES_P12_B64 }}
+      #     p12-password: ${{ secrets.CERTIFICATES_P12_PASS }}
+      #
+      # - name: Build for Device
+      #   run: |
+      #     xcodebuild -project Apps/MyApp/MyApp.xcodeproj \
+      #       -scheme MyApp \
+      #       -sdk iphoneos \
+      #       -destination 'generic/platform=iOS' \
+      #       -derivedDataPath ${{ env.DERIVED_DATA }} \
+      #       DEVELOPMENT_TEAM=${{ secrets.DEVELOPMENT_TEAM }} \
+      #       -allowProvisioningUpdates \
+      #       build
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyApp-Simulator
+          path: ${{ env.DERIVED_DATA }}/Build/Products/Debug-iphonesimulator/MyApp.app
+          retention-days: 7
+
+  test:
+    name: Run Tests
+    runs-on: macos-14
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Swift Tests
+        run: swift test

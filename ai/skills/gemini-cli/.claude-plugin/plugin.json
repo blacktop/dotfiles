@@ -1,0 +1,12 @@
+{
+  "name": "gemini-cli",
+  "description": "Consult Google Gemini CLI for second opinions on architecture, debugging, and security audits. Use Geminis 1M+ context window for comprehensive code analysis. Compare Flash (fast) vs Pro (thorough) vs 3-Pro-Preview (cutting-edge). Use when: need second opinion on architectural decisions, stuck debugging after 2+ attempts, writing security- sensitive code, planning refactors (5+ files), approaching 70%+ context capacity, unfamiliar with tech stack, need peer review, or want Flash vs Pro vs 3-Pro-",
+  "version": "1.0.0",
+  "author": {
+    "name": "Jeremy Dawes",
+    "email": "jeremy@jezweb.net"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/jezweb/claude-skills",
+  "keywords": ["gemini-cli","google gemini","gemini command line","second opinion","model comparison","gemini-2.5-flash","gemini-2.5-pro","gemini-3-pro-preview","architectural decisions","debugging assistant","code review gemini","security audit gemini","1M context window","AI pair programming","gemini consultation"]
+}
