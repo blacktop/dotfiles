@@ -19,7 +19,8 @@ skills = true
 unified_exec = true
 shell_snapshot = true
 steer = true
-collab = true
+#collab = true
+collaboration_modes = true
 
 [tui]
 notifications = true

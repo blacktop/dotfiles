@@ -39,3 +39,8 @@ install_skill https://github.com/steipete/agent-scripts create-cli
 install_skill https://github.com/rand/cc-polymath discover-tui
 install_skill https://github.com/msmps/opentui-skill opentui
 install_skill https://github.com/existential-birds/beagle bubbletea-code-review
+# ToB
+install_skill https://github.com/trailofbits/skills
+# Mine
+install_skill https://github.com/blacktop/ipsw-skill ipsw
+install_skill https://github.com/blacktop/mcp-tts speak
