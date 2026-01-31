@@ -31,7 +31,7 @@ install_extension() {
   fi
 }
 
-install_extension https://github.com/galz10/pickle-rick-extension
+install_extension https://github.com/gemini-cli-extensions/ralph
 install_extension https://github.com/gemini-cli-extensions/jules
 install_extension https://github.com/upstash/context7
 install_extension https://github.com/exa-labs/exa-mcp-server
