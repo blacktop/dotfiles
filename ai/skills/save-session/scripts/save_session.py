@@ -67,6 +67,32 @@ def add_session(
     save_sessions(sessions_file, data)
     print(f"Saved session: {session_id}")
 
+def resolve_session_id(session_id: str, agent: str) -> str:
+    """Resolve auto session IDs for supported agents."""
+    if session_id != "auto":
+        return session_id
+
+    if agent != "codex":
+        raise ValueError("auto session-id is only supported for agent=codex")
+
+    env_id = os.getenv("CODEX_SESSION_ID") or os.getenv("OPENAI_CODEX_SESSION_ID")
+    if env_id:
+        return env_id
+
+    snapshots_dir = Path.home() / ".codex" / "shell_snapshots"
+    if snapshots_dir.exists():
+        snapshots = sorted(
+            snapshots_dir.glob("*.sh"),
+            key=lambda path: path.stat().st_mtime,
+            reverse=True,
+        )
+        if snapshots:
+            return snapshots[0].stem
+
+    raise ValueError(
+        "unable to auto-detect Codex session id; run /status and pass --session-id"
+    )
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -75,7 +101,7 @@ def main():
     parser.add_argument(
         "--session-id",
         required=True,
-        help="Unique session identifier (UUID or agent-specific ID)",
+        help="Unique session identifier (UUID or agent-specific ID). Use 'auto' for Codex.",
     )
     parser.add_argument(
         "--agent",
@@ -104,9 +130,15 @@ def main():
     repo_root = Path(args.repo_root).resolve()
     sessions_file = repo_root / "docs" / ".ai" / "sessions.json"
 
+    try:
+        session_id = resolve_session_id(args.session_id, args.agent)
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(2)
+
     add_session(
         sessions_file=sessions_file,
-        session_id=args.session_id,
+        session_id=session_id,
         agent=args.agent,
         summary=args.summary,
         tags=args.tags,

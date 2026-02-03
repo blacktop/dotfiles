@@ -1,14 +1,14 @@
 #!/bin/sh
-# Install community skills via npx skills add
+# Install community skills to ~/.agents/skills (unified location for all AI agents)
 set -o errexit -o nounset
 
 install_skill() {
-  local repo="$1"
-  local skill="${2:-}"
-  local name="${skill:-$(basename "$repo")}"
+  repo="$1"
+  skill="${2:-}"
+  name="${skill:-$(basename "$repo")}"
   echo "$(gum style --foreground "#BE05D0" "      +") $(gum style --bold "$name")"
-  # Install to all agent skill directories
-  if ! npx -y add-skill "$repo" ${skill:+--skill "$skill"} -g -y -a claude-code -a codex -a gemini-cli 2>/dev/null; then
+  # Install to ~/.agents/skills via --agent amp -g (global/user scope)
+  if ! npx -y add-skill "$repo" ${skill:+--skill "$skill"} --agent amp -g -y 2>/dev/null; then
     echo "$(gum style --foreground "#FF0000" "      ✗ Failed to install $name")"
   fi
 }

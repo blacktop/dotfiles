@@ -23,6 +23,16 @@ python3 ~/.claude/skills/save-session/scripts/save_session.py \
   --repo-root "$(pwd)"
 ```
 
+For Codex, you can use automatic detection:
+
+```bash
+python3 ~/.claude/skills/save-session/scripts/save_session.py \
+  --session-id auto \
+  --agent codex \
+  --summary "Brief description of work done" \
+  --repo-root "$(pwd)"
+```
+
 ## Finding Your Session ID by Agent
 
 ### Claude Code
@@ -46,6 +56,7 @@ python3 ~/.claude/skills/save-session/scripts/save_session.py \
 - Use `/status` command within Codex
 - Copy from session picker
 - List files in `~/.codex/sessions/`
+- Or pass `--session-id auto` (uses latest `~/.codex/shell_snapshots/*.sh` filename; verify if multiple sessions are active)
 
 **Note:** Session ID is not currently exposed to the model itself (see GitHub issue #5912)
 
