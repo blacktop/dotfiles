@@ -13,7 +13,7 @@ fish_add_path -a /opt/homebrew/opt/llvm/bin
 fish_add_path -a $HOME/.cargo/bin
 fish_add_path -a $HOME/.local/bin
 fish_add_path -a $HOME/.lmstudio/bin # LM Studio CLI (lms)
-
+fish_add_path -a $HOME/.orbstack/bin
 # fish_add_path -a $HOME/.modular/pkg/packages.modular.com_mojo/bin
 
 if test -e /opt/homebrew/bin/brew
