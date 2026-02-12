@@ -14,7 +14,7 @@ install_skill() {
 }
 
 # Business
-install_skill https://github.com/coreyhaines31/marketingskills
+# install_skill https://github.com/coreyhaines31/marketingskills
 # UI/UX
 install_skill https://github.com/nextlevelbuilder/ui-ux-pro-max-skill ui-ux-pro-max
 # Swift
@@ -31,7 +31,7 @@ install_skill https://github.com/existential-birds/beagle swiftui-code-review
 install_skill https://github.com/wshobson/agents mobile-ios-design
 # Productivity
 install_skill https://github.com/subsy/ralph-tui
-install_skill https://github.com/clawdbot/clawdbot things-mac
+# install_skill https://github.com/clawdbot/clawdbot things-mac
 install_skill https://github.com/trevors/dot-claude jj-workflow
 # CLI/TUI
 install_skill https://github.com/jeffallan/claude-skills cli-developer
@@ -41,6 +41,9 @@ install_skill https://github.com/msmps/opentui-skill opentui
 install_skill https://github.com/existential-birds/beagle bubbletea-code-review
 # ToB
 install_skill https://github.com/trailofbits/skills
+# Rust
+install_skill https://github.com/apollographql/skills rust-best-practices
+install_skill https://github.com/jeffallan/claude-skills rust-engineer
 # Mine
 install_skill https://github.com/blacktop/ipsw-skill ipsw
 install_skill https://github.com/blacktop/mcp-tts speak

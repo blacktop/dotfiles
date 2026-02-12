@@ -8,20 +8,24 @@ AGENTS_SKILLS="$HOME/.agents/skills"
 # Create the standardized skills directory
 mkdir -p "$AGENTS_SKILLS"
 
-# Create symlinks from legacy agent skill directories to unified location
-# (codex already reads from ~/.agents/skills natively)
-for agent_dir in "$HOME/.claude" "$HOME/.gemini" "$HOME/.codex"; do
+# Clean up stale symlinks for agents that now read ~/.agents/skills natively
+for agent_dir in "$HOME/.gemini" "$HOME/.codex"; do
   skills_path="$agent_dir/skills"
-  # Remove existing directory or broken symlink
-  if [ -d "$skills_path" ] && [ ! -L "$skills_path" ]; then
-    rm -rf "$skills_path"
-  elif [ -L "$skills_path" ]; then
+  if [ -L "$skills_path" ]; then
     rm "$skills_path"
   fi
-  # Create symlink to unified location
-  mkdir -p "$agent_dir"
-  ln -s "$AGENTS_SKILLS" "$skills_path"
 done
+
+# Claude Code is the only agent that doesn't scan ~/.agents/skills natively,
+# so it still needs a symlink from ~/.claude/skills -> ~/.agents/skills.
+claude_skills="$HOME/.claude/skills"
+if [ -d "$claude_skills" ] && [ ! -L "$claude_skills" ]; then
+  rm -rf "$claude_skills"
+elif [ -L "$claude_skills" ]; then
+  rm "$claude_skills"
+fi
+mkdir -p "$HOME/.claude"
+ln -s "$AGENTS_SKILLS" "$claude_skills"
 
 # Install community skills (installs directly to ~/.agents/skills)
 if [ -x "$SCRIPT_DIR/skills/install-community.sh" ]; then
