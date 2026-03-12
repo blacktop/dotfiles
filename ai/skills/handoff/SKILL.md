@@ -1,141 +1,148 @@
 ---
 name: handoff
-description: Generate optimized handoff prompts for delegating tasks to LLM agents. Use when needing to hand off work to another agent (GPT-5.2/Codex, Claude Opus 4.5/Sonnet 4, or Gemini 3 Pro/Flash), whether for a sub-task/parallel task within the same project or a fresh start handoff to a new agent context. Triggers on requests like "create a handoff prompt", "delegate this task to another agent", "hand this off", or "prepare context for another agent".
+description: Generate optimized handoff prompts for delegating work to another LLM agent. Use when handing work to GPT-5.x/Codex, Claude 4.x, Gemini 3.x, or Grok 4.x, either as a shared-workspace sub-task handoff or a fresh-context handoff for a new session or model. Triggers on requests like "create a handoff prompt", "delegate this task to another agent", "hand this off", or "prepare context for another agent".
 ---
 
 # Handoff Prompt Generator
 
-Generate optimized handoff prompts for different LLM agents and handoff types.
+Generate a prompt that another agent can execute without guessing.
 
-## Handoff Types
+## Choose the handoff mode
 
-### 1. Sub-Task/Parallel Handoff
-For delegating a portion of work to another agent within the same project:
-- Agent has access to same codebase/files
-- Shared context exists
-- Task is scoped subset of larger work
-- May run in parallel with other agents
+- Use a shared-workspace handoff when the receiving agent can access the same repo, files, and artifacts.
+- Use a fresh-context handoff when the receiving agent starts cold, in another session, or on another platform.
+- Ask for the target model family if it is not implied by the user's request. If it still is not known, draft a vendor-neutral base prompt and mark any missing model-specific adjustments.
 
-### 2. Fresh Start Handoff
-For handing off to an agent starting with a new context:
-- Agent starts with no prior context
-- Needs project orientation
-- Requires state files and entry points
-- May be a new session or different model
+## Read one model reference
 
-## Workflow
+Read only the reference that matches the receiving model:
 
-1. **Identify target model** - Ask which model family will receive the handoff
-2. **Identify handoff type** - Sub-task/parallel or fresh start
-3. **Gather context** - Collect essential information for the handoff
-4. **Generate prompt** - Apply model-specific patterns from references
-5. **Review and refine** - Ensure prompt is complete and well-scoped
+| Target model family | Reference |
+| --- | --- |
+| OpenAI GPT-5.x / Codex | [references/openai.md](references/openai.md) |
+| Anthropic Claude 4.x | [references/anthropic.md](references/anthropic.md) |
+| Google Gemini 3.x | [references/google.md](references/google.md) |
+| xAI Grok 4.x / Grok Code | [references/xai.md](references/xai.md) |
 
-## Model-Specific References
+If the requested model version is newer than the reference, verify the latest official docs before drafting the handoff.
 
-Read the appropriate reference based on target model:
+## Gather only execution-critical context
 
-| Target Model | Reference File |
-|-------------|----------------|
-| GPT-5.2, GPT-5.2-Codex | [references/openai.md](references/openai.md) |
-| Claude Opus 4.5, Sonnet 4 | [references/anthropic.md](references/anthropic.md) |
-| Gemini 3 Pro, Gemini 3 Flash | [references/google.md](references/google.md) |
+Collect the minimum information that removes ambiguity:
 
-## Universal Handoff Components
+- objective
+- success criteria
+- scope boundaries
+- relevant files, commands, URLs, or artifacts
+- current state and known blockers
+- verification steps
+- output location or return format
+- coordination notes for parallel work
 
-Every handoff prompt should include:
+Do not pad the handoff with background that does not change the receiver's next action.
 
-### Required
-- **Objective**: Clear, specific goal
-- **Scope/Boundaries**: What is and isn't in scope
-- **Output Format**: Expected deliverable structure
-- **Constraints**: What not to do, limitations
+## Build the base handoff
 
-### For Fresh Start Handoffs (add these)
-- **Project Context**: Essential background
-- **Entry Points**: Key files to read first
-- **Current State**: What's done, what remains
-- **State Files**: Progress tracking files to check
+Use flat labeled sections. Prefer direct operational language over narrative explanation.
 
-### For Sub-Task Handoffs (add these)
-- **Dependencies**: Files, APIs, or prior outputs needed
-- **Artifact References**: Shared state or outputs
-- **Coordination Notes**: How this task fits with parallel work
+### Shared-Workspace Handoff
 
-## Quick Templates
+```text
+Target model: [family/version]
+Handoff type: shared-workspace sub-task
 
-### Sub-Task Handoff (Universal)
-```xml
-<task_handoff target="[MODEL]">
-<objective>[Specific, atomic goal]</objective>
-<context>[Only what's needed for THIS task]</context>
-<dependencies>[Files, APIs, prior outputs needed]</dependencies>
-<scope>
-  <include>[What to do]</include>
-  <exclude>[What NOT to do]</exclude>
-</scope>
-<output>
-  <format>[Structure of deliverable]</format>
-  <location>[Where to save/return results]</location>
-</output>
-<coordination>[How this fits with parallel work]</coordination>
-</task_handoff>
+Objective
+[One concrete outcome]
+
+Success criteria
+- [Observable completion condition]
+- [Verification condition]
+
+Context
+- [Only facts needed for this slice of work]
+
+Inputs and artifacts
+- [file paths, branches, logs, docs, prior outputs]
+
+Ownership
+- [files or directories to modify]
+- [areas to avoid]
+
+Constraints
+- [technical limits]
+- [things the agent must not do]
+
+Verification
+- [commands, tests, or review checks to run]
+
+Output
+- [exact return format]
+- [where to write or save artifacts]
+
+Coordination
+- [how this work fits with parallel tasks]
 ```
 
-### Fresh Start Handoff (Universal)
-```xml
-<fresh_context target="[MODEL]">
-<project>
-  <name>[Project name]</name>
-  <overview>[1-2 sentence description]</overview>
-  <entry_points>[Key files to read first]</entry_points>
-</project>
-<state>
-  <completed>[What's done]</completed>
-  <remaining>[What needs to be done]</remaining>
-  <state_files>[progress.txt, tests.json, etc.]</state_files>
-</state>
-<task>
-  <objective>[Specific goal]</objective>
-  <success_criteria>[How to verify completion]</success_criteria>
-</task>
-<constraints>
-  [Scope limits]
-  [What not to do]
-</constraints>
-<output>
-  <format>[Expected structure]</format>
-  <verification>[How to validate results]</verification>
-</output>
-</fresh_context>
+### Fresh-Context Handoff
+
+```text
+Target model: [family/version]
+Handoff type: fresh context
+
+Project
+- name: [project name]
+- overview: [1-2 sentences]
+- entry points: [first files or docs to read]
+
+Current state
+- completed: [what is already done]
+- remaining: [what still needs to be done]
+- blockers/baseline: [known failures, risks, or assumptions]
+
+Task
+- objective: [single outcome]
+- success criteria:
+  - [observable condition]
+  - [verification condition]
+
+Constraints
+- [scope limits]
+- [things not to change]
+- [environment or policy constraints]
+
+Verification
+- [commands, tests, or manual checks]
+
+Output
+- [exact deliverable shape]
+- [how to report open questions or TODOs]
 ```
 
-## Model-Specific Adjustments
+Use placeholders like `[TODO: exact path]` instead of inventing repository facts.
 
-After generating the base prompt, apply these adjustments:
+## Apply model-specific tuning
 
-### GPT-5.2/Codex
-- Use CTCO framework (Context → Task → Constraints → Output)
-- Add `<reasoning_effort>` tag (minimal/low/medium/high)
-- For fresh handoffs, format as AGENTS.md
+After drafting the base handoff:
 
-### Claude Opus 4.5/Sonnet 4
-- Avoid word "think" for Opus 4.5 (use consider/evaluate)
-- Add explicit action mode (proactive vs conservative)
-- Include parallel execution guidance
-- Reference git for state tracking
+- add only the adjustments from the matching reference file
+- prefer external runtime settings when the receiving harness exposes them
+- avoid inventing API-only controls inside plain chat prompts
+- generate one prompt per target model if the user wants multiple versions
 
-### Gemini 3 Pro/Flash
-- Add `thinking_level` (LOW/MEDIUM/HIGH)
-- Include anchoring phrase ("Based on the above...")
-- Avoid broad negatives; be specific
-- Note: keep temperature at 1.0
+## Hold the quality bar
 
-## Best Practices
+- Keep the task atomic.
+- Define what "done" means.
+- Name files and commands whenever possible.
+- Reference shared artifacts by path instead of pasting large logs.
+- State explicit stop rules for destructive or broad changes.
+- Ask for findings first for review tasks.
+- Require source boundaries and citation expectations for research tasks.
 
-1. **Minimize context** - Include only what's essential for the task
-2. **Be explicit** - State goals clearly; don't rely on inference
-3. **Scope tightly** - Prevent overlap with parallel tasks
-4. **Include verification** - How will the agent know it succeeded?
-5. **Reference artifacts** - Point to shared state rather than duplicating
-6. **Match model style** - Use patterns the target model responds to best
+## Return format
+
+When the user asks for a handoff prompt:
+
+1. Return the ready-to-send prompt in a fenced code block.
+2. List assumptions or placeholders after the prompt.
+3. Generate separate prompts when the user wants handoffs for multiple models.

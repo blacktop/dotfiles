@@ -1,0 +1,4 @@
+interface:
+  display_name: "Orchestrate"
+  short_description: "Lead multi-step work with Claude as a worker"
+  default_prompt: "Use $orchestrate to split this task and delegate the right parts to Claude Code."

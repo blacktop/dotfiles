@@ -1,0 +1,4 @@
+interface:
+  display_name: "Handoff Prompt Generator"
+  short_description: "Draft model-specific prompts for agent handoffs"
+  default_prompt: "Use $handoff to draft a model-specific agent handoff prompt."

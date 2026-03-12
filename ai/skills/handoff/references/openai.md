@@ -1,92 +1,65 @@
-# OpenAI GPT-5.2 & GPT-5.2-Codex Handoff Patterns
+# OpenAI GPT-5.x / Codex Handoff Patterns
 
-## Model Characteristics
-- Trained for precise instruction following; ambiguity is a bug
-- Supports `reasoning_effort` parameter: minimal, low, medium, high, xhigh
-- Best-in-class for agentic coding with multi-hour autonomous operation
-- Uses AGENTS.md format for persistent instructions
+Source snapshot: refreshed 2026-03-12 from official OpenAI docs
 
-## CTCO Framework (Required Structure)
-Structure all prompts using Context → Task → Constraints → Output:
+- [Prompt guidance for GPT-5.4](https://developers.openai.com/api/docs/guides/prompt-guidance/)
+- [Using GPT-5.4](https://developers.openai.com/api/docs/guides/latest-model/)
+- [GPT-5 prompting guide](https://developers.openai.com/cookbook/examples/gpt-5/gpt-5_prompting_guide/)
+- [GPT-5.2 prompting guide](https://developers.openai.com/cookbook/examples/gpt-5/gpt-5-2_prompting_guide/)
 
-```
-<context>
-[Who is the model? Background state? Project context?]
-</context>
+## Start here
 
-<task>
-[Single, atomic action required]
-</task>
+- Prefer the Responses API or an agent wrapper that preserves tool state across turns.
+- State the objective, tool-use rules, completion criteria, verification plan, and output contract explicitly.
+- Use labeled blocks or clearly separated sections so the model can keep context, constraints, and deliverables distinct.
+- Ask for structured outputs or strict schemas when another system will parse the result.
+- Tell the agent whether to act proactively or stop after analysis.
 
-<constraints>
-[Negative constraints - what NOT to do]
-[Scope limits]
-</constraints>
+## Handoff emphasis
 
-<output>
-[Expected format, structure, deliverables]
-</output>
-```
+- Name the tools or files the agent should use first.
+- Separate scope boundaries from background context.
+- Give concrete stop rules for destructive, broad, or expensive actions.
+- Include exact verification commands when correctness matters.
+- Prefer direct operational language over conversational setup.
 
-## Reasoning Effort Control
+## Runtime knobs
 
-### Low/Minimal Effort
-- Best for: migrations, formatting, data extraction
-- Prompt key: "Directly output the result without preamble."
+If the receiving harness exposes model settings, prefer these there instead of spelling them out in prose:
 
-### High Effort
-- Best for: coding refactors, complex logic, debugging
-- Prompt key: "Plan the solution step-by-step. Verify the logic of step 2 before proceeding to step 3."
+- `reasoning.effort`: use `none` or `low` for extraction, classification, and formatting; use `medium` or `high` for debugging, coding, and multi-step planning.
+- `text.verbosity`: use `low`, `medium`, or `high` to control response length without rewriting the whole prompt.
+- structured outputs or strict tool schemas: use them whenever machine-readable output is required.
 
-## AGENTS.md Format for Fresh Handoffs
-When handing off to a fresh agent, structure as AGENTS.md:
+## Good shape
 
-```markdown
-# Project: [Name]
+```text
+Context
+[Only facts the agent needs]
 
-## Working Agreements
-- [Testing requirements]
-- [Code style expectations]
-- [Review standards]
+Task
+[Single concrete outcome]
 
-## Repository Expectations
-- [Build commands]
-- [Linting rules]
-- [Documentation standards]
+Tool use
+- [Which tools/files to use]
+- [Whether to act proactively]
 
-## Current Task
-[Specific objective with success criteria]
+Constraints
+- [Scope limits]
+- [What not to change]
 
-## Context
-[Essential background - keep minimal]
+Verification
+- [Checks to run]
 
-## Constraints
-[What not to do]
-[Scope limits]
+Output contract
+- [Exact format to return]
+- [Artifacts to write]
 ```
 
-## Sub-Task Handoff Pattern
-For parallel/sub-task handoffs, use Plan-then-Execute:
+## Avoid
 
-```xml
-<planning>
-[Strategic analysis of the task]
-[Decomposition into sub-steps]
-</planning>
-
-<task_handoff>
-<objective>[Specific goal]</objective>
-<reasoning_effort>[minimal|low|medium|high]</reasoning_effort>
-<context>[Only what's needed for this specific task]</context>
-<constraints>[Scope limits, what not to do]</constraints>
-<expected_output>[Format and deliverables]</expected_output>
-<dependencies>[Files, APIs, or artifacts needed]</dependencies>
-</task_handoff>
-```
-
-## Key Prompting Rules
-1. Use XML-tagged scaffolding for structure
-2. Separate constraints from task (reduces instruction drift)
-3. Use strict JSON schemas for structured output
-4. Include negative constraints explicitly ("Do not...")
-5. Keep prompts architectural, not conversational
+- vague goals like "improve this"
+- hidden completion criteria
+- mixing examples, constraints, and background in one paragraph
+- relying only on broad negative instructions when a positive target behavior can be stated
+- asking for internal reasoning when a final answer, checklist, or evidence summary is enough

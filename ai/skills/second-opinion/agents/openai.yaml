@@ -1,0 +1,4 @@
+interface:
+  display_name: "Second Opinion"
+  short_description: "Run external Codex or Gemini code reviews"
+  default_prompt: "Use $second-opinion to get an external code review on these changes."

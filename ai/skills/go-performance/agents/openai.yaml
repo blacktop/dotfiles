@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go Performance"
+  short_description: "Profile and optimize Go performance issues"
+  default_prompt: "Use $go-performance to benchmark, profile, and optimize this Go hot path."
