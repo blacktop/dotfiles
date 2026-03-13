@@ -3,9 +3,18 @@
 
 # ~/.macos — https://mths.be/macos
 
-# Close any open System Preferences panes, to prevent them from overriding
-# settings we’re about to change
-osascript -e 'tell application "System Preferences" to quit'
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+quit_app() {
+  local app_name="$1"
+  osascript -e "tell application \"${app_name}\" to quit" >/dev/null 2>&1 || true
+}
+
+# Close any open Settings panes so they don't override the preferences we are
+# about to change. Tahoe uses System Settings, but keep the older app name as a
+# no-op fallback for machines on older releases.
+quit_app "System Settings"
+quit_app "System Preferences"
 
 # Ask for the administrator password upfront
 sudo -v
@@ -77,7 +86,7 @@ defaults write com.apple.speech.voice.prefs SelectedVoiceName -string "simone (E
 ###############################################################################
 
 # Save screenshots to the downloads folder
-mkdir ~/Downloads/Screenshots
+mkdir -p "${HOME}/Downloads/Screenshots"
 defaults write com.apple.screencapture location -string "${HOME}/Downloads/Screenshots"
 
 # Save screenshots in PNG format (other options: BMP, GIF, JPG, PDF, TIFF)
@@ -119,7 +128,8 @@ defaults write com.apple.finder OpenWindowForNewRemovableDisk -bool true
 defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
 
 # Show the ~/Library folder
-chflags nohidden ~/Library && xattr -d com.apple.FinderInfo ~/Library
+chflags nohidden "${HOME}/Library"
+xattr -d com.apple.FinderInfo "${HOME}/Library" >/dev/null 2>&1 || true
 
 # Show the /Volumes folder
 sudo chflags nohidden /Volumes
@@ -170,10 +180,10 @@ defaults write com.apple.dock wvous-tr-modifier -int 0
 # Safari & WebKit                                                             #
 ###############################################################################
 
-# Launch Safari to populate the defaults
-/Applications/Safari.app/Contents/MacOS/Safari &
-sleep 10
-kill -9 %1
+# Launch Safari once to populate its preferences domain, then quit it cleanly.
+open -gj -a Safari
+sleep 5
+quit_app "Safari"
 
 # Enable Safari's remote automation and "Develop" menu
 # sudo safaridriver --enable
@@ -341,14 +351,14 @@ defaults write com.apple.SoftwareUpdate ConfigDataInstall -int 1
 defaults write com.apple.commerce AutoUpdate -bool true
 
 ###############################################################################
-# Terminal & iTerm 2                                                          #
+# Terminal                                                                    #
 ###############################################################################
 
 # Only use UTF-8 in Terminal.app
-defaults write com.apple.terminal StringEncodings -array 4
+defaults write com.apple.Terminal StringEncodings -array 4
 
 # Use a modified version of the Nord theme by default in Terminal.app
-open "$(dirname "$0")/init/Nord.terminal"
+open "${SCRIPT_DIR}/init/Nord.terminal"
 defaults write com.apple.Terminal "Default Window Settings" -string "Nord"
 defaults write com.apple.Terminal "Startup Window Settings" -string "Nord"
 
@@ -359,20 +369,10 @@ defaults write com.apple.Terminal "Startup Window Settings" -string "Nord"
 
 # Enable Secure Keyboard Entry in Terminal.app
 # See: https://security.stackexchange.com/a/47786/8918
-defaults write com.apple.terminal SecureKeyboardEntry -bool true
+defaults write com.apple.Terminal SecureKeyboardEntry -bool true
 
 # Disable the annoying line marks
 defaults write com.apple.Terminal ShowLineMarks -int 0
-
-# Install the Nord theme for iTerm
-open "$(dirname "$0")/init/Nord.itermcolors"
-# Write iterm2 preferences
-mkdir -p ~/.config/iterm2/Config
-cp "$(dirname "$0")/init/com.googlecode.iterm2.plist" ~/.config/iterm2/Config/com.googlecode.iterm2.plist
-# Specify the preferences directory
-defaults write com.googlecode.iterm2.plist PrefsCustomFolder -string "~/.config/iterm2/Config"
-# Tell iTerm2 to use the custom preferences in the directory
-defaults write com.googlecode.iterm2.plist LoadPrefsFromCustomFolder -bool true
 
 ####################
 # TouchID for sudo #
@@ -412,6 +412,9 @@ done
 ###############################################################################
 # Kill affected applications                                                  #
 ###############################################################################
+
+# Restart the preferences daemon so app relaunches see the new defaults.
+killall cfprefsd > /dev/null 2>&1 || true
 
 for app in "Activity Monitor" \
 	"Address Book" \

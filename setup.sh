@@ -20,6 +20,38 @@ function info() {
     echo -e "$COL_BLUE[info]$COL_RESET" $1
 }
 
+function has_gum_prompt_ui() {
+    command -v gum >/dev/null 2>&1 && [[ -t 0 ]] && [[ -t 1 ]]
+}
+
+function confirm_step() {
+    local prompt="$1"
+    local env_name="${2:-}"
+    local env_value=""
+
+    if [[ -n "$env_name" ]]; then
+        env_value="${!env_name:-}"
+        case "${env_value,,}" in
+            1|true|yes|y)
+                return 0
+                ;;
+            0|false|no|n)
+                return 1
+                ;;
+        esac
+    fi
+
+    if has_gum_prompt_ui; then
+        gum confirm "$prompt" \
+            --prompt.foreground "#FF9400" \
+            --selected.foreground "#230" \
+            --selected.background "#FF9400" \
+            --unselected.foreground "#F7BA00"
+    else
+        return 1
+    fi
+}
+
 running "Configuring macOS"
 
 if [[ $(xcode-select --version) ]]; then
@@ -82,8 +114,12 @@ zed/setup.sh
 bat/setup.sh
 # ollama
 # ollama/setup.sh
-# LM Studio
-lmstudio/lms.sh
+# LM Studio (large model downloads; opt-in only)
+if confirm_step "Install LM Studio and download local models? This downloads large models." "SETUP_LMSTUDIO"; then
+    lmstudio/lms.sh
+else
+    info "Skipping LM Studio setup (set SETUP_LMSTUDIO=yes to enable non-interactively)"
+fi
 # zig
 # zig/setup.sh
 # AI CLI agents (Claude Code, Codex, etc.)
@@ -101,17 +137,13 @@ if [[ $(sw_vers -productVersion | cut -d . -f 1) -lt 26 ]]; then
 fi
 
 # macOS
-echo "$(gum style --bold --foreground "#FF9400" "[choose]") $(gum style --bold "Configure macOS defaults?")"
-CHOICE=$(gum choose --cursor.foreground "#FF9400" --item.foreground "#F7BA00" "Yes" "No")
-if [[ "$CHOICE" == "Yes" ]]; then
+if confirm_step "Configure macOS defaults?" "SETUP_MACOS_DEFAULTS"; then
     echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Running 'config-osx.sh'")"
     exec ./config-osx.sh
 fi
 
 # Offline profile
-echo "$(gum style --bold --foreground "#FF9400" "[choose]") $(gum style --bold "Apply offline firewall (Tailscale-only + update window)?")"
-OFFLINE_CHOICE=$(gum choose --cursor.foreground "#FF9400" --item.foreground "#F7BA00" "Yes" "No")
-if [[ "$OFFLINE_CHOICE" == "Yes" ]]; then
+if confirm_step "Apply offline firewall (Tailscale-only + update window)?" "SETUP_OFFLINE_FIREWALL"; then
     echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Enabling offline pf profile")"
     ./offline/offline-firewall.sh enable
 fi
