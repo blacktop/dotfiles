@@ -8,7 +8,7 @@ install_skill() {
   name="${skill:-$(basename "$repo")}"
   echo "$(gum style --foreground "#BE05D0" "      +") $(gum style --bold "$name")"
   # Install to ~/.agents/skills via --agent amp -g (global/user scope)
-  if ! npx -y add-skill "$repo" ${skill:+--skill "$skill"} --agent amp -g -y 2>/dev/null; then
+  if ! npx -y skills add "$repo" ${skill:+--skill "$skill"} --agent amp -g -y 2>/dev/null; then
     echo "$(gum style --foreground "#FF0000" "      ✗ Failed to install $name")"
   fi
 }
