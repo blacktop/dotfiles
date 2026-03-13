@@ -8,7 +8,7 @@ echo "$(gum style --bold --foreground "#BE05D0" "  -") Install claude-code..."
 brew install --quiet claude-code
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Install codex..."
-brew install --quiet openai-codex
+brew install --quiet codex codex-app
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Install gemini-cli..."
 brew install --quiet gemini-cli
