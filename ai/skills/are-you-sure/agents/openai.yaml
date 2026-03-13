@@ -1,0 +1,4 @@
+interface:
+  display_name: "Are You Sure"
+  short_description: "Fresh-eyes self-review and repair"
+  default_prompt: "Use $are-you-sure to review the changes you just made with fresh eyes and fix any clear issues you find."
