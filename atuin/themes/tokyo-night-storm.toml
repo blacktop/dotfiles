@@ -1,0 +1,13 @@
+[theme]
+name = "tokyo-night-storm"
+parent = "default"
+
+[colors]
+AlertInfo = "#73daca"
+AlertWarn = "#e0af68"
+AlertError = "#f7768e"
+Annotation = "#565f89"
+Base = "#c0caf5"
+Guidance = "#ff9e64"
+Important = "#7aa2f7"
+Title = "#bb9af7"

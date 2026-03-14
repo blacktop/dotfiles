@@ -23,7 +23,8 @@ fi
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Installing fisher packages..."
 # fish -c "fisher install catppuccin/fish"
 # fish -c "fisher install vitallium/tokyonight-fish"
-fish -c "fisher install jethrokuan/fzf"
+fish -c "fisher list | string match -q 'jethrokuan/fzf'; and fisher remove jethrokuan/fzf; true"
+fish -c "fisher install PatrickF1/fzf.fish"
 fish -c "fisher install jorgebucaran/autopair.fish"
 fish -c "fisher install jorgebucaran/hydro"
 
@@ -31,8 +32,6 @@ echo "$(gum style --bold --foreground "#BE05D0" "  -") Setup fish config..."
 cp $(dirname "$0")/config.fish "$HOME/.config/fish/config.fish"
 cp -r $(dirname "$0")/functions/* "$HOME/.config/fish/functions/"
 cp -r $(dirname "$0")/themes/* "$HOME/.config/fish/themes/"
-
-fish -c "fish_config theme choose TokyoNight\ Moon"
 
 # echo "$(gum style --bold --foreground "#BE05D0" "  -") Setup 🚀 starship prompt config..."
 # cp -r $(dirname "$0")/config/starship.toml "$HOME/.config/starship.toml"

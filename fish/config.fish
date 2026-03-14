@@ -1,36 +1,45 @@
-if status is-interactive
-    # Commands to run in interactive sessions can go here
-end
-
-fish_add_path -a $HOME/Library/Python/3.13/bin
-fish_add_path -a $HOME/Library/Python/3.14/bin
-fish_add_path -a $HOME/go/bin
-fish_add_path -a /opt/homebrew/bin
-fish_add_path -a /opt/homebrew/sbin
-fish_add_path -a /opt/homebrew/opt/openjdk/bin
-fish_add_path -a /opt/homebrew/opt/ruby/bin
-fish_add_path -a /opt/homebrew/opt/llvm/bin
-fish_add_path -a $HOME/.cargo/bin
-fish_add_path -a $HOME/.local/bin
-fish_add_path -a $HOME/.lmstudio/bin # LM Studio CLI (lms)
-fish_add_path -a $HOME/.orbstack/bin
-# fish_add_path -a $HOME/.modular/pkg/packages.modular.com_mojo/bin
+fish_add_path --global -a $HOME/Library/Python/3.13/bin
+fish_add_path --global -a $HOME/Library/Python/3.14/bin
+fish_add_path --global -a $HOME/go/bin
+fish_add_path --global -a /opt/homebrew/bin
+fish_add_path --global -a /opt/homebrew/sbin
+fish_add_path --global -a /opt/homebrew/opt/openjdk/bin
+fish_add_path --global -a /opt/homebrew/opt/ruby/bin
+fish_add_path --global -a /opt/homebrew/opt/llvm/bin
+fish_add_path --global -a $HOME/.cargo/bin
+fish_add_path --global -a $HOME/.bun/bin
+fish_add_path --global -a $HOME/.local/bin
+fish_add_path --global -a $HOME/.lmstudio/bin # LM Studio CLI (lms)
+fish_add_path --global -a $HOME/.orbstack/bin
+# fish_add_path --global -a $HOME/.modular/pkg/packages.modular.com_mojo/bin
 
 if test -e /opt/homebrew/bin/brew
-    eval $(/opt/homebrew/bin/brew shellenv)
+    eval (/opt/homebrew/bin/brew shellenv)
 end
 
 # locals.fish is a home for anything machine specific
-if test -e ~/.config/fish/locals.fish
-    source ~/.config/fish/locals.fish
+if test -f "$HOME/.config/fish/locals.fish"
+    source "$HOME/.config/fish/locals.fish"
 end
 
-set -xg EDITOR (which code) -w
+if command -q zed
+    set -gx EDITOR "zed --wait"
+    set -gx VISUAL "zed --wait"
+else if command -q code
+    set -gx EDITOR "code -w"
+    set -gx VISUAL "code -w"
+end
 
 # STYLE #########################################
 set fish_greeting
-fish_config theme choose "TokyoNight Moon"
-# fish_config theme choose "Rosé Pine Moon"
+if test -f "$HOME/.config/fish/themes/TokyoNight Moon.theme"
+    while read -l name value
+        if string match -qr '^(#|$)' -- "$name"
+            continue
+        end
+        set -g $name $value
+    end < "$HOME/.config/fish/themes/TokyoNight Moon.theme"
+end
 # Prompt
 set hydro_color_pwd brcyan
 set hydro_color_git brmagenta
@@ -46,41 +55,38 @@ alias lt 'eza -guUmhl -T --hyperlink --git --time-style long-iso'
 alias ta 'tmux new -A -s default'
 
 # homebrew
-set -x HOMEBREW_CASK_OPTS '--appdir=/Applications --fontdir=~/Library/Fonts --require-sha'
-set -x HOMEBREW_NO_INSECURE_REDIRECT 1
+set -gx HOMEBREW_CASK_OPTS "--appdir=/Applications --fontdir=$HOME/Library/Fonts --require-sha"
+set -gx HOMEBREW_NO_INSECURE_REDIRECT 1
 
-set -x TERM xterm-256color
-set -x GREP_COLOR '1;33'
-set -x CLICOLOR 1
+set -gx GREP_COLOR '1;33'
+set -gx CLICOLOR 1
 
 # Prefer US English and use UTF-8.
-set -x  LANG 'en_US.UTF-8'
-set -x  LC_ALL 'en_US.UTF-8'
+set -gx LANG 'en_US.UTF-8'
 
 # Don’t clear the screen after quitting a manual page.
-set -x  MANPAGER 'less -X'
+set -gx MANPAGER 'less -X'
 
 # Avoid issues with `gpg` as installed via Homebrew.
 # https://stackoverflow.com/a/42265848/96656
-set -x GPG_TTY $(tty);
+if status is-interactive
+    set -gx GPG_TTY (tty)
+end
 
 # fzf settings
 function fish_user_key_bindings
-    set -U FZF_LEGACY_KEYBINDINGS 0
-    source $HOME/.config/fish/conf.d/fzf_key_bindings.fish
-    source $HOME/.config/fish/functions/keys_bindings.fish
+    if functions -q fzf_configure_bindings
+        fzf_configure_bindings
+    else if functions -q fzf_key_bindings
+        fzf_key_bindings
+    end
+
+    if test -f "$HOME/.config/fish/functions/keys_bindings.fish"
+        source "$HOME/.config/fish/functions/keys_bindings.fish"
+    end
 end
 
-set -x FZF_COMPLETE 1
-set -x FZF_REVERSE_ISEARCH_OPTS '--preview-window=up:10 --preview="echo {}" --height 100%'
-
-set -x FZF_COMPLETE 1
-set -x FZF_REVERSE_ISEARCH_OPTS '--preview-window=up:10 --preview="echo {}" --height 100%'
-set -x FZF_LEGACY_KEYBINDINGS 0
-set -x FZF_ENABLE_OPEN_PREVIEW 1
-set -x FZF_PREVIEW_FILE_CMD "bat --color=always --theme=Nord2 --style=numbers --line-range=:500"
-set -x FZF_TMUX 1
-set -Ux FZF_DEFAULT_OPTS "\
+set -gx FZF_DEFAULT_OPTS "\
     --color=bg:#16161e \
     --color=bg+:#283457 \
     --color=border:#27a1b9 \
@@ -99,8 +105,10 @@ set -Ux FZF_DEFAULT_OPTS "\
     --color=spinner:#ff007c \
     --border thinblock \
     --multi"
+set -gx fzf_preview_file_cmd "bat --color=always --theme=Nord2 --style=numbers --line-range=:500"
+set -gx fzf_history_opts "--preview-window=down:3:hidden:wrap --bind '?:toggle-preview'"
 # Catppuccin Mocha
-# set -Ux FZF_DEFAULT_OPTS "\
+# set -gx FZF_DEFAULT_OPTS "\
 # --color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 \
 # --color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc \
 # --color=marker:#b4befe,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8 \
@@ -109,10 +117,14 @@ set -Ux FZF_DEFAULT_OPTS "\
 # --multi"
 
 # zoxide
-zoxide init fish | source
+if command -q zoxide
+    zoxide init fish | source
+end
 
 # shell history
-# atuin init fish | source
+if command -q atuin
+    atuin init fish --disable-ctrl-r | source
+end
 
 function expand-dot-to-parent-directory-path -d 'expand ... to ../.. etc'
     # Get commandline up to cursor

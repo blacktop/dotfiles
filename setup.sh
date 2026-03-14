@@ -100,6 +100,8 @@ git/setup.sh
 vscode/setup.sh
 # fish
 fish/setup.sh
+# atuin
+atuin/setup.sh
 # tmux
 tmux/setup.sh
 # rust
