@@ -119,12 +119,12 @@ brew "blacktop/tap/apfs"
 brew "blacktop/tap/go-hypervisor"
 brew "blacktop/tap/ipsw"
 brew "blacktop/tap/mcp-tts"
-brew "blacktop/tap/ida-mcp"
 brew "blacktop/tap/xpost"
 
 # Casks
 cask "010-editor"
 cask "blacktop/tap/ghidra-app"
+cask "blacktop/tap/ida-mcp"
 cask "blacktop/tap/pdf"
 # cask "bindiff"
 cask "blockblock"

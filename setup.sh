@@ -28,10 +28,12 @@ function confirm_step() {
     local prompt="$1"
     local env_name="${2:-}"
     local env_value=""
+    local env_value_lower=""
 
     if [[ -n "$env_name" ]]; then
         env_value="${!env_name:-}"
-        case "${env_value,,}" in
+        env_value_lower="$(printf '%s' "$env_value" | tr '[:upper:]' '[:lower:]')"
+        case "$env_value_lower" in
             1|true|yes|y)
                 return 0
                 ;;
