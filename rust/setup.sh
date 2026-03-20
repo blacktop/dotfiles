@@ -6,7 +6,7 @@ echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Set
 export PATH="$HOME/.cargo/bin:$PATH"
 COMPLETIONS_DIR="$HOME/.config/fish/completions"
 
-if ! command -v rustup >/dev/null; then
+if ! command -v rustc >/dev/null; then
     rustup-init -y # rustup-init was installed by Homebrew
 fi
 
