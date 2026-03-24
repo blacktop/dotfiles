@@ -158,3 +158,5 @@ cask "temurin"
 cask "visual-studio-code"
 # cask "wireshark"
 # cask "xquartz"
+
+mas "Xcode", id: 497799835
