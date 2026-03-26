@@ -143,6 +143,7 @@ cask "github"
 cask "kap" # Screen recorder
 cask "keycastr" # Show keystrokes
 cask "knockknock"
+cask "legcord" # Discord
 cask "lulu"
 cask "netiquette"
 cask "obsidian"
