@@ -7,4 +7,5 @@ brew install --cask zed
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Configure Zed settings..."
 mkdir -p "$HOME/.config/zed"
-cp $(dirname "$0")/config/config.json "$HOME/.config/zed/settings.json"
+cp "$(dirname "$0")/config/config.json" "$HOME/.config/zed/settings.json"
+echo "$(gum style --bold --foreground "#BE05D0" "  -") Extensions will auto-install on first launch via auto_install_extensions"

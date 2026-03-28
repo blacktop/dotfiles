@@ -1,55 +1,76 @@
-// Zed settings
-//
-// For information on how to configure Zed, see the Zed
-// documentation: https://zed.dev/docs/configuring-zed
-//
-// To see all of Zed's default settings without changing your
-// custom settings, run the `open default settings` command
-// from the command palette or from `Zed` application menu.
 {
-  // "disable_ai": true,
-  "use_system_window_tabs": true,
-  "scroll_beyond_last_line": "vertical_scroll_margin",
-  "ui_font_family": "MonoLisa Nerd Font",
-  "file_scan_exclusions": [
-    "**/locals.fish",
-    "**/.git",
-    "**/node_modules",
-    "**/.env",
-    "**/secrets/**",
-    "**/private/**",
-    "**/.cache",
-    "**/.ssh",
-    "**/.DS_Store"
-  ],
-  "private_files": ["**/locals.fish", "**/.env", "**/secrets/**", "**/private/**", "**/.cache", "**/.ssh"],
+  // Editor
   "vim_mode": false,
-  "features": {
-    "edit_prediction_provider": "zed"
-  },
-  "minimap": { "show": "always" },
-  "edit_predictions": {
-    "mode": "subtle"
-  },
-  "icon_theme": "Catppuccin Macchiato",
-  "tabs": { "file_icons": true },
   "base_keymap": "Atom",
-  "theme": "Rosé Pine Moon",
+  "soft_wrap": "editor_width",
+  "preferred_line_length": 120,
+  "scroll_beyond_last_line": "vertical_scroll_margin",
+  "colorize_brackets": true,
+  "word_diff_enabled": true,
+  "diff_view_style": "unified",
+  "use_system_window_tabs": true,
+
+  // Appearance
+  "theme": "Fleet Dark Purple",
+  "minimap": { "show": "always" },
+  "tabs": { "file_icons": true },
+  "scrollbar": { "git_diff": true },
+  "project_panel": { "show_diagnostics": "all" },
+
+  // Fonts
+  "ui_font_family": "MonoLisa Nerd Font",
   "ui_font_size": 14.0,
+  "buffer_font_family": "OperatorMono Nerd Font Mono",
   "buffer_font_size": 13.0,
-  "buffer_font_family": "Cousine Nerd Font Mono",
   "buffer_font_features": {
     "liga": true,
     "calt": true,
     "titl": true
   },
+
+  // Terminal
   "terminal": {
-    "font_family": "Hack Nerd Font Mono",
-    "font_size": 13.0,
-    "blinking": "off"
+    "font_family": "MesloLGLDZ Nerd Font Mono",
+    "font_size": 12.0,
+    "font_features": { "calt": true },
+    "line_height": { "custom": 1.5 },
+    "blinking": "off",
+    "shell": {
+      "with_arguments": {
+        "program": "/opt/homebrew/bin/fish",
+        "args": ["-c", "tmux new-session -A -s \"$(basename \"$PWD\")\""]
+      }
+    }
   },
-  "preferred_line_length": 120,
-  "soft_wrap": "editor_width",
+
+  // Git
+  "git_panel": {
+    "tree_view": true,
+    "sort_by_path": false
+  },
+
+  // Edit predictions
+  "edit_predictions": {
+    "provider": "zed",
+    "disabled_globs": ["**/.env*", "**/*.pem", "**/*.key", "**/secrets/**", "**/private/**"]
+  },
+
+  // Languages
+  "languages": {
+    "Swift": {
+      "enable_language_server": false,
+      "language_servers": ["sourcekit-lsp"],
+      "formatter": "language_server",
+      "format_on_save": "on",
+      "tab_size": 2
+    },
+    "Python": {
+      "enable_language_server": true,
+      "language_servers": ["ty", "ruff", "!basedpyright", "!pyrefly", "!pyright", "!pylsp"]
+    }
+  },
+
+  // LSP
   "lsp": {
     "sourcekit-lsp": {
       "binary": {
@@ -62,57 +83,172 @@
         "arguments": ["lsp"]
       },
       "settings": {
-        "python": {
-          "pythonPath": ".venv/bin/python"
-        },
+        "python": { "pythonPath": ".venv/bin/python" },
         "pyrefly": {
           "project_includes": ["**/*.py", "tests/**/*.py"],
           "project_excludes": ["**/.[!/.]*", "**/*venv/**"],
-          // "search_path": ["**"],
           "ignore_errors_in_generated_code": true
         }
       }
     },
     "clangd": {
       "binary": {
-        "path": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clangd",
+        "path": "/usr/bin/clangd",
         "arguments": [
           "--background-index",
-          "--header-insertion=never", // clangd has the tendency to insert unnecessary includes, so I prefer to just disable the feature.
-          "--limit-results=5000", // The default limit for reference search results is too low for WebKit
-          "--enable-config", // Enable reading .clangd file
+          "--header-insertion=never",
+          "--limit-results=5000",
+          "--enable-config",
           "-j",
           "10"
         ]
       }
     }
   },
-  "languages": {
-    "Swift": {
-      "enable_language_server": true,
-      "language_servers": ["sourcekit-lsp"],
-      "formatter": "language_server",
-      "format_on_save": "on",
-      "tab_size": 2
-    },
-    "Python": {
-      "enable_language_server": true,
-      "language_servers": ["pyrefly", "!pyright", "!pylsp"]
-    }
-  },
+
+  // File types
   "file_types": {
     "Scheme": ["sb", "in"]
   },
+
+  // File exclusions
+  "file_scan_exclusions": [
+    "**/locals.fish",
+    "**/.git",
+    "**/node_modules",
+    "**/.env",
+    "**/secrets/**",
+    "**/private/**",
+    "**/.cache",
+    "**/.ssh",
+    "**/.DS_Store"
+  ],
+  "private_files": ["**/locals.fish", "**/.env", "**/secrets/**", "**/private/**", "**/.cache", "**/.ssh"],
+
+  // Agent
   "agent": {
-    "play_sound_when_agent_done": true,
-    "default_profile": "ask",
-    "always_allow_tool_actions": false,
     "enabled": true,
+    "play_sound_when_agent_done": true,
+    "default_profile": "write",
+    "tool_permissions": { "default": "allow" },
+    "commit_message_model": {
+      "provider": "copilot_chat",
+      "model": "claude-sonnet-4.6"
+    },
+    "inline_assistant_model": {
+      "provider": "copilot_chat",
+      "model": "claude-sonnet-4.6"
+    },
     "default_model": {
-      "provider": "lmstudio",
-      "model": "qwen/qwen3-coder-30b"
+      "provider": "copilot_chat",
+      "model": "claude-opus-4.6"
+    },
+    "profiles": {
+      "write": {
+        "name": "Write",
+        "tools": {
+          "batch_tool": false,
+          "code_actions": false,
+          "code_symbols": false,
+          "contents": false,
+          "copy_path": false,
+          "create_file": true,
+          "delete_path": false,
+          "diagnostics": true,
+          "edit_file": true,
+          "fetch": true,
+          "find_path": true,
+          "grep": true,
+          "list_directory": true,
+          "move_path": false,
+          "now": false,
+          "read_file": true,
+          "rename": false,
+          "symbol_info": false,
+          "terminal": true,
+          "thinking": true,
+          "web_search": true
+        },
+        "enable_all_context_servers": true,
+        "context_servers": {
+          "say": { "tools": { "say": false } }
+        }
+      }
     }
   },
+
+  // Agent servers
+  "agent_servers": {
+    "gemini": { "type": "registry" },
+    "claude-acp": { "type": "registry" }
+  },
+
+  // Language models
+  "language_models": {
+    "lmstudio": {
+      "api_url": "http://bmo:3993/api/v0",
+      "available_models": [
+        {
+          "name": "google/gemma-3-12b",
+          "max_tokens": 131072,
+          "supports_images": true,
+          "supports_tool_calls": true
+        }
+      ]
+    }
+  },
+
+  // Context servers (add API keys locally)
+  "context_servers": {
+    "mcp-server-exa-search": {
+      "enabled": true,
+      "settings": {
+        "exa_api_key": "YOUR_API_KEY"
+      }
+    }
+    // "mcp-server-tts": {
+    //   "enabled": true,
+    //   "settings": {
+    //     "elevenlabs_api_key": "YOUR_API_KEY",
+    //     "say_tts_rate": 200,
+    //     "say_tts_voice": ""
+    //   }
+    // }
+  },
+
+  // Extensions (auto-installed on startup)
+  "auto_install_extensions": {
+    // Languages
+    "assembly": true,
+    "dockerfile": true,
+    "fish": true,
+    "html": true,
+    "ini": true,
+    "just": true,
+    "log": true,
+    "make": true,
+    "nix": true,
+    "pyrefly": true,
+    "scheme": true,
+    "svelte": true,
+    "swift": true,
+    "toml": true,
+    "xml": true,
+    "zig": true,
+    // Themes
+    "catppuccin": true,
+    "fleet-themes": true,
+    "palenight": true,
+    "rose-pine-theme": true,
+    "tokyo-night": true,
+    // MCP servers
+    "mcp-server-context7": true,
+    "mcp-server-exa-search": true,
+    "shadcn-mcp": true,
+    "svelte-mcp": true
+  },
+
+  // Telemetry
   "telemetry": {
     "diagnostics": false,
     "metrics": false
