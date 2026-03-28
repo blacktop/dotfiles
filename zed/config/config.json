@@ -179,8 +179,9 @@
 
   // Agent servers
   "agent_servers": {
-    "gemini": { "type": "registry" },
-    "claude-acp": { "type": "registry" }
+    "claude-acp": { "type": "registry" },
+    "codex-acp": { "type": "registry" },
+    "gemini": { "type": "registry" }
   },
 
   // Language models
