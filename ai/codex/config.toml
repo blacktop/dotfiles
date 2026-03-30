@@ -1,83 +1,83 @@
-model = "gpt-5.2-codex"
-model_reasoning_effort = "high"
+# ── Model ────────────────────────────────────────────────────────────────────
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
+model_context_window = 1000000
+model_auto_compact_token_limit = 960000
 tool_output_token_limit = 25000
-# Leave room for native compaction near the 272–273k context window.
-# Formula: 273000 - (tool_output_token_limit + 15000)
-# With tool_output_token_limit=25000 ⇒ 273000 - (25000 + 15000) = 233000
-model_auto_compact_token_limit = 233000
-# model_reasoning_summary = "detailed"
-# model_verbosity = "medium"
-# show_raw_agent_reasoning = true
+plan_mode_reasoning_effort = "xhigh"
+service_tier = "fast"
+personality = "pragmatic"
+web_search = "live"
+responses_websockets_v2 = true
+default_mode_request_user_input = true
 
-[features]
-ghost_commit = false
-apply_patch_freeform = true
-view_image_tool = true
-web_search_request = true
-#tui2 = true
-skills = true
-unified_exec = true
-shell_snapshot = true
-steer = true
-#collab = true
-collaboration_modes = true
-
-[tui]
-notifications = true
-
-# same as `--sandbox workspace-write`
+# ── Sandbox & approvals ─────────────────────────────────────────────────────
 sandbox_mode = "workspace-write"
 
-# Extra settings that only apply when `sandbox = "workspace-write"`.
 [sandbox_workspace_write]
-# By default, the cwd for the Codex session will be writable as well as $TMPDIR
-# (if set) and /tmp (if it exists). Setting the respective options to `true`
-# will override those defaults.
-exclude_tmpdir_env_var = false
-exclude_slash_tmp = false
-
-# Optional list of _additional_ writable roots beyond $TMPDIR and /tmp.
+network_access = true
 writable_roots = [
   "/Users/blacktop/Library/Caches/go-build",
   "/Users/blacktop/.cargo",
   "/Users/blacktop/.rustup",
 ]
 
-# Allow the command being run inside the sandbox to make outbound network
-# requests. Disabled by default.
-network_access = true
+# ── Shell environment ────────────────────────────────────────────────────────
+[shell_environment_policy]
+inherit = "core"
 
+[shell_environment_policy.set]
+CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY = "1"
+CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"
+DISABLE_ERROR_REPORTING = "1"
+DISABLE_TELEMETRY = "1"
+
+# ── Feature flags ────────────────────────────────────────────────────────────
+# Removed/no-op flags (always on): sqlite, steer, collaboration_modes
+# Deprecated flags (use top-level): web_search_request → web_search
+[features]
+apps = true                    # Connected ChatGPT Apps
+ghost_commit = false           # Git snapshots per turn (key: "undo")
+guardian_approval = true       # Sub-agent reviews approvals for safety
+js_repl = true                 # Node.js JavaScript REPL
+memories = true                # Persistent agent memories
+multi_agent = true             # Spawn parallel sub-agents
+prevent_idle_sleep = true      # Keep Mac awake during turns
+shell_snapshot = true          # Shell state snapshotting
+skills = true                  # Skill system
+unified_exec = true            # Single PTY-backed exec tool
+view_image_tool = true         # Image viewing capability
+voice_transcription = true     # Voice dictation (Ctrl+M)
+
+# ── Multi-agent ──────────────────────────────────────────────────────────────
+[agents]
+max_threads = 12
+
+[agents.fast_worker]
+config_file = "/Users/blacktop/.codex/agents/fast_worker.toml"
+description = "Fast scoped implementation agent."
+
+# ── TUI ──────────────────────────────────────────────────────────────────────
+[tui]
+network_access = true
+notifications = true
+theme = "catppuccin-mocha"
+
+# ── Trust ────────────────────────────────────────────────────────────────────
 [projects."/Users/blacktop/Developer/Mine/blacktop"]
 trust_level = "trusted"
 
+# ── MCP servers ──────────────────────────────────────────────────────────────
+# ida-pro is always available (no key needed)
 [mcp_servers.ida-pro]
 command = "/opt/homebrew/bin/ida-mcp"
 
-[mcp_servers.context7]
-command = "npx"
-args = ["-y", "@upstash/context7-mcp", "--api-key", "API_KEY"]
+# Key-dependent servers (context7, exa, mcp-tts) are appended by mcp-setup.sh
+# only when the user provides credentials. Do not add them here.
 
-[mcp_servers.exa]
-args = ["-y", "exa-mcp-server"]
-command = "npx"
-env = { "EXA_API_KEY" = "API_KEY" }
+# ── Plugins ──────────────────────────────────────────────────────────────────
+[plugins."github@openai-curated"]
+enabled = true
 
-[mcp_servers.mcp_tts]
-command = "mcp-tts"
-args = ["--verbose"]
-
-[mcp_servers.mcp_tts.env]
-ELEVENLABS_API_KEY = "API_KEY"
-OPENAI_API_KEY = "API_KEY"
-
-# [mcp_servers.gemini-cli]
-# args = ["-y", "gemini-mcp-tool"]
-# command = "npx"
-
-# [mcp_servers.claude]
-# command = "claude"
-# args = ["mcp", "serve"]
-
-# [mcp_servers.chrome]
-# command = "npx"
-# args = ["chrome-devtools-mcp@latest"]
+[plugins."build-ios-apps@openai-curated"]
+enabled = true

@@ -14,7 +14,7 @@ description: |
 
 1. **Copy template** to project:
    ```bash
-   cp -r ~/.claude/skills/ratatui-tui/assets/templates/<template>/* .
+   cp -r ~/.agents/skills/ratatui-tui/assets/templates/<template>/* .
    ```
 
 2. **Run**:

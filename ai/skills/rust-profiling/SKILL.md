@@ -19,7 +19,7 @@ samply record ./target/profiling/<binary> [args...]
 
 # 4. Or save for CLI analysis
 samply record --save-only -o profile.json ./target/profiling/<binary>
-python3 ~/.claude/skills/rust-profiling/scripts/analyze_profile.py profile.json
+python3 ~/.agents/skills/rust-profiling/scripts/analyze_profile.py profile.json
 ```
 
 ## Skill Files

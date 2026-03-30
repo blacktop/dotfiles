@@ -30,7 +30,7 @@ samply record --save-only -o profile.json ./target/profiling/myapp
 # Later:
 samply load profile.json
 # Or analyze via CLI:
-python3 ~/.claude/skills/rust-profiling/scripts/analyze_profile.py profile.json
+python3 ~/.agents/skills/rust-profiling/scripts/analyze_profile.py profile.json
 ```
 
 ### Profile Tests
@@ -58,7 +58,7 @@ samply record ./target/release/deps/<bench-binary> --bench
 ### Basic Analysis
 
 ```bash
-python3 ~/.claude/skills/rust-profiling/scripts/analyze_profile.py profile.json
+python3 ~/.agents/skills/rust-profiling/scripts/analyze_profile.py profile.json
 ```
 
 Output:
@@ -92,13 +92,13 @@ HOT FUNCTIONS (by self time)
 ### Filter to Your Code
 
 ```bash
-python3 ~/.claude/skills/rust-profiling/scripts/analyze_profile.py profile.json --lib ipsw
+python3 ~/.agents/skills/rust-profiling/scripts/analyze_profile.py profile.json --lib ipsw
 ```
 
 ### Find Who Calls a Hot Function
 
 ```bash
-python3 ~/.claude/skills/rust-profiling/scripts/analyze_profile.py profile.json --callers decompress_chunk
+python3 ~/.agents/skills/rust-profiling/scripts/analyze_profile.py profile.json --callers decompress_chunk
 ```
 
 Output:
@@ -113,7 +113,7 @@ CALLERS OF: decompress_chunk
 ### Show Call Tree
 
 ```bash
-python3 ~/.claude/skills/rust-profiling/scripts/analyze_profile.py profile.json --tree
+python3 ~/.agents/skills/rust-profiling/scripts/analyze_profile.py profile.json --tree
 ```
 
 Output:
@@ -141,7 +141,7 @@ cargo build --profile profiling
 samply record --save-only -o after.json ./target/profiling/myapp
 
 # Compare
-python3 ~/.claude/skills/rust-profiling/scripts/analyze_profile.py before.json --diff after.json
+python3 ~/.agents/skills/rust-profiling/scripts/analyze_profile.py before.json --diff after.json
 ```
 
 Output:
@@ -167,7 +167,7 @@ Summary: 15 functions improved, 3 regressed (>0.5% change)
 ### Export for CI/Automation
 
 ```bash
-python3 ~/.claude/skills/rust-profiling/scripts/analyze_profile.py profile.json --json > analysis.json
+python3 ~/.agents/skills/rust-profiling/scripts/analyze_profile.py profile.json --json > analysis.json
 ```
 
 Then in CI, check for regressions:

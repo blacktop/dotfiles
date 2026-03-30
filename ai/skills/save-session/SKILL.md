@@ -16,7 +16,7 @@ Save session metadata to `docs/.ai/sessions.json` for future resumption by any A
 ## Usage
 
 ```bash
-python3 ~/.claude/skills/save-session/scripts/save_session.py \
+python3 ~/.agents/skills/save-session/scripts/save_session.py \
   --session-id "SESSION_ID" \
   --agent "claude" \
   --summary "Brief description of work done" \
@@ -26,7 +26,7 @@ python3 ~/.claude/skills/save-session/scripts/save_session.py \
 For Codex, you can use automatic detection:
 
 ```bash
-python3 ~/.claude/skills/save-session/scripts/save_session.py \
+python3 ~/.agents/skills/save-session/scripts/save_session.py \
   --session-id auto \
   --agent codex \
   --summary "Brief description of work done" \

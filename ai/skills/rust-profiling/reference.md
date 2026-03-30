@@ -61,7 +61,7 @@ samply setup
 ## analyze_profile.py Options
 
 ```bash
-python3 ~/.claude/skills/rust-profiling/scripts/analyze_profile.py [OPTIONS] <profile.json>
+python3 ~/.agents/skills/rust-profiling/scripts/analyze_profile.py [OPTIONS] <profile.json>
 ```
 
 | Option | Description |

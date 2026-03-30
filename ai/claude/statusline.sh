@@ -1,158 +1,142 @@
 #!/bin/bash
-# Claude Code statusline with powerline style and git status
-# Uses nerd fonts and ANSI colors for rainbow effect
+# Claude Code statusline — minimal, no background fills
+set -euo pipefail
 
 input=$(cat)
 
-# Validate JSON and extract fields safely
 if ! echo "$input" | jq -e . >/dev/null 2>&1; then
-  echo "⚠ invalid input"
   exit 0
 fi
 
-cwd=$(echo "$input" | jq -r '.workspace.current_dir // empty' 2>/dev/null)
-dir_name=$(basename "$cwd" 2>/dev/null || echo "?")
+# ── colors (foreground only, rendered dim by Claude Code) ─────────────────────
+RESET=$'\033[0m'
+DIM=$'\033[2m'
+C_MUTED=$'\033[38;5;242m'   # gray — separators
+C_BASE=$'\033[38;5;250m'    # light gray — default text
+C_BLUE=$'\033[38;5;75m'     # blue — model / dir
+C_GREEN=$'\033[38;5;71m'    # green — clean git
+C_YELLOW=$'\033[38;5;179m'  # yellow — dirty git
+C_RED=$'\033[38;5;167m'     # red — high context / INSERT mode
+C_CYAN=$'\033[38;5;73m'     # cyan — agent / worktree / NORMAL mode
+C_ORANGE=$'\033[38;5;173m'  # orange — context warning
 
-# Extract model - could be string or object with .id field
+SEP="${C_MUTED}·${RESET}"
+
+# ── extract fields ─────────────────────────────────────────────────────────────
+cwd=$(echo "$input" | jq -r '.workspace.current_dir // empty' 2>/dev/null)
+dir_name=$(basename "${cwd:-?}" 2>/dev/null)
+
 model=$(echo "$input" | jq -r '
-  if .model | type == "object" then .model.id // .model.name // "claude"
+  if .model | type == "object" then .model.display_name // .model.id // "claude"
   elif .model | type == "string" then .model
   else "claude"
   end
 ' 2>/dev/null)
 [ -z "$model" ] || [ "$model" = "null" ] && model="claude"
-# Clean up model name - remove claude- prefix and date suffix, truncate
-model=$(echo "$model" | sed 's/claude-//' | sed 's/-[0-9]*$//' | cut -c1-10)
+# Shorten: "Claude 3.5 Sonnet" -> "sonnet-3.5", raw IDs drop date suffix
+model=$(echo "$model" | sed '
+  s/Claude //I
+  s/ /\-/g
+  s/[Ss]onnet/sonnet/
+  s/[Hh]aiku/haiku/
+  s/[Oo]pus/opus/
+' | tr '[:upper:]' '[:lower:]' | sed 's/-[0-9]\{8\}$//')
 
-# ANSI color codes (using $'...' for proper escape handling)
-RESET=$'\033[0m'
-BG_BLUE=$'\033[44m'
-FG_BLUE=$'\033[34m'
-BG_GREEN=$'\033[42m'
-FG_GREEN=$'\033[32m'
-BG_YELLOW=$'\033[43m'
-FG_YELLOW=$'\033[33m'
-BG_CYAN=$'\033[46m'
-FG_CYAN=$'\033[36m'
-BG_RED=$'\033[41m'
-FG_RED=$'\033[31m'
-BG_ORANGE=$'\033[48;5;208m'
-FG_ORANGE=$'\033[38;5;208m'
-BG_MAGENTA=$'\033[45m'
-FG_MAGENTA=$'\033[35m'
-FG_BLACK=$'\033[30m'
-FG_WHITE=$'\033[97m'
-BOLD=$'\033[1m'
-BLINK=$'\033[5m'
+vim_mode=$(echo "$input" | jq -r '.vim.mode // empty' 2>/dev/null)
+agent_name=$(echo "$input" | jq -r '.agent.name // empty' 2>/dev/null)
+worktree_branch=$(echo "$input" | jq -r '.worktree.branch // .worktree.name // empty' 2>/dev/null)
+session_name=$(echo "$input" | jq -r '.session_name // empty' 2>/dev/null)
 
-# Powerline separator (U+E0B0)
-SEP=$''
-
-# Nerd font icons (literal characters)
-ICON_ROBOT='󱚝'
-ICON_FOLDER='󱧨'
-ICON_GIT=''
-
-# Dark background for progress bar
-BG_DARK=$'\033[48;5;236m'
-FG_DARK=$'\033[38;5;236m'
-
-# Git info - check status first to determine model background color
-has_git=false
-model_bg=$BG_GREEN
-model_fg=$FG_GREEN
-BG_LTBLUE=$'\033[48;5;75m'
-FG_LTBLUE=$'\033[38;5;75m'
-
-if git -C "$cwd" rev-parse --git-dir >/dev/null 2>&1; then
-  has_git=true
+# ── git ────────────────────────────────────────────────────────────────────────
+git_part=""
+if [ -n "$cwd" ] && git -C "$cwd" rev-parse --git-dir >/dev/null 2>&1; then
   branch=$(git -C "$cwd" branch --show-current 2>/dev/null)
   [ -z "$branch" ] && branch=$(git -C "$cwd" rev-parse --short HEAD 2>/dev/null)
 
-  # Get status counts
-  status=$(git -C "$cwd" status --porcelain 2>/dev/null)
-  staged=$(echo "$status" | grep -c '^[MADRC]')
-  modified=$(echo "$status" | grep -c '^.[MD]')
-
-  # Ahead/behind
+  porcelain=$(git -C "$cwd" status --porcelain 2>/dev/null)
+  staged=$(echo "$porcelain" | grep -c '^[MADRC]' || true)
+  modified=$(echo "$porcelain" | grep -c '^.[MD]' || true)
   ahead=$(git -C "$cwd" rev-list --count @{u}..HEAD 2>/dev/null || echo 0)
   behind=$(git -C "$cwd" rev-list --count HEAD..@{u} 2>/dev/null || echo 0)
 
-  # Build compact git status (starship style)
-  git_status=""
-  [ "$ahead" -gt 0 ] 2>/dev/null && git_status+="⇡$ahead"
-  [ "$behind" -gt 0 ] 2>/dev/null && git_status+="⇣$behind"
-  [ "$staged" -gt 0 ] && git_status+="+$staged"
-  [ "$modified" -gt 0 ] && git_status+="!$modified"
+  flags=""
+  [ "${ahead:-0}" -gt 0 ] && flags+="⇡${ahead}"
+  [ "${behind:-0}" -gt 0 ] && flags+="⇣${behind}"
+  [ "${staged:-0}" -gt 0 ] && flags+="+${staged}"
+  [ "${modified:-0}" -gt 0 ] && flags+="!${modified}"
 
-  if [ -n "$git_status" ]; then
-    model_bg=$BG_YELLOW
-    model_fg=$FG_YELLOW
-    git_content=" ${ICON_GIT} $branch $git_status "
+  git_color=$C_GREEN
+  [ -n "$flags" ] && git_color=$C_YELLOW
+  git_part="${git_color}${branch}${flags:+ ${flags}}${RESET}"
+fi
+
+# ── context ────────────────────────────────────────────────────────────────────
+ctx_part=""
+pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty' 2>/dev/null)
+if [ -n "$pct" ] && [ "$pct" != "null" ]; then
+  pct_int=$(printf '%.0f' "$pct" 2>/dev/null || echo "$pct")
+  if [ "${pct_int:-0}" -gt 85 ]; then
+    ctx_color=$C_RED
+  elif [ "${pct_int:-0}" -gt 65 ]; then
+    ctx_color=$C_ORANGE
   else
-    git_content=" ${ICON_GIT} $branch "
+    ctx_color=$C_MUTED
   fi
+  ctx_part="${ctx_color}ctx:${pct_int}%${RESET}"
 fi
 
-# Context progress bar
-pct=$(echo "$input" | jq '.context_window.used_percentage // empty' 2>/dev/null)
-has_context=false
-if [ -n "$pct" ] && [ "$pct" != "null" ] && [ "$pct" -ge 0 ] 2>/dev/null; then
-  has_context=true
-  bar_width=10
-  filled=$((pct * bar_width / 100))
-  [ "$filled" -gt "$bar_width" ] && filled=$bar_width
-  empty=$((bar_width - filled))
-
-  if [ "$pct" -gt 95 ]; then
-    fill_color=$'\033[38;5;196m'
-    bar_blink=$BLINK
-  elif [ "$pct" -gt 85 ]; then
-    fill_color=$'\033[38;5;208m'
-    bar_blink=""
-  elif [ "$pct" -gt 70 ]; then
-    fill_color=$'\033[38;5;220m'
-    bar_blink=""
-  else
-    fill_color=$'\033[38;5;29m'
-    bar_blink=""
-  fi
-  empty_color=$'\033[38;5;240m'
-
-  filled_bar=""
-  empty_bar=""
-  for ((i = 0; i < filled; i++)); do filled_bar+="█"; done
-  for ((i = 0; i < empty; i++)); do empty_bar+="░"; done
-  context_content="${bar_blink}${fill_color}${filled_bar}${RESET}${BG_DARK}${empty_color}${empty_bar}${FG_WHITE} ${pct}%"
+# ── rate limits (claude.ai subscribers) ───────────────────────────────────────
+rate_part=""
+five_pct=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty' 2>/dev/null)
+week_pct=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty' 2>/dev/null)
+if [ -n "$five_pct" ] || [ -n "$week_pct" ]; then
+  rate_str=""
+  [ -n "$five_pct" ] && rate_str+="5h:$(printf '%.0f' "$five_pct")%"
+  [ -n "$week_pct" ] && rate_str+="${rate_str:+ }7d:$(printf '%.0f' "$week_pct")%"
+  rate_part="${C_MUTED}${rate_str}${RESET}"
 fi
 
-# Build output with proper powerline transitions
-# Segment 1: Model (green/yellow bg)
-echo -n "${model_bg}${FG_BLACK}${BOLD} ${ICON_ROBOT} $model ${RESET}"
+# ── assemble ───────────────────────────────────────────────────────────────────
+parts=()
 
-# Separator: model -> cwd (model_fg on blue bg)
-echo -n "${model_fg}${BG_BLUE}${SEP}${RESET}"
-
-# Segment 2: CWD (blue bg)
-echo -n "${BG_BLUE}${FG_BLACK} ${ICON_FOLDER} $dir_name ${RESET}"
-
-if [ "$has_git" = true ]; then
-  # Separator: cwd -> git (blue_fg on ltblue bg)
-  echo -n "${FG_BLUE}${BG_LTBLUE}${SEP}${RESET}"
-  # Segment 3: Git (ltblue bg)
-  echo -n "${BG_LTBLUE}${FG_BLACK}${git_content}${RESET}"
-
-  if [ "$has_context" = true ]; then
-    # No arrow, just transition to context
-    echo -n "${RESET} "
-    # Segment 4: Context (dark bg)
-    echo -n "${BG_DARK}${context_content}${RESET}"
-  fi
-else
-  if [ "$has_context" = true ]; then
-    # No arrow, just transition to context
-    echo -n "${RESET} "
-    # Segment: Context (dark bg)
-    echo -n "${BG_DARK}${context_content}${RESET}"
-  fi
+# vim mode (only when active)
+if [ -n "$vim_mode" ]; then
+  case "$vim_mode" in
+    INSERT) parts+=("${C_RED}I${RESET}") ;;
+    NORMAL) parts+=("${C_CYAN}N${RESET}") ;;
+    *)      parts+=("${C_MUTED}${vim_mode}${RESET}") ;;
+  esac
 fi
+
+# model
+parts+=("${C_BLUE}${model}${RESET}")
+
+# dir
+parts+=("${C_BASE}${dir_name}${RESET}")
+
+# git
+[ -n "$git_part" ] && parts+=("$git_part")
+
+# worktree (when different from current branch)
+[ -n "$worktree_branch" ] && parts+=("${C_CYAN}wt:${worktree_branch}${RESET}")
+
+# agent name
+[ -n "$agent_name" ] && parts+=("${C_CYAN}@${agent_name}${RESET}")
+
+# session name
+[ -n "$session_name" ] && parts+=("${DIM}${C_MUTED}${session_name}${RESET}")
+
+# context usage
+[ -n "$ctx_part" ] && parts+=("$ctx_part")
+
+# rate limits
+[ -n "$rate_part" ] && parts+=("$rate_part")
+
+# join with separator
+out=""
+for part in "${parts[@]}"; do
+  [ -n "$out" ] && out+=" ${SEP} "
+  out+="$part"
+done
+
+printf '%s' "$out"

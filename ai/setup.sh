@@ -38,3 +38,19 @@ echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync skills..."
 # Install Gemini CLI extensions
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Install gemini extensions..."
 "$SCRIPT_DIR/gemini/install-extensions.sh"
+
+# Install Claude Code plugin marketplaces and plugins
+if command -v claude >/dev/null 2>&1; then
+    echo "$(gum style --bold --foreground "#BE05D0" "  -") Install claude plugins..."
+    if ! claude plugin marketplace add anthropics/claude-plugins-official 2>/dev/null; then
+        echo "$(gum style --bold --foreground "#FF9400" "  ⚠") Failed to add claude-plugins-official marketplace"
+    fi
+    if ! claude plugin install pr-review-toolkit@claude-plugins-official 2>/dev/null; then
+        echo "$(gum style --bold --foreground "#FF9400" "  ⚠") Failed to install pr-review-toolkit (/review-pr and /fix-issue depend on it)"
+    fi
+else
+    echo "$(gum style --faint "      ⚠ claude CLI not found, skipping plugin install")"
+fi
+
+# Setup MCP servers (API keys → Keychain, register with Claude + Codex)
+"$SCRIPT_DIR/mcp-setup.sh"
