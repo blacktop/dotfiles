@@ -48,6 +48,12 @@ if command -v claude >/dev/null 2>&1; then
     if ! claude plugin install pr-review-toolkit@claude-plugins-official 2>/dev/null; then
         echo "$(gum style --bold --foreground "#FF9400" "  ⚠") Failed to install pr-review-toolkit (/review-pr and /fix-issue depend on it)"
     fi
+    if ! claude plugin marketplace add openai/codex-plugin-cc 2>/dev/null; then
+        echo "$(gum style --bold --foreground "#FF9400" "  ⚠") Failed to add openai/codex-plugin-cc marketplace"
+    fi
+    if ! claude plugin install codex@openai-codex 2>/dev/null; then
+        echo "$(gum style --bold --foreground "#FF9400" "  ⚠") Failed to install codex plugin (/codex:review, /codex:rescue)"
+    fi
 else
     echo "$(gum style --faint "      ⚠ claude CLI not found, skipping plugin install")"
 fi
