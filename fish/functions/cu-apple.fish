@@ -1,5 +1,8 @@
 function cu-apple --description 'Use Apple container as the backend for Container Use (start/stop/status)'
-    set -l cmd (count $argv) > /dev/null; and set -l sub $argv[1]; or set -l sub status
+    set -l sub status
+    if test (count $argv) -gt 0
+        set sub $argv[1]
+    end
 
     switch $sub
     case on

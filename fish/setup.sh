@@ -28,10 +28,16 @@ fish -c "fisher install PatrickF1/fzf.fish"
 fish -c "fisher install jorgebucaran/autopair.fish"
 fish -c "fisher install jorgebucaran/hydro"
 
-echo "$(gum style --bold --foreground "#BE05D0" "  -") Setup fish config..."
-cp $(dirname "$0")/config.fish "$HOME/.config/fish/config.fish"
-cp -r $(dirname "$0")/functions/* "$HOME/.config/fish/functions/"
-cp -r $(dirname "$0")/themes/* "$HOME/.config/fish/themes/"
+echo "$(gum style --bold --foreground "#BE05D0" "  -") Setup fish config (symlinks)..."
+FISH_DIR="$(cd "$(dirname "$0")" && pwd)"
+ln -sf "$FISH_DIR/config.fish" "$HOME/.config/fish/config.fish"
+for f in "$FISH_DIR"/functions/*.fish; do
+    ln -sf "$f" "$HOME/.config/fish/functions/$(basename "$f")"
+done
+mkdir -p "$HOME/.config/fish/themes"
+for t in "$FISH_DIR"/themes/*; do
+    ln -sf "$t" "$HOME/.config/fish/themes/$(basename "$t")"
+done
 
 # echo "$(gum style --bold --foreground "#BE05D0" "  -") Setup 🚀 starship prompt config..."
 # cp -r $(dirname "$0")/config/starship.toml "$HOME/.config/starship.toml"

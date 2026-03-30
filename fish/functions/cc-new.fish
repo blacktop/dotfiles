@@ -18,8 +18,7 @@ function cc-new --description 'Create a Claude Code worktree and start a session
     if test -e "$workdir"
         echo "cc-new: worktree already exists: $workdir"; return 1
     end
-    git show-ref --verify --quiet "refs/heads/$branch"
-    if test $status -eq 0
+    if git show-ref --verify --quiet "refs/heads/$branch"
         echo "cc-new: branch already exists: $branch"; return 1
     end
 

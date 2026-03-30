@@ -1,4 +1,3 @@
 function ll --description 'List contents of directory using long format'
-    set -l param --color=auto
-    command ls -lah $param $argv
+    command ls -lah --color=auto $argv
 end

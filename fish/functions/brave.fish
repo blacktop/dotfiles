@@ -1,3 +1,3 @@
 function brave --description 'Open Brave Browser in Private Mode'
-    ~/Applications/Brave\ Browser.app/Contents/MacOS/Brave\ Browser --incognito $argv
+    open -a "Brave Browser" -n --args --incognito $argv
 end
