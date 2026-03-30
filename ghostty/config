@@ -1,83 +1,65 @@
 # vi:ft=conf
-#
 # https://github.com/ghostty-org/ghostty/blob/main/src/config/Config.zig
-#
 
-auto-update-channel=tip
+# ── General ──────────────────────────────────────────────────────────────────
+auto-update-channel = tip
+quit-after-last-window-closed = true
+confirm-close-surface = false
+scrollback-limit = 1_000_000_000
 
+# ── Window ───────────────────────────────────────────────────────────────────
+window-save-state = always
+window-decoration = true
+window-theme = dark
+
+# ── macOS ────────────────────────────────────────────────────────────────────
+macos-option-as-alt = true
+macos-auto-secure-input = true
+macos-secure-input-indication = true
+
+# ── Shell ────────────────────────────────────────────────────────────────────
+shell-integration = fish
+shell-integration-features = cursor,no-sudo,title,ssh-terminfo,ssh-env
+
+# ── Keybinds ─────────────────────────────────────────────────────────────────
 keybind = ctrl+shift+j=write_screen_file:paste
 keybind = super+f=write_screen_file:open
 keybind = global:cmd+alt+s=toggle_quick_terminal
 keybind = super+shift+home=scroll_to_top
-# Claude Code
 keybind = shift+enter=text:\n
 
-window-save-state = always
-window-decoration = true
-window-theme = "dark"
-# macos-titlebar-style = hidden
-macos-option-as-alt = true
-macos-auto-secure-input = true
-macos-secure-input-indication= true
-# mouse-hide-while-typing = true
-confirm-close-surface = false
-quit-after-last-window-closed = true
-scrollback-limit = 1_000_000_000
+# ── Bell & notifications ─────────────────────────────────────────────────────
+bell-audio-path = /System/Library/Sounds/Bottle.aiff
+bell-features = border,attention,audio
+notify-on-command-finish = unfocused
+notify-on-command-finish-action = bell,no-notify
+notify-on-command-finish-after = 4s
 
-# Shell
-shell-integration = fish
-shell-integration-features = cursor,no-sudo,title
-
-# Clipboard (ask, allow or deny)
+# ── Clipboard ────────────────────────────────────────────────────────────────
 clipboard-read = ask
 clipboard-trim-trailing-spaces = true
 clipboard-paste-protection = true
 clipboard-paste-bracketed-safe = true
 
-# Theme
-# theme = nord
+# ── Theme ────────────────────────────────────────────────────────────────────
 theme = Tokyonight Storm
 # theme = catppuccin-mocha
-# theme = catppuccin-frappe
 # theme = Rose Pine Moon
 
-# green
-# palette = 2=#3e8fb0
-# palette = 10=#3e8fb0
-# blue
-# palette = 4=#9ccfd8
-# palette = 12=#9ccfd8
-
-# Style
+# ── Appearance ───────────────────────────────────────────────────────────────
 background-opacity = 0.9
-unfocused-split-opacity = 0.4
-#unfocused-split-fill = gray
-split-divider-color = white
 background-blur-radius = 20
-
-cursor-style-blink = true
+unfocused-split-opacity = 0.4
+split-divider-color = white
 cursor-style = bar
+cursor-style-blink = true
+bold-is-bright = false
 
-# Default font
-font-family             = "Cousine Nerd Font Mono"
-# font-family             = "OperatorMono Nerd Font Mono"
-# font-family             = "MonoLisa Nerd Font"
-# font-style              = "Medium"
-# Bold
-# font-family-bold        = "MonoLisa Nerd Font Mono"
-# font-style-bold         = "ExtraBold"
-# Italic
-# font-family-italic      = "MonoLisa Nerd Font Mono"
-# font-style-italic       = "Italic"
-# Bold and Italic
-# font-family-bold-italic = "MonoLisa Nerd Font Mono"
-# font-style-bold-italic  = "ExtraBold Italic"
-
+# ── Font ─────────────────────────────────────────────────────────────────────
+font-family = "Cousine Nerd Font Mono"
 font-size = 13
 font-thicken = true
 font-feature = zero
-# font-feature = ss01
-# MonoLisa script
 font-feature = ss02
 font-feature = ss03
 font-feature = ss04
@@ -87,26 +69,16 @@ font-feature = ss07
 font-feature = ss08
 font-feature = ss09
 font-feature = ss10
-# MonoLisa centered hexadecimal '0xF'
 font-feature = ss11
-# MonoLisa strikethrough '$'
 font-feature = ss13
 font-feature = -ss14
 font-feature = ss18
 font-feature = calt
 font-feature = liga
-#font-variation = "wght=800"
-bold-is-bright = false
 
+# ── Nerd Font glyph mapping ─────────────────────────────────────────────────
 # https://github.com/ryanoasis/nerd-fonts/wiki/Glyph-Sets-and-Code-Points
-# powerline & powerline-extras
 font-codepoint-map = U+e0b0-U+e0b3,U+e0b4-U+e0c8,U+e0cc-U+e0d4,U+e0ca= Cousine Nerd Font Mono
-
-# font-awesome
 font-codepoint-map = U+f000-U+f2e0,U+e200-U+e2a9= Cousine Nerd Font Mono
-
-# seti-ui
 font-codepoint-map = U+e5fa-U+e6b1= Cousine Nerd Font Mono
-
-# codicons
 font-codepoint-map = U+ea60-U+ebeb= Cousine Nerd Font Mono
