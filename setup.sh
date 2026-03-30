@@ -34,10 +34,10 @@ function confirm_step() {
         env_value="${!env_name:-}"
         env_value_lower="$(printf '%s' "$env_value" | tr '[:upper:]' '[:lower:]')"
         case "$env_value_lower" in
-            1|true|yes|y)
+            1 | true | yes | y)
                 return 0
                 ;;
-            0|false|no|n)
+            0 | false | no | n)
                 return 1
                 ;;
         esac
@@ -57,10 +57,10 @@ function confirm_step() {
 running "Configuring macOS"
 
 if [[ $(xcode-select --version) ]]; then
-  info "Xcode command tools already installed"
+    info "Xcode command tools already installed"
 else
-  running "Installing Xcode commandline tools"
-  $(xcode-select --install)
+    running "Installing Xcode commandline tools"
+    $(xcode-select --install)
 fi
 
 running "Installing Rosetta 2"
@@ -73,7 +73,7 @@ if [ -d "/Applications/Xcode-beta.app" ]; then
     fi
 fi
 
-if [[ $(/opt/homebrew/bin/brew --version) ]] ; then
+if [[ $(/opt/homebrew/bin/brew --version) ]]; then
     running "Attempting to update Homebrew from version $(/opt/homebrew/bin/brew --version)"
     /opt/homebrew/bin/brew update
 else
@@ -85,7 +85,9 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 
 export HOMEBREW_CASK_OPTS="--appdir=/Applications"
 
-brew update; brew upgrade --cask; brew cleanup || true
+brew update
+brew upgrade --cask
+brew cleanup || true
 
 info "Homebrew Version"
 brew --version
@@ -133,9 +135,9 @@ mkdir -p ~/Developer/Work
 mkdir -p ~/Developer/XCode
 
 if [[ $(sw_vers -productVersion | cut -d . -f 1) -lt 26 ]]; then
-  # Organize Launchpad/Dock (pre macOS 26.x)
-  brew install blacktop/tap/lporg
-  lporg load --config init/lporg.yml --no-backup --yes
+    # Organize Launchpad/Dock (pre macOS 26.x)
+    brew install blacktop/tap/lporg
+    lporg load --config init/lporg.yml --no-backup --yes
 fi
 
 # macOS

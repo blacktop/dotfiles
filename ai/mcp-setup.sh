@@ -3,9 +3,9 @@ set -o errexit -o nounset
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
-msg()  { echo "$(gum style --bold --foreground "#BE05D0" "  -") $1"; }
+msg() { echo "$(gum style --bold --foreground "#BE05D0" "  -") $1"; }
 warn() { echo "$(gum style --bold --foreground "#FF9400" "  ⚠") $1"; }
-ok()   { echo "$(gum style --bold --foreground "#00C853" "  ✓") $1"; }
+ok() { echo "$(gum style --bold --foreground "#00C853" "  ✓") $1"; }
 
 # Read a key from macOS Keychain (empty string if not found)
 keychain_get() {
@@ -51,11 +51,11 @@ echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Set
 echo "  Keys are stored in macOS Keychain (encrypted)."
 echo ""
 
-prompt_key "exa"        "Exa API key"
-prompt_key "context7"   "Context7 API key"
+prompt_key "exa" "Exa API key"
+prompt_key "context7" "Context7 API key"
 prompt_key "elevenlabs" "ElevenLabs API key"
-prompt_key "openai"     "OpenAI API key"
-prompt_key "gemini"     "Gemini API key"
+prompt_key "openai" "OpenAI API key"
+prompt_key "gemini" "Gemini API key"
 
 # ── Claude Code MCP servers ─────────────────────────────────────────────────
 
@@ -96,8 +96,8 @@ else
     if command -v mcp-tts >/dev/null 2>&1; then
         tts_env=""
         [ -n "$KEY_elevenlabs" ] && tts_env="$tts_env -e ELEVENLABS_API_KEY=$KEY_elevenlabs"
-        [ -n "$KEY_openai" ]     && tts_env="$tts_env -e OPENAI_API_KEY=$KEY_openai"
-        [ -n "$KEY_gemini" ]     && tts_env="$tts_env -e GEMINI_API_KEY=$KEY_gemini"
+        [ -n "$KEY_openai" ] && tts_env="$tts_env -e OPENAI_API_KEY=$KEY_openai"
+        [ -n "$KEY_gemini" ] && tts_env="$tts_env -e GEMINI_API_KEY=$KEY_gemini"
         eval claude mcp add --scope user mcp-tts $tts_env -- mcp-tts
         ok "Claude: mcp-tts (stdio)"
     else
@@ -148,29 +148,29 @@ TOML
             printf '\n[mcp_servers.mcp_tts]\ncommand = "mcp-tts"\nargs = ["--verbose"]\nenv_vars = ['
             sep=""
             [ -n "$KEY_elevenlabs" ] && printf '%s"ELEVENLABS_API_KEY"' "$sep" && sep=", "
-            [ -n "$KEY_openai" ]     && printf '%s"OPENAI_API_KEY"' "$sep"     && sep=", "
-            [ -n "$KEY_gemini" ]     && printf '%s"GEMINI_API_KEY"' "$sep"
+            [ -n "$KEY_openai" ] && printf '%s"OPENAI_API_KEY"' "$sep" && sep=", "
+            [ -n "$KEY_gemini" ] && printf '%s"GEMINI_API_KEY"' "$sep"
             printf ']\n'
             ok "Codex: mcp-tts" >&2
         fi
 
         echo ""
         echo "# ── MCP-SETUP-END ──"
-    } >> "$CODEX_CONFIG"
+    } >>"$CODEX_CONFIG"
 fi
 
 # ── Reminder ─────────────────────────────────────────────────────────────────
 
 LOCALS_LINES=""
-[ -n "$KEY_exa" ]        && LOCALS_LINES="$LOCALS_LINES
+[ -n "$KEY_exa" ] && LOCALS_LINES="$LOCALS_LINES
     set -gx EXA_API_KEY (security find-generic-password -a exa -s mcp-api-key -w 2>/dev/null)"
-[ -n "$KEY_context7" ]   && LOCALS_LINES="$LOCALS_LINES
+[ -n "$KEY_context7" ] && LOCALS_LINES="$LOCALS_LINES
     set -gx CONTEXT7_API_KEY (security find-generic-password -a context7 -s mcp-api-key -w 2>/dev/null)"
 [ -n "$KEY_elevenlabs" ] && LOCALS_LINES="$LOCALS_LINES
     set -gx ELEVENLABS_API_KEY (security find-generic-password -a elevenlabs -s mcp-api-key -w 2>/dev/null)"
-[ -n "$KEY_openai" ]     && LOCALS_LINES="$LOCALS_LINES
+[ -n "$KEY_openai" ] && LOCALS_LINES="$LOCALS_LINES
     set -gx OPENAI_API_KEY (security find-generic-password -a openai -s mcp-api-key -w 2>/dev/null)"
-[ -n "$KEY_gemini" ]     && LOCALS_LINES="$LOCALS_LINES
+[ -n "$KEY_gemini" ] && LOCALS_LINES="$LOCALS_LINES
     set -gx GEMINI_API_KEY (security find-generic-password -a gemini -s mcp-api-key -w 2>/dev/null)"
 
 echo ""

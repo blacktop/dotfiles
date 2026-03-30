@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 
 # ~/.macos — https://mths.be/macos
@@ -6,8 +5,8 @@
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 quit_app() {
-  local app_name="$1"
-  osascript -e "tell application \"${app_name}\" to quit" >/dev/null 2>&1 || true
+    local app_name="$1"
+    osascript -e "tell application \"${app_name}\" to quit" >/dev/null 2>&1 || true
 }
 
 # Close any open Settings panes so they don't override the preferences we are
@@ -20,7 +19,11 @@ quit_app "System Preferences"
 sudo -v
 
 # Keep-alive: update existing `sudo` time stamp until `.macos` has finished
-while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+while true; do
+    sudo -n true
+    sleep 60
+    kill -0 "$$" || exit
+done 2>/dev/null &
 
 ###############################################################################
 # General UI/UX                                                               #
@@ -277,34 +280,34 @@ sudo defaults write /.Spotlight-V100/VolumeConfiguration Exclusions -array "/Vol
 # 	MENU_WEBSEARCH             (send search queries to Apple)
 # 	MENU_OTHER
 defaults write com.apple.spotlight orderedItems -array \
-	'{"enabled" = 1;"name" = "APPLICATIONS";}' \
-	'{"enabled" = 1;"name" = "SYSTEM_PREFS";}' \
-	'{"enabled" = 1;"name" = "DIRECTORIES";}' \
-	'{"enabled" = 1;"name" = "PDF";}' \
-	'{"enabled" = 1;"name" = "FONTS";}' \
-	'{"enabled" = 0;"name" = "DOCUMENTS";}' \
-	'{"enabled" = 0;"name" = "MESSAGES";}' \
-	'{"enabled" = 0;"name" = "CONTACT";}' \
-	'{"enabled" = 0;"name" = "EVENT_TODO";}' \
-	'{"enabled" = 0;"name" = "IMAGES";}' \
-	'{"enabled" = 0;"name" = "BOOKMARKS";}' \
-	'{"enabled" = 0;"name" = "MUSIC";}' \
-	'{"enabled" = 0;"name" = "MOVIES";}' \
-	'{"enabled" = 0;"name" = "PRESENTATIONS";}' \
-	'{"enabled" = 0;"name" = "SPREADSHEETS";}' \
-	'{"enabled" = 0;"name" = "SOURCE";}' \
-	'{"enabled" = 0;"name" = "MENU_DEFINITION";}' \
-	'{"enabled" = 0;"name" = "MENU_OTHER";}' \
-	'{"enabled" = 0;"name" = "MENU_CONVERSION";}' \
-	'{"enabled" = 0;"name" = "MENU_EXPRESSION";}' \
-	'{"enabled" = 0;"name" = "MENU_WEBSEARCH";}' \
-	'{"enabled" = 0;"name" = "MENU_SPOTLIGHT_SUGGESTIONS";}'
+    '{"enabled" = 1;"name" = "APPLICATIONS";}' \
+    '{"enabled" = 1;"name" = "SYSTEM_PREFS";}' \
+    '{"enabled" = 1;"name" = "DIRECTORIES";}' \
+    '{"enabled" = 1;"name" = "PDF";}' \
+    '{"enabled" = 1;"name" = "FONTS";}' \
+    '{"enabled" = 0;"name" = "DOCUMENTS";}' \
+    '{"enabled" = 0;"name" = "MESSAGES";}' \
+    '{"enabled" = 0;"name" = "CONTACT";}' \
+    '{"enabled" = 0;"name" = "EVENT_TODO";}' \
+    '{"enabled" = 0;"name" = "IMAGES";}' \
+    '{"enabled" = 0;"name" = "BOOKMARKS";}' \
+    '{"enabled" = 0;"name" = "MUSIC";}' \
+    '{"enabled" = 0;"name" = "MOVIES";}' \
+    '{"enabled" = 0;"name" = "PRESENTATIONS";}' \
+    '{"enabled" = 0;"name" = "SPREADSHEETS";}' \
+    '{"enabled" = 0;"name" = "SOURCE";}' \
+    '{"enabled" = 0;"name" = "MENU_DEFINITION";}' \
+    '{"enabled" = 0;"name" = "MENU_OTHER";}' \
+    '{"enabled" = 0;"name" = "MENU_CONVERSION";}' \
+    '{"enabled" = 0;"name" = "MENU_EXPRESSION";}' \
+    '{"enabled" = 0;"name" = "MENU_WEBSEARCH";}' \
+    '{"enabled" = 0;"name" = "MENU_SPOTLIGHT_SUGGESTIONS";}'
 # Load new settings before rebuilding the index
-killall mds > /dev/null 2>&1
+killall mds >/dev/null 2>&1
 # Make sure indexing is enabled for the main volume
-sudo mdutil -i on / > /dev/null
+sudo mdutil -i on / >/dev/null
 # Rebuild the index from scratch
-sudo mdutil -E / > /dev/null
+sudo mdutil -E / >/dev/null
 
 ###############################################################################
 # TextEdit, and Disk Utility                                                  #
@@ -378,8 +381,8 @@ defaults write com.apple.Terminal ShowLineMarks -int 0
 # TouchID for sudo #
 ####################
 sudo cp /etc/pam.d/sudo_local.template /etc/pam.d/sudo_local
-echo "auth       optional       /opt/homebrew/lib/pam/pam_reattach.so ignore_ssh" | sudo tee -a /etc/pam.d/sudo_local > /dev/null
-echo "auth       sufficient     pam_tid.so" | sudo tee -a /etc/pam.d/sudo_local > /dev/null
+echo "auth       optional       /opt/homebrew/lib/pam/pam_reattach.so ignore_ssh" | sudo tee -a /etc/pam.d/sudo_local >/dev/null
+echo "auth       sufficient     pam_tid.so" | sudo tee -a /etc/pam.d/sudo_local >/dev/null
 # sudo sed -i'' -e '/^#auth /s/^#//g' /etc/pam.d/sudo_local
 
 ###########################
@@ -404,40 +407,39 @@ echo "auth       sufficient     pam_tid.so" | sudo tee -a /etc/pam.d/sudo_local 
 /usr/bin/tmutil addexclusion "${HOME}/Developer/SDKs/"
 /usr/bin/tmutil addexclusion "${HOME}/RE/"
 find "${HOME}/Developer" -maxdepth 3 \( -name 'dist' -or -name 'node_modules' \) -not -path "*/Go/*" -not -path "*/.git/*" | while read -r p; do
-	echo "TimeMachine: excluding $p..."
-	/usr/bin/tmutil addexclusion "$p"
+    echo "TimeMachine: excluding $p..."
+    /usr/bin/tmutil addexclusion "$p"
 done
-
 
 ###############################################################################
 # Kill affected applications                                                  #
 ###############################################################################
 
 # Restart the preferences daemon so app relaunches see the new defaults.
-killall cfprefsd > /dev/null 2>&1 || true
+killall cfprefsd >/dev/null 2>&1 || true
 
 for app in "Activity Monitor" \
-	"Address Book" \
-	"Calendar" \
-	"cfprefsd" \
-	"Contacts" \
-	"Dock" \
-	"Finder" \
-	"Google Chrome Canary" \
-	"Google Chrome" \
-	"Mail" \
-	"Messages" \
-	"Opera" \
-	"Photos" \
-	"Safari" \
-	"SizeUp" \
-	"Spectacle" \
-	"SystemUIServer" \
-	"Terminal" \
-	"Transmission" \
-	"Tweetbot" \
-	"Twitter" \
-	"iCal"; do
-	killall "${app}" &> /dev/null
+    "Address Book" \
+    "Calendar" \
+    "cfprefsd" \
+    "Contacts" \
+    "Dock" \
+    "Finder" \
+    "Google Chrome Canary" \
+    "Google Chrome" \
+    "Mail" \
+    "Messages" \
+    "Opera" \
+    "Photos" \
+    "Safari" \
+    "SizeUp" \
+    "Spectacle" \
+    "SystemUIServer" \
+    "Terminal" \
+    "Transmission" \
+    "Tweetbot" \
+    "Twitter" \
+    "iCal"; do
+    killall "${app}" &>/dev/null
 done
 echo "Done. Note that some of these changes require a logout/restart to take effect."
