@@ -44,7 +44,6 @@ code --install-extension njpwerner.autodocstring --force
 code --install-extension redhat.vscode-xml --force
 code --install-extension redhat.vscode-yaml --force
 code --install-extension rust-lang.rust-analyzer --force
-code --install-extension spmeesseman.vscode-taskexplorer --force
 code --install-extension swiftlang.swift-vscode --force
 code --install-extension svelte.svelte-vscode --force
 code --install-extension tamasfe.even-better-toml --force
@@ -54,7 +53,6 @@ code --install-extension trailofbits.sarif-explorer --force
 code --install-extension trailofbits.weaudit --force
 code --install-extension Tyriar.theme-sapphire --force
 code --install-extension vadimcn.vscode-lldb --force
-code --install-extension vknabel.vscode-apple-swift-format --force
 code --install-extension wesbos.theme-cobalt2 --force
 code --install-extension whizkydee.material-palenight-theme --force
 code --install-extension wmaurer.change-case --force

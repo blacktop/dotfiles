@@ -124,8 +124,6 @@ if confirm_step "Install LM Studio and download local models? This downloads lar
 else
     info "Skipping LM Studio setup (set SETUP_LMSTUDIO=yes to enable non-interactively)"
 fi
-# zig
-# zig/setup.sh
 # AI CLI agents (Claude Code, Codex, etc.)
 ai/setup.sh
 

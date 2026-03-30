@@ -12,6 +12,6 @@ trap "kill $PID" EXIT
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Download Ollama Models..."
 ollama pull gpt-oss:20b
-ollama pull qwen3-coder:30b
+ollama pull qwen3-coder-next
 ollama pull gemma3:12b
-ollama pull bytedance/seed-oss-36b
+# ollama pull bytedance/seed-oss-36b
