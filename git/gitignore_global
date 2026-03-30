@@ -1,0 +1,58 @@
+# ── macOS ────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# ── Security ─────────────────────────────────────────────────────────────────
+id_rsa
+
+# ── Vim / Neovim ─────────────────────────────────────────────────────────────
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+*~
+
+# ── Node ─────────────────────────────────────────────────────────────────────
+node_modules
+*.log
+*.pid
+*.seed
+coverage
+.grunt
+.lock-wscript
+build/Release
+
+# ── Go ───────────────────────────────────────────────────────────────────────
+.cache/
+.gocache/
+
+# ── Tooling ──────────────────────────────────────────────────────────────────
+.vagrant/
+.vscode/
+target/
+
+# ── AI agents ────────────────────────────────────────────────────────────────
+.claude/
+CLAUDE*.md
+.gemini/
+GEMINI.md
+AGENTS.md
+**/docs/.ai/
+.kiro/
+.specify/
+.jules/
+conductor/
+CONTINUITY.md
+
+# ── Reference codebases ─────────────────────────────────────────────────────
+OPC/
