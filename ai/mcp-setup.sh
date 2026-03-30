@@ -55,6 +55,7 @@ prompt_key "exa"        "Exa API key"
 prompt_key "context7"   "Context7 API key"
 prompt_key "elevenlabs" "ElevenLabs API key"
 prompt_key "openai"     "OpenAI API key"
+prompt_key "gemini"     "Gemini API key"
 
 # ── Claude Code MCP servers ─────────────────────────────────────────────────
 
@@ -96,6 +97,7 @@ else
         tts_env=""
         [ -n "$KEY_elevenlabs" ] && tts_env="$tts_env -e ELEVENLABS_API_KEY=$KEY_elevenlabs"
         [ -n "$KEY_openai" ]     && tts_env="$tts_env -e OPENAI_API_KEY=$KEY_openai"
+        [ -n "$KEY_gemini" ]     && tts_env="$tts_env -e GEMINI_API_KEY=$KEY_gemini"
         eval claude mcp add --scope user mcp-tts $tts_env -- mcp-tts
         ok "Claude: mcp-tts (stdio)"
     else
@@ -128,7 +130,7 @@ command = "npx"
 args = ["-y", "exa-mcp-server"]
 env_vars = ["EXA_API_KEY"]
 TOML
-            ok "Codex: exa"
+            ok "Codex: exa" >&2
         fi
 
         if [ -n "$KEY_context7" ]; then
@@ -139,19 +141,17 @@ command = "npx"
 args = ["-y", "@upstash/context7-mcp"]
 env_vars = ["CONTEXT7_API_KEY"]
 TOML
-            ok "Codex: context7"
+            ok "Codex: context7" >&2
         fi
 
-        if [ -n "$KEY_elevenlabs" ] || [ -n "$KEY_openai" ]; then
-            printf '\n[mcp_servers.mcp_tts]\ncommand = "mcp-tts"\nargs = ["--verbose"]\n'
-            if [ -n "$KEY_elevenlabs" ] && [ -n "$KEY_openai" ]; then
-                printf 'env_vars = ["ELEVENLABS_API_KEY", "OPENAI_API_KEY"]\n'
-            elif [ -n "$KEY_elevenlabs" ]; then
-                printf 'env_vars = ["ELEVENLABS_API_KEY"]\n'
-            else
-                printf 'env_vars = ["OPENAI_API_KEY"]\n'
-            fi
-            ok "Codex: mcp-tts"
+        if [ -n "$KEY_elevenlabs" ] || [ -n "$KEY_openai" ] || [ -n "$KEY_gemini" ]; then
+            printf '\n[mcp_servers.mcp_tts]\ncommand = "mcp-tts"\nargs = ["--verbose"]\nenv_vars = ['
+            sep=""
+            [ -n "$KEY_elevenlabs" ] && printf '%s"ELEVENLABS_API_KEY"' "$sep" && sep=", "
+            [ -n "$KEY_openai" ]     && printf '%s"OPENAI_API_KEY"' "$sep"     && sep=", "
+            [ -n "$KEY_gemini" ]     && printf '%s"GEMINI_API_KEY"' "$sep"
+            printf ']\n'
+            ok "Codex: mcp-tts" >&2
         fi
 
         echo ""
@@ -170,6 +170,8 @@ LOCALS_LINES=""
     set -gx ELEVENLABS_API_KEY (security find-generic-password -a elevenlabs -s mcp-api-key -w 2>/dev/null)"
 [ -n "$KEY_openai" ]     && LOCALS_LINES="$LOCALS_LINES
     set -gx OPENAI_API_KEY (security find-generic-password -a openai -s mcp-api-key -w 2>/dev/null)"
+[ -n "$KEY_gemini" ]     && LOCALS_LINES="$LOCALS_LINES
+    set -gx GEMINI_API_KEY (security find-generic-password -a gemini -s mcp-api-key -w 2>/dev/null)"
 
 echo ""
 echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Done!")"
