@@ -126,16 +126,67 @@ if [ -f "$SEP_PUB_KEY" ]; then
         } >>"$SSH_CONFIG"
     fi
 
-    # Upload to GitHub
+    # Enable SSH commit signing now that the key exists
+    # Install signing wrapper to ~/.ssh/ so GUI apps (GitHub Desktop, Zed)
+    # can sign without inheriting shell env vars
+    cp "$SCRIPT_DIR/ssh-sign-sep.sh" "$HOME/.ssh/ssh-sign-sep.sh"
+    chmod +x "$HOME/.ssh/ssh-sign-sep.sh"
+    git config --global gpg.format ssh
+    git config --global gpg.ssh.program "$HOME/.ssh/ssh-sign-sep.sh"
+    git config --global user.signingkey "$SEP_PUB_KEY"
+    git config --global commit.gpgsign true
+    git config --global tag.gpgsign true
+
+    # Allowed signers file for local signature verification
+    ALLOWED_SIGNERS="$HOME/.ssh/allowed_signers"
+    EMAIL=$(git config --global user.email)
+    PUB_CONTENT=$(cat "$SEP_PUB_KEY")
+    if ! grep -qF "$PUB_CONTENT" "$ALLOWED_SIGNERS" 2>/dev/null; then
+        echo "$EMAIL $PUB_CONTENT" >>"$ALLOWED_SIGNERS"
+        chmod 600 "$ALLOWED_SIGNERS"
+    fi
+    git config --global gpg.ssh.allowedSignersFile "$ALLOWED_SIGNERS"
+
+    # Upload to GitHub (auth + signing keys)
     if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
         HOSTNAME=$(scutil --get ComputerName 2>/dev/null || hostname -s)
-        GH_OUTPUT=$(gh ssh-key add "$SEP_PUB_KEY" --title "SEP-$HOSTNAME-$(date +%Y)" 2>&1) && {
-            echo "$(gum style --bold --foreground "#00C853" "  ✓") SSH key added to GitHub"
+        KEY_TITLE="SEP-$HOSTNAME-$(date +%Y)"
+
+        # Upload auth key
+        _out=$(gh ssh-key add "$SEP_PUB_KEY" --title "$KEY_TITLE" 2>&1) && {
+            echo "$(gum style --bold --foreground "#00C853" "  ✓") SSH auth key added to GitHub"
         } || {
-            if echo "$GH_OUTPUT" | grep -qi 'already'; then
-                echo "$(gum style --bold --foreground "#00C853" "  ✓") SSH key already on GitHub"
+            if echo "$_out" | grep -qi 'already'; then
+                echo "$(gum style --bold --foreground "#00C853" "  ✓") SSH auth key already on GitHub"
+            elif echo "$_out" | grep -qi 'admin:public_key'; then
+                if gh auth refresh -h github.com -s admin:public_key 2>/dev/null; then
+                    gh ssh-key add "$SEP_PUB_KEY" --title "$KEY_TITLE" 2>/dev/null \
+                        && echo "$(gum style --bold --foreground "#00C853" "  ✓") SSH auth key added to GitHub" \
+                        || echo "$(gum style --bold --foreground "#FF9400" "  ⚠") Failed to upload SSH auth key after scope refresh"
+                else
+                    echo "$(gum style --bold --foreground "#FF9400" "  ⚠") Could not refresh gh scope — upload SSH auth key manually"
+                fi
             else
-                echo "$(gum style --bold --foreground "#FF9400" "  ⚠") Failed to upload SSH key: $GH_OUTPUT"
+                echo "$(gum style --bold --foreground "#FF9400" "  ⚠") Failed to upload SSH auth key: $_out"
+            fi
+        }
+
+        # Upload signing key
+        _out=$(gh ssh-key add "$SEP_PUB_KEY" --title "$KEY_TITLE-signing" --type signing 2>&1) && {
+            echo "$(gum style --bold --foreground "#00C853" "  ✓") SSH signing key added to GitHub"
+        } || {
+            if echo "$_out" | grep -qi 'already'; then
+                echo "$(gum style --bold --foreground "#00C853" "  ✓") SSH signing key already on GitHub"
+            elif echo "$_out" | grep -qi 'admin:ssh_signing_key'; then
+                if gh auth refresh -h github.com -s admin:ssh_signing_key 2>/dev/null; then
+                    gh ssh-key add "$SEP_PUB_KEY" --title "$KEY_TITLE-signing" --type signing 2>/dev/null \
+                        && echo "$(gum style --bold --foreground "#00C853" "  ✓") SSH signing key added to GitHub" \
+                        || echo "$(gum style --bold --foreground "#FF9400" "  ⚠") Failed to upload SSH signing key after scope refresh"
+                else
+                    echo "$(gum style --bold --foreground "#FF9400" "  ⚠") Could not refresh gh scope — upload SSH signing key manually"
+                fi
+            else
+                echo "$(gum style --bold --foreground "#FF9400" "  ⚠") Failed to upload SSH signing key: $_out"
             fi
         }
     else

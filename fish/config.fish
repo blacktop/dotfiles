@@ -22,6 +22,9 @@ if test -f "$HOME/.config/fish/locals.fish"
     source "$HOME/.config/fish/locals.fish"
 end
 
+# Secure Enclave SSH key provider (needed for git commit signing + SSH auth)
+set -gx SSH_SK_PROVIDER /usr/lib/ssh-keychain.dylib
+
 if command -q zed
     set -gx EDITOR "zed --wait"
     set -gx VISUAL "zed --wait"
