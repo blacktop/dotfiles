@@ -23,7 +23,6 @@ shell-integration-features = cursor,no-sudo,title,ssh-terminfo,ssh-env
 
 # ── Keybinds ─────────────────────────────────────────────────────────────────
 keybind = ctrl+shift+j=write_screen_file:paste
-keybind = super+f=write_screen_file:open
 keybind = global:cmd+alt+s=toggle_quick_terminal
 keybind = super+shift+home=scroll_to_top
 keybind = shift+enter=text:\n
