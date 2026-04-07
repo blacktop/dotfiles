@@ -16,6 +16,9 @@ window-theme = dark
 macos-option-as-alt = true
 macos-auto-secure-input = true
 macos-secure-input-indication = true
+# Keep Shift-drag as Ghostty-native selection even when tmux enables mouse
+# reporting, so tmux navigation and terminal-style copy can coexist.
+mouse-shift-capture = never
 
 # ── Shell ────────────────────────────────────────────────────────────────────
 shell-integration = fish
