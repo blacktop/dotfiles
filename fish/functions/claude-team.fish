@@ -8,9 +8,9 @@ function claude-team -d 'Claude Code using team account'
             echo "Patched claude"
         else
             rm -f "$tmp"
-            echo "claude-hax: patch failed" >&2
+            echo "claude-team: patch failed" >&2
             return 1
         end
     end
-    command CLAUDE_CONFIG_DIR=$HOME/.claude-team claude $argv
+    CLAUDE_CONFIG_DIR=$HOME/.claude-team command claude $argv
 end
