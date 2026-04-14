@@ -18,13 +18,16 @@ echo "$(gum style --bold --foreground "#BE05D0" "  -") Install ralph-tui..."
 bun install -g ralph-tui 2>/dev/null || echo "$(gum style --faint "      ⚠ bun not found, skipping ralph-tui")"
 
 # Create config directories (including unified ~/.agents for skills)
-mkdir -p "$HOME/.claude" "$HOME/.codex" "$HOME/.gemini" "$HOME/.agents/skills"
+mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.codex" "$HOME/.gemini" "$HOME/.agents/skills"
 
 SCRIPT_DIR="$(dirname "$0")"
 
 # Copy agent config files
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync claude config..."
 rsync -a --exclude='.DS_Store' --exclude='skills' "$SCRIPT_DIR/claude/" "$HOME/.claude/"
+
+echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync claude-team config..."
+rsync -a --exclude='.DS_Store' --exclude='skills' "$SCRIPT_DIR/claude/" "$HOME/.claude-team/"
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync codex config..."
 rsync -a --exclude='.DS_Store' --exclude='skills' "$SCRIPT_DIR/codex/" "$HOME/.codex/"
