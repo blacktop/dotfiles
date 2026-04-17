@@ -3,9 +3,7 @@ set -o errexit -o nounset
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
-msg() { echo "$(gum style --bold --foreground "#BE05D0" "  -") $1"; }
-warn() { echo "$(gum style --bold --foreground "#FF9400" "  ⚠") $1"; }
-ok() { echo "$(gum style --bold --foreground "#00C853" "  ✓") $1"; }
+. "$(dirname "$0")/lib.sh"
 
 # Read a key from macOS Keychain (empty string if not found)
 keychain_get() {

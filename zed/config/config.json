@@ -79,7 +79,7 @@
     },
     "pyrefly": {
       "binary": {
-        "path": "/Users/blacktop/.local/share/uv/tools/pyrefly/bin/pyrefly",
+        "path": "pyrefly",
         "arguments": ["lsp"]
       },
       "settings": {

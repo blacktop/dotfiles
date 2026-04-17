@@ -1,11 +1,56 @@
 #!/bin/sh
 set -o errexit -o nounset
 
-echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Setup AI CLI agents")"
+# ── Args / env ───────────────────────────────────────────────────────────────
+# Default: preserve existing user-mutable configs (settings.json, config.toml).
+# Use --force or AI_FORCE_SYNC=1 to overwrite them with the dotfile template.
+FORCE_SYNC="${AI_FORCE_SYNC:-0}"
+case "${1:-}" in
+--force | -f) FORCE_SYNC=1 ;;
+--help | -h)
+    cat <<EOF
+Usage: $0 [--force|-f]
 
-# Install CLI agents via Homebrew
-echo "$(gum style --bold --foreground "#BE05D0" "  -") Install claude-code..."
-brew install --quiet claude-code
+Idempotent by default — re-running preserves your customised:
+  ~/.claude/settings.json
+  ~/.codex/config.toml
+
+Use --force (or AI_FORCE_SYNC=1) to overwrite those with the dotfile template.
+Static content (CLAUDE.md, agents/, commands/, prompts/, statusline.sh) and
+managed MCP blocks always sync.
+EOF
+    exit 0
+    ;;
+esac
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+SCRIPT_DIR="$(dirname "$0")"
+. "$SCRIPT_DIR/lib.sh"
+
+# Sync a user-mutable file. Skip if dest exists unless FORCE_SYNC=1.
+# Args: description, src, dst
+sync_user_file() {
+    desc="$1" src="$2" dst="$3"
+    if [ -f "$dst" ] && [ "$FORCE_SYNC" != "1" ]; then
+        if cmp -s "$src" "$dst"; then
+            ok "$desc up to date"
+        else
+            warn "Skipped $desc (exists & differs — review with: diff '$src' '$dst')"
+            warn "    re-run with --force to overwrite"
+        fi
+        return 0
+    fi
+    mkdir -p "$(dirname "$dst")"
+    cp "$src" "$dst"
+    ok "Wrote $desc"
+}
+
+echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Setup AI CLI agents")"
+[ "$FORCE_SYNC" = "1" ] && warn "FORCE mode: user-mutable configs will be overwritten"
+
+# Install CLI agents
+msg "Install claude-code (npm)..."
+npm install -g @anthropic-ai/claude-code
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Install codex..."
 brew install --quiet codex codex-app
@@ -20,17 +65,23 @@ bun install -g ralph-tui 2>/dev/null || echo "$(gum style --faint "      ⚠ bun
 # Create config directories (including unified ~/.agents for skills)
 mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.codex" "$HOME/.gemini" "$HOME/.agents/skills"
 
-SCRIPT_DIR="$(dirname "$0")"
+# Sync claude + claude-team from the same source tree (settings.json gated by FORCE_SYNC)
+for variant in claude claude-team; do
+    msg "Sync $variant config..."
+    rsync -a --exclude='.DS_Store' --exclude='skills' --exclude='settings.json' \
+        "$SCRIPT_DIR/claude/" "$HOME/.$variant/"
+    sync_user_file "$variant settings.json" \
+        "$SCRIPT_DIR/claude/settings.json" "$HOME/.$variant/settings.json"
+done
 
-# Copy agent config files
-echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync claude config..."
-rsync -a --exclude='.DS_Store' --exclude='skills' "$SCRIPT_DIR/claude/" "$HOME/.claude/"
-
-echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync claude-team config..."
-rsync -a --exclude='.DS_Store' --exclude='skills' "$SCRIPT_DIR/claude/" "$HOME/.claude-team/"
-
-echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync codex config..."
-rsync -a --exclude='.DS_Store' --exclude='skills' "$SCRIPT_DIR/codex/" "$HOME/.codex/"
+msg "Sync codex config..."
+rsync -a --exclude='.DS_Store' --exclude='skills' --exclude='config.toml' \
+    "$SCRIPT_DIR/codex/" "$HOME/.codex/"
+# Codex TOML doesn't expand env vars — render ${HOME} placeholders before installing.
+codex_tmp=$(mktemp -t codex-config.toml)
+sed "s|\${HOME}|$HOME|g" "$SCRIPT_DIR/codex/config.toml" >"$codex_tmp"
+sync_user_file "codex config.toml" "$codex_tmp" "$HOME/.codex/config.toml"
+rm -f "$codex_tmp"
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync gemini config..."
 rsync -a --exclude='.DS_Store' --exclude='skills' "$SCRIPT_DIR/gemini/" "$HOME/.gemini/"

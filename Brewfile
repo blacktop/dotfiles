@@ -150,6 +150,7 @@ cask "legcord" # Discord
 cask "lulu"
 cask "netiquette"
 cask "obsidian"
+cask "orbstack" # Fast, light Docker & Linux VMs
 cask "oversight"
 cask "raycast" # Spotlight on steroids
 cask "rectangle"

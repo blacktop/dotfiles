@@ -16,7 +16,8 @@ install_skill() {
 # Business
 # install_skill https://github.com/coreyhaines31/marketingskills
 # UI/UX
-install_skill https://github.com/nextlevelbuilder/ui-ux-pro-max-skill ui-ux-pro-max
+# NOTE: skills.sh audit flagged ath=high — re-enable once upstream addresses it
+# install_skill https://github.com/nextlevelbuilder/ui-ux-pro-max-skill ui-ux-pro-max
 # Swift
 install_skill https://github.com/dimillian/skills swiftui-ui-patterns
 install_skill https://github.com/dimillian/skills swiftui-liquid-glass
@@ -38,23 +39,30 @@ install_skill https://github.com/jeffallan/claude-skills cli-developer
 install_skill https://github.com/steipete/agent-scripts create-cli
 install_skill https://github.com/rand/cc-polymath discover-tui
 install_skill https://github.com/msmps/opentui-skill opentui
-install_skill https://github.com/existential-birds/beagle bubbletea-code-review
+# NOTE: skills.sh audit flagged ath=high — re-enable once upstream addresses it
+# install_skill https://github.com/existential-birds/beagle bubbletea-code-review
 # ToB
 # install_skill https://github.com/trailofbits/skills
 install_skill https://github.com/trailofbits/skills ask-questions-if-underspecified
-install_skill https://github.com/trailofbits/skills codeql
 install_skill https://github.com/trailofbits/skills audit-context-building
-install_skill https://github.com/trailofbits/skills property-based-testing
 install_skill https://github.com/trailofbits/skills variant-analysis
-install_skill https://github.com/trailofbits/skills modern-python
 install_skill https://github.com/trailofbits/skills semgrep-rule-creator
-install_skill https://github.com/trailofbits/skills cargo-fuzz
 install_skill https://github.com/trailofbits/skills libfuzzer
 install_skill https://github.com/trailofbits/skills ossfuzz
-install_skill https://github.com/trailofbits/skills aflpp
-install_skill https://github.com/trailofbits/skills libafl
 install_skill https://github.com/trailofbits/skills fuzzing-dictionary
 install_skill https://github.com/trailofbits/skills constant-time-testing
+install_skill https://github.com/trailofbits/skills skill-improver
+install_skill https://github.com/trailofbits/skills dimensional-analysis
+# NOTE: skills.sh audit flagged unsafe — re-enable once upstream addresses it
+# install_skill https://github.com/trailofbits/skills codeql                # socket=1 alert (critical)
+# install_skill https://github.com/trailofbits/skills property-based-testing # ath=high
+# install_skill https://github.com/trailofbits/skills modern-python          # ath=high
+# install_skill https://github.com/trailofbits/skills cargo-fuzz             # ath=critical
+# install_skill https://github.com/trailofbits/skills aflpp                  # socket=1 alert (critical)
+# install_skill https://github.com/trailofbits/skills libafl                 # ath=high
+install_skill https://github.com/trailofbits/skills differential-review # ath=high
+# ToB Curated
+install_skill https://github.com/trailofbits/skills-curated skill-extractor
 # Rust
 install_skill https://github.com/apollographql/skills rust-best-practices
 install_skill https://github.com/jeffallan/claude-skills rust-engineer

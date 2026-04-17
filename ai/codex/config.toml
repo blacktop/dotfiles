@@ -17,9 +17,9 @@ sandbox_mode = "workspace-write"
 [sandbox_workspace_write]
 network_access = true
 writable_roots = [
-  "/Users/blacktop/Library/Caches/go-build",
-  "/Users/blacktop/.cargo",
-  "/Users/blacktop/.rustup",
+  "${HOME}/Library/Caches/go-build",
+  "${HOME}/.cargo",
+  "${HOME}/.rustup",
 ]
 
 # ── Shell environment ────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ voice_transcription = true     # Voice dictation (Ctrl+M)
 max_threads = 12
 
 [agents.fast_worker]
-config_file = "/Users/blacktop/.codex/agents/fast_worker.toml"
+config_file = "${HOME}/.codex/agents/fast_worker.toml"
 description = "Fast scoped implementation agent."
 
 # ── TUI ──────────────────────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ notifications = true
 theme = "catppuccin-mocha"
 
 # ── Trust ────────────────────────────────────────────────────────────────────
-[projects."/Users/blacktop/Developer/Mine/blacktop"]
+[projects."${HOME}/Developer/Mine/blacktop"]
 trust_level = "trusted"
 
 # ── MCP servers ──────────────────────────────────────────────────────────────
