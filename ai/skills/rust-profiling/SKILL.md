@@ -28,6 +28,7 @@ python3 ~/.agents/skills/rust-profiling/scripts/analyze_profile.py profile.json
 |------|---------|
 | `reference.md` | Cargo.toml setup, samply options, troubleshooting |
 | `examples.md` | Common profiling scenarios and analysis patterns |
+| `optimization.md` | Post-profiling fixes: source patterns, release-profile tuning, PGO, BOLT, what doesn't work |
 | `scripts/analyze_profile.py` | CLI tool to analyze saved profile.json files |
 
 ## When to Use
