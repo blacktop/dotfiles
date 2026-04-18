@@ -2,32 +2,17 @@
 # Install Gemini CLI extensions
 set -o errexit -o nounset
 
-installed_extensions=""
-if [ -f "$HOME/.gemini/.extensions-installed" ]; then
-    installed_extensions=$(cat "$HOME/.gemini/.extensions-installed")
-fi
-
 install_extension() {
-    local url="$1"
-    local repo="${url##*/}"
-    local short="${repo%-extension}"
-    if [ -n "$installed_extensions" ]; then
-        if printf '%s\n' "$installed_extensions" | grep -Fq "$url"; then
-            echo "$(gum style --faint "      ✓ $short (already installed)")"
-            return 0
-        fi
-        if printf '%s\n' "$installed_extensions" | grep -Fq "$repo"; then
-            echo "$(gum style --faint "      ✓ $short (already installed)")"
-            return 0
-        fi
-        if [ "$short" != "$repo" ] && printf '%s\n' "$installed_extensions" | grep -Fq "$short"; then
-            echo "$(gum style --faint "      ✓ $short (already installed)")"
-            return 0
-        fi
-    fi
-    echo "$(gum style --foreground "#BE05D0" "      +") $(gum style --bold "$short")"
-    if ! gemini extensions install "$url"; then
+    url="$1"
+    repo="${url##*/}"
+    short="${repo%-extension}"
+    if output=$(gemini extensions install "$url" 2>&1); then
+        echo "$(gum style --foreground "#BE05D0" "      +") $(gum style --bold "$short")"
+    elif printf '%s' "$output" | grep -qi 'already installed'; then
+        echo "$(gum style --faint "      ✓ $short (already installed)")"
+    else
         echo "$(gum style --foreground "#FF0000" "      ✗ Failed to install $short")"
+        printf '        %s\n' "$output" | head -5
     fi
 }
 

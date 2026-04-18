@@ -16,13 +16,25 @@ keychain_set() {
     security add-generic-password -a "$1" -s "mcp-api-key" -w "$2"
 }
 
-# Prompt for an API key with gum; skip if already in Keychain
+# Resolve an API key from (in order): $<NAME>_API_KEY env var, macOS Keychain, gum prompt.
+# Env-var values are synced to Keychain so subsequent runs work without the env exported.
 prompt_key() {
     local name="$1"
     local label="$2"
+    local env_name
+    env_name="$(printf '%s' "$name" | tr '[:lower:]' '[:upper:]')_API_KEY"
+    local env_value=""
+    eval "env_value=\${${env_name}:-}"
+
+    if [ -n "$env_value" ]; then
+        keychain_set "$name" "$env_value"
+        ok "$label from \$$env_name (synced to Keychain)"
+        eval "KEY_$name=\"$env_value\""
+        return 0
+    fi
+
     local existing
     existing=$(keychain_get "$name")
-
     if [ -n "$existing" ]; then
         ok "$label already in Keychain"
         eval "KEY_$name=\"$existing\""
@@ -31,7 +43,6 @@ prompt_key() {
 
     local value
     value=$(gum input --password --prompt "$label: " --placeholder "paste key or leave blank to skip")
-
     if [ -z "$value" ]; then
         warn "Skipped $label (no key entered)"
         eval "KEY_$name="

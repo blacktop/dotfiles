@@ -52,10 +52,11 @@ echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Set
 msg "Install claude-code (npm)..."
 npm install -g @anthropic-ai/claude-code
 
-echo "$(gum style --bold --foreground "#BE05D0" "  -") Install codex..."
-brew install --quiet codex codex-app
+msg "Install codex (npm CLI + brew GUI cask)..."
+npm install -g @openai/codex
+brew install --quiet codex-app
 
-echo "$(gum style --bold --foreground "#BE05D0" "  -") Install gemini-cli..."
+msg "Install gemini-cli..."
 brew install --quiet gemini-cli
 
 # Install skill dependencies
