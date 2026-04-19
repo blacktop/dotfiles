@@ -10,7 +10,6 @@ fi
 
 # ── colors (foreground only, rendered dim by Claude Code) ─────────────────────
 RESET=$'\033[0m'
-DIM=$'\033[2m'
 C_MUTED=$'\033[38;5;242m'  # gray — separators
 C_BASE=$'\033[38;5;250m'   # light gray — default text
 C_BLUE=$'\033[38;5;75m'    # blue — model / dir
@@ -45,7 +44,6 @@ model=$(echo "$model" | sed '
 vim_mode=$(echo "$input" | jq -r '.vim.mode // empty' 2>/dev/null)
 agent_name=$(echo "$input" | jq -r '.agent.name // empty' 2>/dev/null)
 worktree_branch=$(echo "$input" | jq -r '.worktree.branch // .worktree.name // empty' 2>/dev/null)
-session_name=$(echo "$input" | jq -r '.session_name // empty' 2>/dev/null)
 
 # ── git ────────────────────────────────────────────────────────────────────────
 git_part=""
@@ -122,9 +120,6 @@ parts+=("${C_BASE}${dir_name}${RESET}")
 
 # agent name
 [ -n "$agent_name" ] && parts+=("${C_CYAN}@${agent_name}${RESET}")
-
-# session name
-[ -n "$session_name" ] && parts+=("${DIM}${C_MUTED}${session_name}${RESET}")
 
 # context usage
 [ -n "$ctx_part" ] && parts+=("$ctx_part")
