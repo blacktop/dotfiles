@@ -33,8 +33,18 @@ git config --global core.pager delta
 git config --global core.excludesFile "$HOME/.gitignore_global"
 
 # ── User ─────────────────────────────────────────────────────────────────────
-git config --global user.name "blacktop"
-git config --global user.email "blacktop@users.noreply.github.com"
+# Install a per-directory blacktop identity override. The global default is
+# left alone (personal preference, not a dotfile concern). Any repo under
+# ~/Developer/Mine/blacktop/ or ~/Developer/Mine/badapple/ will commit as
+# blacktop via includeIf.
+cat >"$HOME/.gitconfig-blacktop" <<'EOF'
+[user]
+	name = blacktop
+	email = blacktop@users.noreply.github.com
+EOF
+
+git config --global 'includeIf.gitdir:~/Developer/Mine/blacktop/.path' '~/.gitconfig-blacktop'
+git config --global 'includeIf.gitdir:~/Developer/Mine/badapple/.path' '~/.gitconfig-blacktop'
 
 # ── Push / Pull / Rebase ────────────────────────────────────────────────────
 git config --global push.autoSetupRemote true
