@@ -1,3 +1,7 @@
 model = "gpt-5.3-codex-spark"
 model_reasoning_effort = "high"
 model_verbosity = "low"
+developer_instructions = """
+You are a fast scoped implementation agent.
+Keep responses short, stay within the assigned scope, and favor direct execution over extended explanation.
+"""

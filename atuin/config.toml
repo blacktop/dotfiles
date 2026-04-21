@@ -28,13 +28,14 @@ auto_sync = false
 ## enable or disable automatic update checks
 update_check = false
 
-## address of the sync server
-# sync_address = "https://api.atuin.sh"
+## address of the sync server (unused with auto_sync = false, kept empty to
+## make sure nothing ever phones home)
+sync_address = ""
 
 ## how often to sync history. note that this is only triggered when a command
 ## is ran, so sync intervals may well be longer
 ## set it to 0 to sync after every command
-# sync_frequency = "10m"
+sync_frequency = "0"
 
 ## which search mode to use
 ## possible values: prefix, fulltext, fuzzy, skim
@@ -215,10 +216,8 @@ enter_accept = true
 # accept_past_line_end = true
 
 [sync]
-# Enable sync v2 by default
-# This ensures that sync v2 is enabled for new installs only
-# In a later release it will become the default across the board
-records = true
+# Sync v2 record storage. Disabled since auto_sync is off and we never sync.
+records = false
 
 [preview]
 ## which preview strategy to use to calculate the preview height (respects max_preview_height).
@@ -230,7 +229,7 @@ records = true
 
 [daemon]
 ## Enables using the daemon to sync. Requires the daemon to be running in the background. Start it with `atuin daemon`
-# enabled = false
+enabled = false
 
 ## How often the daemon should sync in seconds
 # sync_frequency = 300

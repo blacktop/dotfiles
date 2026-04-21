@@ -13,8 +13,19 @@ fish_add_path --global -a $HOME/.lmstudio/bin # LM Studio CLI (lms)
 fish_add_path --global -a $HOME/.orbstack/bin
 # fish_add_path --global -a $HOME/.modular/pkg/packages.modular.com_mojo/bin
 
-if test -e /opt/homebrew/bin/brew
-    eval (/opt/homebrew/bin/brew shellenv)
+# Equivalent to `eval (/opt/homebrew/bin/brew shellenv)` but avoids the ~1.3s
+# cost of spawning Ruby on every shell startup. PATH entries are already set
+# above via fish_add_path.
+if test -d /opt/homebrew
+    set -gx HOMEBREW_PREFIX /opt/homebrew
+    set -gx HOMEBREW_CELLAR /opt/homebrew/Cellar
+    set -gx HOMEBREW_REPOSITORY /opt/homebrew
+    if not contains /opt/homebrew/share/man $MANPATH
+        set -gx MANPATH /opt/homebrew/share/man $MANPATH
+    end
+    if not contains /opt/homebrew/share/info $INFOPATH
+        set -gx INFOPATH /opt/homebrew/share/info $INFOPATH
+    end
 end
 
 # locals.fish is a home for anything machine specific
