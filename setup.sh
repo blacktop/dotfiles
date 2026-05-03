@@ -87,6 +87,7 @@ export HOMEBREW_CASK_OPTS="--appdir=/Applications"
 
 brew update
 brew upgrade --cask
+brew autoremove
 brew cleanup || true
 
 info "Homebrew Version"
