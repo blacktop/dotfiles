@@ -64,7 +64,7 @@ echo "$(gum style --bold --foreground "#BE05D0" "  -") Install ralph-tui..."
 bun install -g ralph-tui 2>/dev/null || echo "$(gum style --faint "      ⚠ bun not found, skipping ralph-tui")"
 
 # Create config directories (including unified ~/.agents for skills)
-mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.codex" "$HOME/.gemini" "$HOME/.agents/skills"
+mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.codex" "$HOME/.codex-team" "$HOME/.gemini" "$HOME/.agents/skills"
 
 # Sync claude + claude-team from the same source tree (settings.json gated by FORCE_SYNC)
 for variant in claude claude-team; do
@@ -75,13 +75,16 @@ for variant in claude claude-team; do
         "$SCRIPT_DIR/claude/settings.json" "$HOME/.$variant/settings.json"
 done
 
-msg "Sync codex config..."
-rsync -a --exclude='.DS_Store' --exclude='skills' --exclude='config.toml' \
-    "$SCRIPT_DIR/codex/" "$HOME/.codex/"
+# Sync codex + codex-team from the same source tree (config.toml gated by FORCE_SYNC).
 # Codex TOML doesn't expand env vars — render ${HOME} placeholders before installing.
 codex_tmp=$(mktemp -t codex-config.toml)
 sed "s|\${HOME}|$HOME|g" "$SCRIPT_DIR/codex/config.toml" >"$codex_tmp"
-sync_user_file "codex config.toml" "$codex_tmp" "$HOME/.codex/config.toml"
+for variant in codex codex-team; do
+    msg "Sync $variant config..."
+    rsync -a --exclude='.DS_Store' --exclude='skills' --exclude='config.toml' \
+        "$SCRIPT_DIR/codex/" "$HOME/.$variant/"
+    sync_user_file "$variant config.toml" "$codex_tmp" "$HOME/.$variant/config.toml"
+done
 rm -f "$codex_tmp"
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync gemini config..."

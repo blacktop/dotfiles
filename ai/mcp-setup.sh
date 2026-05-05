@@ -117,56 +117,60 @@ fi
 # ── Codex MCP servers ────────────────────────────────────────────────────────
 # Append key-dependent MCP servers to the deployed config.toml only when
 # the user provided credentials. This avoids leaving enabled servers with
-# empty secrets.
+# empty secrets. The same block is mirrored to ~/.codex and ~/.codex-team.
 
-CODEX_CONFIG="$HOME/.codex/config.toml"
+msg "Configuring Codex MCP servers..."
 
-if [ -f "$CODEX_CONFIG" ]; then
-    msg "Configuring Codex MCP servers..."
+# Build the MCP block once (logging to stderr, content to the tempfile)
+mcp_block=$(mktemp -t codex-mcp-block)
+{
+    echo ""
+    echo "# ── MCP-SETUP-BEGIN (managed by mcp-setup.sh — do not edit) ──"
 
-    # Strip any previously appended MCP blocks (between sentinel comments)
-    sed -i '' '/^# ── MCP-SETUP-BEGIN/,/^# ── MCP-SETUP-END/d' "$CODEX_CONFIG"
-
-    {
-        echo ""
-        echo "# ── MCP-SETUP-BEGIN (managed by mcp-setup.sh — do not edit) ──"
-
-        if [ -n "$KEY_exa" ]; then
-            cat <<'TOML'
+    if [ -n "$KEY_exa" ]; then
+        cat <<'TOML'
 
 [mcp_servers.exa]
 command = "npx"
 args = ["-y", "exa-mcp-server"]
 env_vars = ["EXA_API_KEY"]
 TOML
-            ok "Codex: exa" >&2
-        fi
+        ok "Codex: exa" >&2
+    fi
 
-        if [ -n "$KEY_context7" ]; then
-            cat <<'TOML'
+    if [ -n "$KEY_context7" ]; then
+        cat <<'TOML'
 
 [mcp_servers.context7]
 command = "npx"
 args = ["-y", "@upstash/context7-mcp"]
 env_vars = ["CONTEXT7_API_KEY"]
 TOML
-            ok "Codex: context7" >&2
-        fi
+        ok "Codex: context7" >&2
+    fi
 
-        if [ -n "$KEY_elevenlabs" ] || [ -n "$KEY_openai" ] || [ -n "$KEY_gemini" ]; then
-            printf '\n[mcp_servers.mcp_tts]\ncommand = "mcp-tts"\nargs = ["--verbose"]\nenv_vars = ['
-            sep=""
-            [ -n "$KEY_elevenlabs" ] && printf '%s"ELEVENLABS_API_KEY"' "$sep" && sep=", "
-            [ -n "$KEY_openai" ] && printf '%s"OPENAI_API_KEY"' "$sep" && sep=", "
-            [ -n "$KEY_gemini" ] && printf '%s"GEMINI_API_KEY"' "$sep"
-            printf ']\n'
-            ok "Codex: mcp-tts" >&2
-        fi
+    if [ -n "$KEY_elevenlabs" ] || [ -n "$KEY_openai" ] || [ -n "$KEY_gemini" ]; then
+        printf '\n[mcp_servers.mcp_tts]\ncommand = "mcp-tts"\nargs = ["--verbose"]\nenv_vars = ['
+        sep=""
+        [ -n "$KEY_elevenlabs" ] && printf '%s"ELEVENLABS_API_KEY"' "$sep" && sep=", "
+        [ -n "$KEY_openai" ] && printf '%s"OPENAI_API_KEY"' "$sep" && sep=", "
+        [ -n "$KEY_gemini" ] && printf '%s"GEMINI_API_KEY"' "$sep"
+        printf ']\n'
+        ok "Codex: mcp-tts" >&2
+    fi
 
-        echo ""
-        echo "# ── MCP-SETUP-END ──"
-    } >>"$CODEX_CONFIG"
-fi
+    echo ""
+    echo "# ── MCP-SETUP-END ──"
+} >"$mcp_block"
+
+for variant in codex codex-team; do
+    config="$HOME/.$variant/config.toml"
+    [ -f "$config" ] || continue
+    # Strip any previously appended MCP blocks (between sentinel comments)
+    sed -i '' '/^# ── MCP-SETUP-BEGIN/,/^# ── MCP-SETUP-END/d' "$config"
+    cat "$mcp_block" >>"$config"
+done
+rm -f "$mcp_block"
 
 # ── Reminder ─────────────────────────────────────────────────────────────────
 

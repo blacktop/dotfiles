@@ -11,7 +11,7 @@ function ipsw-diff --description 'Diff two IPSWs with comprehensive analysis'
     while test $i -le (count $argv)
         set -l arg $argv[$i]
         switch $arg
-            case '-h' '--help'
+            case -h --help
                 printf '%s\n\n' $usage
                 printf 'Positional arguments:\n'
                 printf '  old.ipsw    The older IPSW to compare from\n'
@@ -21,7 +21,7 @@ function ipsw-diff --description 'Diff two IPSWs with comprehensive analysis'
                 printf '  -h, --help         Show this help\n\n'
                 printf 'Output directory: ../ipsw-diffs (relative to current directory)\n'
                 return 0
-            case '--kdk'
+            case --kdk
                 set i (math $i + 1)
                 if test $i -gt (count $argv)
                     printf 'Error: --kdk requires two arguments\n' >&2
@@ -86,6 +86,7 @@ function ipsw-diff --description 'Diff two IPSWs with comprehensive analysis'
         --strs \
         --files \
         --starts \
+        --sandbox \
         --signatures ~/Developer/Mine/blacktop/symbolicator/kernel \
         --block-list '__TEXT.__info_plist' \
         --block-list '__AUTH_CONST.__auth_ptr' \
