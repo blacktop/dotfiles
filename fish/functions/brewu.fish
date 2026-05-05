@@ -12,14 +12,21 @@ function brewu -d "Update All the things"
             set cmd (string split '/' $pkg)[-1]
         end
 
-        # Get current version (empty if not installed)
-        set -l old_version (command $cmd --version 2>/dev/null | string trim)
+        # Get current version (empty if not installed). Gate with `command -q`
+        # so missing binaries don't trigger fish's "Unknown command" diagnostic.
+        set -l old_version ""
+        if command -q $cmd
+            set old_version (command $cmd --version 2>/dev/null | string trim)
+        end
 
         # Check if update available using npm outdated
         set -l outdated (npm outdated -g $pkg 2>/dev/null)
         if test -n "$outdated"; or test -z "$old_version"
             npm i -g $pkg
-            set -l new_version (command $cmd --version 2>/dev/null | string trim)
+            set -l new_version ""
+            if command -q $cmd
+                set new_version (command $cmd --version 2>/dev/null | string trim)
+            end
             if test "$old_version" != "$new_version"
                 echo "  $cmd: $old_version → $new_version"
             end
