@@ -2,6 +2,8 @@
 
 This file combines current Go 1.26-era practice with the strongest hot-path guidance from the `ipsw` `go-performance` skill.
 
+For deep CPU-bound hot-path techniques (inlining cost budget, dispatch cost, BCE hints, assembly fallback), read [hot-path.md](hot-path.md) after profiling identifies a dominant kernel.
+
 ## Fix in this order
 
 1. Eliminate unnecessary work.
@@ -18,6 +20,7 @@ Before preserving complex old workarounds, re-measure on Go 1.26:
 - Green Tea GC is now on by default.
 - baseline cgo overhead is lower.
 - the compiler can place more slice backing stores on the stack.
+- experimental SIMD package is available behind `GOEXPERIMENT=simd` on AMD64; see [hot-path.md](hot-path.md#experimental-simd) before adopting.
 
 Practical effect:
 

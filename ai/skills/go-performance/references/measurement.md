@@ -58,6 +58,19 @@ Rules:
 - Use `-benchmem` for almost every optimization pass.
 - Do not mix `-race`, coverage, or unrelated noisy tests into performance measurement runs.
 
+### Code-layout noise
+
+Where the linker places a function in the binary affects its alignment to cache lines and decode windows, which can shift benchmark results by 3-4 % even when nothing about the function changed. Treat single-commit deltas under ~3-5 % as noise unless the result reproduces across an unrelated change.
+
+To estimate the inherent layout variance of a benchmark:
+
+1. Run the benchmark 10 times and record the result.
+2. Add or remove a tiny unrelated function elsewhere in the binary (a no-op exported helper works).
+3. Run the benchmark 10 times again.
+4. The spread between the two `benchstat` outputs is the layout-noise floor; real wins must clear it.
+
+Run benchmarks longer than feels necessary, especially for small kernels.
+
 Install `benchstat` if needed:
 
 ```bash
@@ -122,8 +135,8 @@ go tool trace trace.out
 Notes:
 
 - `net/http/pprof` endpoints must be requested with `GET`.
-- heap, allocs, mutex, block, and goroutine endpoints support `seconds=N` delta profiles
-- CPU and trace endpoints use `seconds=N` as capture duration
+- heap, allocs, mutex, block, and goroutine endpoints support `seconds=N` delta profiles.
+- CPU and trace endpoints use `seconds=N` as capture duration.
 
 ## Flight recorder
 

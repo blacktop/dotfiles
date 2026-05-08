@@ -1,16 +1,23 @@
 ---
 name: go-performance
-description: Measure and improve Go program performance using current Go 1.26-era workflow. Use when profiling Go code, diagnosing CPU or memory bottlenecks, investigating latency or contention, writing or fixing benchmarks, comparing benchmark results, using pprof or trace data, applying PGO, or tuning hot-path Go code.
+description: Measure and improve Go program performance on modern Go (1.24+). Use when profiling Go code, diagnosing CPU or memory bottlenecks, investigating latency or contention, writing or fixing benchmarks, comparing benchmark results, using pprof or trace data, applying PGO, or tuning hot-path Go code.
 ---
 
 # Go Performance
 
 Start with measurement, not rewriting.
 
+## When NOT to use this skill
+
+- No measurement of an actual performance problem exists yet. Write the benchmark or capture the profile first; do not optimize speculatively.
+- The task is correctness, refactoring, or API design without a throughput, latency, or resource concern.
+- The user wants a Go language tutorial or general code review, not performance work.
+
 ## Read the right reference
 
 - Read [references/measurement.md](references/measurement.md) for benchmark setup, `go test` flags, `pprof`, trace, flight recording, runtime metrics, and PGO workflow.
-- Read [references/optimization.md](references/optimization.md) when you are changing code after measurement or reviewing hot-path code.
+- Read [references/optimization.md](references/optimization.md) when changing code after measurement or reviewing hot-path code.
+- Read [references/hot-path.md](references/hot-path.md) only after profiling names a single dominant CPU kernel: covers inlining cost budget, dispatch cost (generics/interface/closure), bounds-check-elimination hints, register-pressure diagnosis, and assembly/SIMD escalation.
 
 ## Default workflow
 
@@ -28,13 +35,13 @@ Start with measurement, not rewriting.
 - Prefer algorithmic or architectural fixes over stylistic micro-optimizations.
 - Use benchmark evidence and profiles to justify code complexity.
 - For long-running services, profile the service shape you actually run; microbenchmarks alone are not enough.
-- Use `-run='^$'` when you want benchmark-only runs.
+- Use `-run='^$'` for benchmark-only runs.
 - For contention or scheduler issues, use trace, block, and mutex tooling instead of only CPU profiles.
 - For intermittent production latency, consider the Go 1.25+ flight recorder before building custom tracing machinery.
 
 ## Go 1.26-specific posture
 
-- Re-measure old workarounds on Go 1.26 before preserving them. Go 1.26 changed the runtime and compiler enough that some older allocation, cgo, and GC workarounds may no longer pay for their complexity.
+- Re-measure old workarounds on Go 1.26; runtime and compiler changes may have made older allocation, cgo, and GC workarounds obsolete.
 - On Linux containers, remember that Go 1.25+ made `GOMAXPROCS` container-aware by default. Do not cargo-cult `automaxprocs` into modern Go services without a measured reason.
 - Use `testing.T.ArtifactDir` plus `go test -artifacts -outputdir ...` when a benchmark or perf regression test needs to retain profiles, traces, or other debugging output.
 
