@@ -50,12 +50,10 @@ view_image_tool = true         # Image viewing capability
 voice_transcription = true     # Voice dictation (Ctrl+M)
 
 # ── Multi-agent ──────────────────────────────────────────────────────────────
+# Agent roles are auto-discovered from $CODEX_HOME/agents/*.toml — define each role
+# as a standalone file with a `name` field; do not duplicate them here.
 [agents]
 max_threads = 12
-
-[agents.fast_worker]
-config_file = "${HOME}/.codex/agents/fast_worker.toml"
-description = "Fast scoped implementation agent."
 
 # ── TUI ──────────────────────────────────────────────────────────────────────
 [tui]
