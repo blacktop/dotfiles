@@ -42,6 +42,8 @@ build/Release
 target/
 
 # ── AI agents ────────────────────────────────────────────────────────────────
+.agents/
+skills-lock.json
 .claude/
 CLAUDE*.md
 .gemini/
