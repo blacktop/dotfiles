@@ -17,7 +17,7 @@ if command -v gh >/dev/null 2>&1; then
             if [ "$CHOICE" = "Yes" ]; then
                 gh auth login
             else
-                echo "$(gum style --faint "      ⚠ Skipped — run 'gh auth login' later for full GitHub integration")"
+                gum style --faint "      ⚠ Skipped — run 'gh auth login' later for full GitHub integration"
             fi
         else
             echo "  ⚠ gh not authenticated (run 'gh auth login' in an interactive terminal)"
@@ -28,7 +28,7 @@ if command -v gh >/dev/null 2>&1; then
 fi
 
 # ── Core ─────────────────────────────────────────────────────────────────────
-git config --global core.editor "code -w -n"
+git config --global core.editor "${EDITOR:-vi}"
 git config --global core.pager delta
 git config --global core.excludesFile "$HOME/.gitignore_global"
 
@@ -43,8 +43,8 @@ cat >"$HOME/.gitconfig-blacktop" <<'EOF'
 	email = blacktop@users.noreply.github.com
 EOF
 
-git config --global 'includeIf.gitdir:~/Developer/Mine/blacktop/.path' '~/.gitconfig-blacktop'
-git config --global 'includeIf.gitdir:~/Developer/Mine/badapple/.path' '~/.gitconfig-blacktop'
+git config --global 'includeIf.gitdir:~/Developer/Mine/blacktop/.path' "$HOME/.gitconfig-blacktop"
+git config --global 'includeIf.gitdir:~/Developer/Mine/badapple/.path' "$HOME/.gitconfig-blacktop"
 
 # ── Push / Pull / Rebase ────────────────────────────────────────────────────
 git config --global push.autoSetupRemote true

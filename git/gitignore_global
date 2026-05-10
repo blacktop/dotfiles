@@ -12,7 +12,19 @@ Temporary Items
 .apdisk
 
 # ── Security ─────────────────────────────────────────────────────────────────
-id_rsa
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ecdsa_sk*
+id_ed25519*
+id_ed25519_sk*
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
 
 # ── Vim / Neovim ─────────────────────────────────────────────────────────────
 [._]*.s[a-w][a-z]
