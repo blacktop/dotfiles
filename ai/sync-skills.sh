@@ -15,7 +15,7 @@ for agent_dir in "$HOME/.claude" "$HOME/.claude-team" "$HOME/.codex" "$HOME/.cod
 	skills_path="$agent_dir/skills"
 	if [ ! -L "$skills_path" ]; then
 		if [ -d "$skills_path" ]; then
-			cp -a "$skills_path/." "$AGENTS_SKILLS/" 2>/dev/null || true
+			cp -a "$skills_path/." "$AGENTS_SKILLS/"
 			rm -rf "$skills_path"
 		fi
 		ln -s "$AGENTS_SKILLS" "$skills_path"
