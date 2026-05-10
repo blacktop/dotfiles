@@ -380,9 +380,15 @@ defaults write com.apple.Terminal ShowLineMarks -int 0
 ####################
 # TouchID for sudo #
 ####################
-sudo cp /etc/pam.d/sudo_local.template /etc/pam.d/sudo_local
-echo "auth       optional       /opt/homebrew/lib/pam/pam_reattach.so ignore_ssh" | sudo tee -a /etc/pam.d/sudo_local >/dev/null
-echo "auth       sufficient     pam_tid.so" | sudo tee -a /etc/pam.d/sudo_local >/dev/null
+if [ -f /etc/pam.d/sudo_local.template ]; then
+    sudo cp /etc/pam.d/sudo_local.template /etc/pam.d/sudo_local
+fi
+if ! sudo grep -Fq "/opt/homebrew/lib/pam/pam_reattach.so ignore_ssh" /etc/pam.d/sudo_local 2>/dev/null; then
+    echo "auth       optional       /opt/homebrew/lib/pam/pam_reattach.so ignore_ssh" | sudo tee -a /etc/pam.d/sudo_local >/dev/null
+fi
+if ! sudo grep -Fq "auth       sufficient     pam_tid.so" /etc/pam.d/sudo_local 2>/dev/null; then
+    echo "auth       sufficient     pam_tid.so" | sudo tee -a /etc/pam.d/sudo_local >/dev/null
+fi
 # sudo sed -i'' -e '/^#auth /s/^#//g' /etc/pam.d/sudo_local
 
 ###########################

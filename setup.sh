@@ -13,11 +13,11 @@ export COL_MAGENTA=$ESC_SEQ"35;01m"
 export COL_CYAN=$ESC_SEQ"36;01m"
 
 function running() {
-    echo -e "$COL_MAGENTA ⇒ $COL_RESET"$1
+    echo -e "${COL_MAGENTA} ⇒ ${COL_RESET}$1"
 }
 
 function info() {
-    echo -e "$COL_BLUE[info]$COL_RESET" $1
+    echo -e "${COL_BLUE}[info]${COL_RESET}" "$1"
 }
 
 function has_gum_prompt_ui() {
@@ -56,15 +56,19 @@ function confirm_step() {
 
 running "Configuring macOS"
 
-if [[ $(xcode-select --version) ]]; then
+if xcode-select -p >/dev/null 2>&1; then
     info "Xcode command tools already installed"
 else
     running "Installing Xcode commandline tools"
-    $(xcode-select --install)
+    xcode-select --install
 fi
 
-running "Installing Rosetta 2"
-sudo softwareupdate --install-rosetta --agree-to-license
+if [[ "$(uname -m)" = "arm64" ]]; then
+    running "Installing Rosetta 2"
+    sudo softwareupdate --install-rosetta --agree-to-license
+else
+    info "Skipping Rosetta 2 install on non-Apple-silicon Mac"
+fi
 
 if [ -d "/Applications/Xcode-beta.app" ]; then
     if [ "$(xcode-select -p)" != "/Applications/Xcode-beta.app/Contents/Developer" ]; then
@@ -73,15 +77,21 @@ if [ -d "/Applications/Xcode-beta.app" ]; then
     fi
 fi
 
-if [[ $(/opt/homebrew/bin/brew --version) ]]; then
-    running "Attempting to update Homebrew from version $(/opt/homebrew/bin/brew --version)"
-    /opt/homebrew/bin/brew update
+BREW_BIN="$(command -v brew || true)"
+if [[ -n "$BREW_BIN" ]]; then
+    running "Attempting to update Homebrew from version $("$BREW_BIN" --version)"
+    "$BREW_BIN" update
 else
     running "Attempting to install Homebrew"
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    if [[ "$(uname -m)" = "arm64" ]]; then
+        BREW_BIN="/opt/homebrew/bin/brew"
+    else
+        BREW_BIN="/usr/local/bin/brew"
+    fi
 fi
 
-eval "$(/opt/homebrew/bin/brew shellenv)"
+eval "$("$BREW_BIN" shellenv)"
 
 export HOMEBREW_CASK_OPTS="--appdir=/Applications"
 
@@ -95,9 +105,8 @@ brew --version
 
 brew bundle --file=Brewfile || true
 
-# python
-running "Installing pip packages"
-pip3 install --break-system-packages -U pip setuptools virtualenv pipenv pytest nose pyflakes isort black --user
+# Python tooling is managed by Brewfile/uv. Avoid mutating system Python.
+info "Skipping system pip package install"
 
 # git
 git/setup.sh
@@ -144,7 +153,7 @@ fi
 # macOS
 if confirm_step "Configure macOS defaults?" "SETUP_MACOS_DEFAULTS"; then
     echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Running 'config-osx.sh'")"
-    exec ./config-osx.sh
+    ./config-osx.sh
 fi
 
 # Offline profile
