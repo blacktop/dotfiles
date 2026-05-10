@@ -13,10 +13,19 @@ function cu-apple --description 'Use Apple container as the backend for Containe
         container system start
 
         # Provide a docker-compatible shim so Dagger/Container Use can talk to Apple 'container'
-        if not test -e /usr/local/bin/docker
-            set -l cbin (command -s container)
-            test -n "$cbin"; or begin; echo "cu-apple: cannot locate 'container' binary"; return 127; end
-            sudo ln -s $cbin /usr/local/bin/docker
+        set -l docker_shim /usr/local/bin/docker
+        set -l cbin (command -s container)
+        test -n "$cbin"; or begin; echo "cu-apple: cannot locate 'container' binary"; return 127; end
+        if test -e $docker_shim; or test -L $docker_shim
+            if not test -L $docker_shim
+                echo "cu-apple: $docker_shim already exists and is not a symlink"; return 1
+            end
+            set -l docker_target (readlink $docker_shim)
+            if test "$docker_target" != "$cbin"
+                echo "cu-apple: $docker_shim already points to $docker_target"; return 1
+            end
+        else
+            sudo ln -s $cbin $docker_shim
         end
 
         # Start (or reuse) a Dagger engine container under Apple 'container'
@@ -32,6 +41,13 @@ function cu-apple --description 'Use Apple container as the backend for Containe
     case off
         if type -q container
             container kill dagger-engine-custom 2>/dev/null
+        end
+        set -l docker_shim /usr/local/bin/docker
+        if test -L $docker_shim
+            set -l docker_target (readlink $docker_shim)
+            if string match -q '*/container' $docker_target
+                sudo rm $docker_shim
+            end
         end
     case status '*'
         if type -q container
