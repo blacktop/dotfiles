@@ -33,6 +33,14 @@ Before finishing a task:
 
 - If you need to add a new dependency to a project to solve an issue, search the web and find the best, most maintained option. Something most other folks use with the best exposed API. We don't want to be in a situation where we are using an unmaintained dependency, that no one else relies on.
 
+## Apple Platform Artifacts
+
+For Apple iOS/macOS research and tooling (`ipsw`, DSC/dyld_shared_cache work,
+kernelcache/KC analysis, extracted firmware), start artifact discovery in
+`~/Documents/IPSWs`. Do not scan the whole filesystem looking for IPSWs,
+extracted DSCs, or kernelcaches; search that directory first and ask before
+widening the search.
+
 ## Secrets & Local Shell State
 
 - Never inspect, print, dump, or verify environment variables or shell-local configuration to confirm credentials or setup.

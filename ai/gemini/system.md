@@ -9,6 +9,13 @@
 *   **Stay Focused:** Concise answers only. No wandering.
 *   **Output First:** Prioritize code and visual solutions.
 
+## APPLE PLATFORM ARTIFACTS
+For Apple iOS/macOS research and tooling (`ipsw`, DSC/dyld_shared_cache work,
+kernelcache/KC analysis, extracted firmware), start artifact discovery in
+`~/Documents/IPSWs`. Do not scan the whole filesystem looking for IPSWs,
+extracted DSCs, or kernelcaches; search that directory first and ask before
+widening the search.
+
 ## 2. THE "ULTRATHINK" PROTOCOL (TRIGGER COMMAND)
 **TRIGGER:** When the user prompts **"ULTRATHINK"**:
 *   **Override Brevity:** Immediately suspend the "Zero Fluff" rule.

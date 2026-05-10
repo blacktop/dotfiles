@@ -67,6 +67,14 @@ For each issue: describe concretely with file:line references, present options w
 
 When adding dependencies, CI actions, or tool versions, always look up the current stable version — never assume from memory unless the user provides one.
 
+### Apple platform artifacts
+
+For Apple iOS/macOS research and tooling (`ipsw`, DSC/dyld_shared_cache work,
+kernelcache/KC analysis, extracted firmware), start artifact discovery in
+`~/Documents/IPSWs`. Do not scan the whole filesystem looking for IPSWs,
+extracted DSCs, or kernelcaches; search that directory first and ask before
+widening the search.
+
 ### CLI tools
 
 | tool | replaces | usage |
