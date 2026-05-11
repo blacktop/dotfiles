@@ -75,7 +75,6 @@ log_user_prompt = false
 # Deprecated flags (use top-level): web_search_request → web_search
 [features]
 apps = true                    # Connected ChatGPT Apps
-default_mode_request_user_input = true
 ghost_commit = false           # Git snapshots per turn (key: "undo")
 guardian_approval = true       # Sub-agent reviews approvals for safety
 js_repl = true                 # Node.js JavaScript REPL
