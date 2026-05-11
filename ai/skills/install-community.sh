@@ -6,10 +6,10 @@ install_skill() {
     repo="$1"
     skill="${2:-}"
     name="${skill:-$(basename "$repo")}"
-    echo "$(gum style --foreground "#BE05D0" "      +") $(gum style --bold "$name")"
+    printf "%s %s\n" "$(gum style --foreground "#BE05D0" "      +")" "$(gum style --bold "$name")"
     # Install to ~/.agents/skills via --agent amp -g (global/user scope)
     if ! npx -y skills add "$repo" ${skill:+--skill "$skill"} --agent amp -g -y 2>/dev/null; then
-        echo "$(gum style --foreground "#FF0000" "      ✗ Failed to install $name")"
+        printf "%s\n" "$(gum style --foreground "#FF0000" "      ✗ Failed to install $name")"
     fi
 }
 
@@ -53,6 +53,7 @@ install_skill https://github.com/trailofbits/skills fuzzing-dictionary
 install_skill https://github.com/trailofbits/skills constant-time-testing
 install_skill https://github.com/trailofbits/skills skill-improver
 install_skill https://github.com/trailofbits/skills dimensional-analysis
+install_skill https://github.com/trailofbits/skills c-review
 # NOTE: skills.sh audit flagged unsafe — re-enable once upstream addresses it
 # install_skill https://github.com/trailofbits/skills codeql                # socket=1 alert (critical)
 # install_skill https://github.com/trailofbits/skills property-based-testing # ath=high
