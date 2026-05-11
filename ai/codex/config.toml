@@ -1,5 +1,5 @@
 # ── Model ────────────────────────────────────────────────────────────────────
-model = "gpt-5.4"
+model = "gpt-5.5"
 model_reasoning_effort = "xhigh"
 model_context_window = 1000000
 model_auto_compact_token_limit = 960000
@@ -8,18 +8,24 @@ plan_mode_reasoning_effort = "xhigh"
 service_tier = "fast"
 personality = "pragmatic"
 web_search = "live"
-responses_websockets_v2 = true
-default_mode_request_user_input = true
 
 # ── Sandbox & approvals ─────────────────────────────────────────────────────
 sandbox_mode = "workspace-write"
+approvals_reviewer = "auto_review"
 
 [sandbox_workspace_write]
 network_access = true
 writable_roots = [
   "${HOME}/Library/Caches/go-build",
+  "${HOME}/go/pkg/mod",
+  "${HOME}/go/pkg/sumdb",
+  "${HOME}/go/bin",
   "${HOME}/.cargo",
   "${HOME}/.rustup",
+  "${HOME}/Library/pnpm",
+  "${HOME}/Library/Caches/node-gyp",
+  "${HOME}/Library/Caches/pnpm",
+  "${HOME}/Library/Caches/corepack",
 ]
 
 # ── Shell environment ────────────────────────────────────────────────────────
@@ -37,6 +43,7 @@ DISABLE_TELEMETRY = "1"
 # Deprecated flags (use top-level): web_search_request → web_search
 [features]
 apps = true                    # Connected ChatGPT Apps
+default_mode_request_user_input = true
 ghost_commit = false           # Git snapshots per turn (key: "undo")
 guardian_approval = true       # Sub-agent reviews approvals for safety
 js_repl = true                 # Node.js JavaScript REPL
@@ -48,6 +55,8 @@ skills = true                  # Skill system
 unified_exec = true            # Single PTY-backed exec tool
 view_image_tool = true         # Image viewing capability
 voice_transcription = true     # Voice dictation (Ctrl+M)
+terminal_resize_reflow = true
+goals = true
 
 # ── Multi-agent ──────────────────────────────────────────────────────────────
 # Agent roles are auto-discovered from $CODEX_HOME/agents/*.toml — define each role
