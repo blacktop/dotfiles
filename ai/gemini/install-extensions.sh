@@ -19,6 +19,5 @@ install_extension() {
 install_extension https://github.com/gemini-cli-extensions/ralph
 install_extension https://github.com/gemini-cli-extensions/jules
 install_extension https://github.com/upstash/context7
-install_extension https://github.com/exa-labs/exa-mcp-server
 install_extension https://github.com/gemini-cli-extensions/security
 install_extension https://github.com/gemini-cli-extensions/code-review

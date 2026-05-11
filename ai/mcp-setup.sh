@@ -67,7 +67,6 @@ echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Set
 echo "  Keys are stored in macOS Keychain (encrypted)."
 echo ""
 
-prompt_key "exa" "Exa API key"
 prompt_key "context7" "Context7 API key"
 prompt_key "elevenlabs" "ElevenLabs API key"
 prompt_key "openai" "OpenAI API key"
@@ -91,13 +90,10 @@ else
             claude mcp remove --scope user "$name" 2>/dev/null || true
         done
 
-        # Exa — stdio keeps the API key out of the MCP URL persisted by Claude.
-        if [ -n "$KEY_exa" ]; then
-            claude mcp add --scope user exa \
-                -e EXA_API_KEY="$KEY_exa" \
-                -- npx -y exa-mcp-server
-            ok "$variant: exa (stdio)"
-        fi
+        # Exa — public keyless HTTP endpoint.
+        # Do not pass an Exa API key here; the free-key path rate-limits quickly.
+        claude mcp add --scope user --transport http exa https://mcp.exa.ai/mcp
+        ok "$variant: exa (http, keyless)"
 
         # Context7 — stdio via npx
         if [ -n "$KEY_context7" ]; then
@@ -130,69 +126,152 @@ else
     unset CLAUDE_CONFIG_DIR
 fi
 
+sync_codex_mcp_config() {
+    local variant="$1"
+    local config="$2"
+    local template="$3"
+    local tmp
+
+    [ -f "$config" ] || return 0
+
+    tmp=$(mktemp)
+    if python3 - "$config" "$template" "$HOME" >"$tmp" <<'PY'
+import re
+import sys
+
+config_path, template_path, home = sys.argv[1:4]
+table_re = re.compile(r"^\s*\[{1,2}([^\]]+)\]{1,2}\s*(?:#.*)?$")
+
+
+def table_name(line):
+    match = table_re.match(line)
+    if not match:
+        return None
+    return match.group(1).strip()
+
+
+def is_mcp_table(name):
+    return name.startswith("mcp_servers.")
+
+
+with open(template_path, encoding="utf-8") as fh:
+    template_lines = [line.replace("${HOME}", home) for line in fh]
+
+managed_lines = []
+managed_tables = set()
+capturing = False
+
+for line in template_lines:
+    name = table_name(line)
+    if name is not None:
+        if is_mcp_table(name):
+            capturing = True
+            managed_tables.add(name)
+        elif capturing:
+            break
+
+    if capturing:
+        managed_lines.append(line)
+
+if not managed_tables:
+    raise SystemExit(f"no [mcp_servers.*] tables found in {template_path}")
+
+managed_prefixes = tuple(f"{name}." for name in managed_tables)
+
+
+def is_managed_table(name):
+    return name in managed_tables or name.startswith(managed_prefixes)
+
+
+with open(config_path, encoding="utf-8") as fh:
+    lines = fh.readlines()
+
+out = []
+in_legacy_block = False
+in_target_table = False
+insert_index = None
+
+for line in lines:
+    if line.startswith("# ── MCP-SETUP-BEGIN"):
+        if insert_index is None:
+            insert_index = len(out)
+        in_legacy_block = True
+        continue
+
+    if in_legacy_block:
+        if line.startswith("# ── MCP-SETUP-END"):
+            in_legacy_block = False
+        continue
+
+    name = table_name(line)
+    if name is not None:
+        if is_managed_table(name):
+            if insert_index is None:
+                insert_index = len(out)
+            in_target_table = True
+            continue
+        in_target_table = False
+
+    if in_target_table:
+        continue
+
+    out.append(line)
+
+if insert_index is None:
+    while out and not out[-1].strip():
+        out.pop()
+    out.extend(["\n"] if out else [])
+    out.extend(managed_lines)
+else:
+    out[insert_index:insert_index] = managed_lines
+
+sys.stdout.writelines(out)
+PY
+    then
+        mv "$tmp" "$config"
+        ok "Codex: synced MCP servers for $variant"
+    else
+        rm -f "$tmp"
+        warn "Codex: failed to sync MCP servers for $variant"
+    fi
+}
+
 # ── Codex MCP servers ────────────────────────────────────────────────────────
-# Append key-dependent MCP servers to the deployed config.toml only when
-# the user provided credentials. This avoids leaving enabled servers with
-# empty secrets. The same block is mirrored to ~/.codex and ~/.codex-team.
-
-msg "Configuring Codex MCP servers..."
-
-# Build the MCP block once (logging to stderr, content to the tempfile)
-mcp_block=$(mktemp -t codex-mcp-block)
-{
-    echo ""
-    echo "# ── MCP-SETUP-BEGIN (managed by mcp-setup.sh — do not edit) ──"
-
-    if [ -n "$KEY_exa" ]; then
-        cat <<'TOML'
-
-[mcp_servers.exa]
-command = "npx"
-args = ["-y", "exa-mcp-server"]
-env_vars = ["EXA_API_KEY"]
-TOML
-        ok "Codex: exa" >&2
-    fi
-
-    if [ -n "$KEY_context7" ]; then
-        cat <<'TOML'
-
-[mcp_servers.context7]
-command = "npx"
-args = ["-y", "@upstash/context7-mcp"]
-env_vars = ["CONTEXT7_API_KEY"]
-TOML
-        ok "Codex: context7" >&2
-    fi
-
-    if [ -n "$KEY_elevenlabs" ] || [ -n "$KEY_openai" ] || [ -n "$KEY_gemini" ]; then
-        printf '\n[mcp_servers.mcp_tts]\ncommand = "mcp-tts"\nargs = ["--verbose"]\nenv_vars = ['
-        sep=""
-        [ -n "$KEY_elevenlabs" ] && printf '%s"ELEVENLABS_API_KEY"' "$sep" && sep=", "
-        [ -n "$KEY_openai" ] && printf '%s"OPENAI_API_KEY"' "$sep" && sep=", "
-        [ -n "$KEY_gemini" ] && printf '%s"GEMINI_API_KEY"' "$sep"
-        printf ']\n\n[mcp_servers.mcp_tts.tools.say_tts]\napproval_mode = "approve"\n'
-        ok "Codex: mcp-tts" >&2
-    fi
-
-    echo ""
-    echo "# ── MCP-SETUP-END ──"
-} >"$mcp_block"
+# Keep deployed Codex configs current even when ai/setup.sh preserves an
+# existing user-edited config.toml instead of copying the template.
 
 for variant in codex codex-team; do
     config="$HOME/.$variant/config.toml"
-    [ -f "$config" ] || continue
-    # Strip any previously appended MCP blocks (between sentinel comments)
-    sed -i '' '/^# ── MCP-SETUP-BEGIN/,/^# ── MCP-SETUP-END/d' "$config"
-    cat "$mcp_block" >>"$config"
+    sync_codex_mcp_config "$variant" "$config" "$(dirname "$0")/codex/config.toml"
 done
-rm -f "$mcp_block"
+
+# ── Gemini CLI MCP servers ───────────────────────────────────────────────────
+# Patch ~/.gemini/settings.json to register the keyless Exa endpoint.
+# (Gemini's settings.json is user-owned; we merge with jq instead of overwriting.)
+
+gemini_settings="$HOME/.gemini/settings.json"
+if command -v jq >/dev/null 2>&1; then
+    msg "Configuring Gemini MCP servers..."
+    mkdir -p "$(dirname "$gemini_settings")"
+    if [ ! -f "$gemini_settings" ]; then
+        printf '{\n  "mcpServers": {}\n}\n' >"$gemini_settings"
+        ok "Gemini: created settings.json"
+    fi
+    tmp=$(mktemp)
+    if jq '.mcpServers = (.mcpServers // {}) | .mcpServers.exa = {"httpUrl": "https://mcp.exa.ai/mcp"}' "$gemini_settings" >"$tmp"; then
+        mv "$tmp" "$gemini_settings"
+        ok "Gemini: exa (http, keyless)"
+    else
+        warn "Gemini: failed to patch settings.json (kept original)"
+        rm -f "$tmp"
+    fi
+else
+    warn "jq not found — skipping Gemini MCP setup"
+fi
 
 # ── Reminder ─────────────────────────────────────────────────────────────────
 
 LOCALS_LINES=""
-[ -n "$KEY_exa" ] && LOCALS_LINES="$LOCALS_LINES
-    set -gx EXA_API_KEY (security find-generic-password -a exa -s $KEYCHAIN_SERVICE -w 2>/dev/null)"
 [ -n "$KEY_context7" ] && LOCALS_LINES="$LOCALS_LINES
     set -gx CONTEXT7_API_KEY (security find-generic-password -a context7 -s $KEYCHAIN_SERVICE -w 2>/dev/null)"
 [ -n "$KEY_elevenlabs" ] && LOCALS_LINES="$LOCALS_LINES

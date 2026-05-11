@@ -1,6 +1,11 @@
+#:schema https://developers.openai.com/codex/config-schema.json
+
 # ── Model ────────────────────────────────────────────────────────────────────
 model = "gpt-5.5"
+review_model = "gpt-5.5"
 model_reasoning_effort = "xhigh"
+model_reasoning_summary = "auto"
+model_verbosity = "medium"
 model_context_window = 1000000
 model_auto_compact_token_limit = 960000
 tool_output_token_limit = 25000
@@ -8,10 +13,17 @@ plan_mode_reasoning_effort = "xhigh"
 service_tier = "fast"
 personality = "pragmatic"
 web_search = "live"
+file_opener = "vscode"
+
+# ── Project docs & roots ────────────────────────────────────────────────────
+project_doc_max_bytes = 65536
+project_doc_fallback_filenames = ["CLAUDE.md", "CONTRIBUTING.md", "CONTINUITY.md"]
+project_root_markers = [".git", ".jj", ".sl"]
 
 # ── Sandbox & approvals ─────────────────────────────────────────────────────
 sandbox_mode = "workspace-write"
 approvals_reviewer = "auto_review"
+allow_login_shell = false
 
 [sandbox_workspace_write]
 network_access = true
@@ -31,12 +43,32 @@ writable_roots = [
 # ── Shell environment ────────────────────────────────────────────────────────
 [shell_environment_policy]
 inherit = "core"
+ignore_default_excludes = false
+exclude = ["*KEY*", "*SECRET*", "*TOKEN*", "AWS_*", "AZURE_*", "GCP_*"]
 
 [shell_environment_policy.set]
 CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY = "1"
 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"
 DISABLE_ERROR_REPORTING = "1"
 DISABLE_TELEMETRY = "1"
+
+# ── History & privacy ───────────────────────────────────────────────────────
+[history]
+persistence = "save-all"
+max_bytes = 268435456 # 256 MiB
+
+[analytics]
+enabled = false
+
+[feedback]
+enabled = false
+
+[otel]
+environment = "dev"
+exporter = "none"
+trace_exporter = "none"
+metrics_exporter = "none"
+log_user_prompt = false
 
 # ── Feature flags ────────────────────────────────────────────────────────────
 # Removed/no-op flags (always on): sqlite, steer, collaboration_modes
@@ -63,11 +95,19 @@ goals = true
 # as a standalone file with a `name` field; do not duplicate them here.
 [agents]
 max_threads = 12
+max_depth = 2
+job_max_runtime_seconds = 3600
 
 # ── TUI ──────────────────────────────────────────────────────────────────────
 [tui]
 network_access = true
-notifications = true
+notifications = ["agent-turn-complete", "approval-requested"]
+notification_method = "bel"
+notification_condition = "unfocused"
+alternate_screen = "auto"
+show_tooltips = false
+status_line = ["model-with-reasoning", "context-remaining", "current-dir", "git-branch"]
+terminal_title = ["spinner", "project", "git-branch"]
 theme = "catppuccin-mocha"
 
 # ── Trust ────────────────────────────────────────────────────────────────────
@@ -79,8 +119,21 @@ trust_level = "trusted"
 [mcp_servers.ida-pro]
 command = "/opt/homebrew/bin/ida-mcp"
 
-# Key-dependent servers (context7, exa, mcp-tts) are appended by mcp-setup.sh
-# only when the user provides credentials. Do not add them here.
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+env_vars = ["CONTEXT7_API_KEY"]
+
+[mcp_servers.mcp_tts]
+command = "mcp-tts"
+args = ["--verbose"]
+env_vars = ["ELEVENLABS_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"]
+
+[mcp_servers.exa]
+url = "https://mcp.exa.ai/mcp"
+
+# Context7 and mcp-tts require exported keys at runtime.
+# Exa intentionally stays on the hosted keyless HTTP endpoint.
 
 # ── Plugins ──────────────────────────────────────────────────────────────────
 [plugins."github@openai-curated"]
