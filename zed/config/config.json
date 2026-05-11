@@ -1,5 +1,15 @@
 {
   // Editor
+  "cli_default_open_behavior": "existing_window",
+  "focus_follows_mouse": {
+    "enabled": false
+  },
+  "outline_panel": {
+    "dock": "right"
+  },
+  "collaboration_panel": {
+    "dock": "right"
+  },
   "vim_mode": false,
   "base_keymap": "Atom",
   "soft_wrap": "editor_width",
@@ -15,7 +25,7 @@
   "minimap": { "show": "always" },
   "tabs": { "file_icons": true },
   "scrollbar": { "git_diff": true },
-  "project_panel": { "show_diagnostics": "all" },
+  "project_panel": { "dock": "left", "show_diagnostics": "all" },
 
   // Fonts
   "ui_font_family": "MonoLisa Nerd Font",
@@ -45,6 +55,7 @@
 
   // Git
   "git_panel": {
+    "dock": "left",
     "tree_view": true,
     "sort_by_path": false
   },
@@ -108,7 +119,8 @@
 
   // File types
   "file_types": {
-    "Scheme": ["sb", "in"]
+    "Scheme": ["sb", "in"],
+    "TOML": ["toml", "toml.example"]
   },
 
   // File exclusions
@@ -127,10 +139,12 @@
 
   // Agent
   "agent": {
+    "sidebar_side": "right",
+    "dock": "right",
     "enabled": true,
-    "play_sound_when_agent_done": true,
+    "play_sound_when_agent_done": "always",
     "default_profile": "write",
-    "tool_permissions": { "default": "allow" },
+    "tool_permissions": { "default": "confirm" },
     "commit_message_model": {
       "provider": "copilot_chat",
       "model": "claude-sonnet-4.6"
@@ -147,6 +161,7 @@
       "write": {
         "name": "Write",
         "tools": {
+          "search_web": true,
           "batch_tool": false,
           "code_actions": false,
           "code_symbols": false,
@@ -190,8 +205,8 @@
       "api_url": "http://bmo:3993/api/v0",
       "available_models": [
         {
-          "name": "google/gemma-3-12b",
-          "max_tokens": 131072,
+          "name": "mlx-community/gemma-4-e4b-it-8bit",
+          "max_tokens": 50000,
           "supports_images": true,
           "supports_tool_calls": true
         }
@@ -200,22 +215,7 @@
   },
 
   // Context servers (add API keys locally)
-  "context_servers": {
-    "mcp-server-exa-search": {
-      "enabled": true,
-      "settings": {
-        "exa_api_key": "YOUR_API_KEY"
-      }
-    }
-    // "mcp-server-tts": {
-    //   "enabled": true,
-    //   "settings": {
-    //     "elevenlabs_api_key": "YOUR_API_KEY",
-    //     "say_tts_rate": 200,
-    //     "say_tts_voice": ""
-    //   }
-    // }
-  },
+  "context_servers": {},
 
   // Extensions (auto-installed on startup)
   "auto_install_extensions": {
