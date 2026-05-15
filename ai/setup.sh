@@ -142,18 +142,11 @@ brew install --quiet codex-app
 msg "Install gemini-cli..."
 brew install --quiet gemini-cli
 
-# Install skill dependencies
-echo "$(gum style --bold --foreground "#BE05D0" "  -") Install ralph-tui..."
-if command -v bun >/dev/null 2>&1; then
-    if ! bun install -g ralph-tui; then
-        warn "Failed to install ralph-tui with bun — continuing setup"
-    fi
-else
-    warn "bun not found — skipping ralph-tui"
-fi
+# Create config directories (including unified ~/.agents for hooks and skills)
+mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.codex" "$HOME/.codex-team" "$HOME/.gemini" "$HOME/.agents/hooks" "$HOME/.agents/skills"
 
-# Create config directories (including unified ~/.agents for skills)
-mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.codex" "$HOME/.codex-team" "$HOME/.gemini" "$HOME/.agents/skills"
+echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync shared AI hooks..."
+rsync -a --exclude='.DS_Store' --exclude='__pycache__' "$SCRIPT_DIR/hooks/" "$HOME/.agents/hooks/"
 
 # Sync claude + claude-team from the same source tree (settings.json gated by FORCE_SYNC)
 for variant in claude claude-team; do
@@ -206,15 +199,6 @@ if command -v claude >/dev/null 2>&1; then
 
         if add_claude_marketplace "$variant" "openai-codex" "openai/codex-plugin-cc"; then
             install_claude_plugin "$variant" "codex@openai-codex" "/codex:review and /codex:rescue depend on it"
-        fi
-
-        flow_marketplace="$HOME/Developer/Mine/blacktop/workflow"
-        if [ -d "$flow_marketplace/.claude-plugin" ]; then
-            if add_claude_marketplace "$variant" "blacktop-flow" "$flow_marketplace"; then
-                install_claude_plugin "$variant" "flow@blacktop-flow" ""
-            fi
-        else
-            warn "$variant: blacktop-flow marketplace missing at $flow_marketplace"
         fi
     done
     unset CLAUDE_CONFIG_DIR

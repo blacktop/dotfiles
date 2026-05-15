@@ -31,10 +31,11 @@ install_skill https://github.com/jamesrochabrun/skills swiftui-animation
 install_skill https://github.com/existential-birds/beagle swiftui-code-review
 install_skill https://github.com/wshobson/agents mobile-ios-design
 # Productivity
-install_skill https://github.com/subsy/ralph-tui
+#install_skill https://github.com/subsy/ralph-tui
 # install_skill https://github.com/clawdbot/clawdbot things-mac
-install_skill https://github.com/trevors/dot-claude jj-workflow
+#install_skill https://github.com/trevors/dot-claude jj-workflow
 # CLI/TUI
+install_skill https://github.com/ast-grep/claude-skill ast-grep
 install_skill https://github.com/jeffallan/claude-skills cli-developer
 install_skill https://github.com/steipete/agent-scripts create-cli
 install_skill https://github.com/rand/cc-polymath discover-tui
