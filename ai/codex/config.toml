@@ -14,6 +14,7 @@ service_tier = "fast"
 personality = "pragmatic"
 web_search = "live"
 file_opener = "vscode"
+notify = ["python3", "${HOME}/.agents/hooks/tts-notify.py", "codex-notify", "--background"]
 
 # ── Project docs & roots ────────────────────────────────────────────────────
 project_doc_max_bytes = 65536
@@ -77,6 +78,7 @@ log_user_prompt = false
 apps = true                    # Connected ChatGPT Apps
 ghost_commit = false           # Git snapshots per turn (key: "undo")
 guardian_approval = true       # Sub-agent reviews approvals for safety
+hooks = true                   # Lifecycle hooks
 js_repl = true                 # Node.js JavaScript REPL
 memories = true                # Persistent agent memories
 multi_agent = true             # Spawn parallel sub-agents
@@ -108,6 +110,15 @@ show_tooltips = false
 status_line = ["model-with-reasoning", "context-remaining", "current-dir", "git-branch"]
 terminal_title = ["spinner", "project", "git-branch"]
 theme = "catppuccin-mocha"
+
+# ── Hooks ────────────────────────────────────────────────────────────────────
+[[hooks.PermissionRequest]]
+
+[[hooks.PermissionRequest.hooks]]
+type = "command"
+command = 'python3 "${HOME}/.agents/hooks/tts-notify.py" codex-hook --background'
+timeout = 15
+statusMessage = "Speaking approval request"
 
 # ── Trust ────────────────────────────────────────────────────────────────────
 [projects."${HOME}/Developer/Mine/blacktop"]

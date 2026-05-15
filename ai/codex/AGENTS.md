@@ -21,6 +21,23 @@ Before finishing a task:
 1. Summarize changes with file and line references.
 1. Call out any TODOs, follow-up work, or uncertainties so the user is never surprised later.
 
+## Host Defaults
+
+- User-facing terminal examples should assume macOS with Homebrew and Fish unless the target is explicitly Linux, a container, or a remote host.
+- Use Fish-compatible syntax for copy/paste snippets. Prefer `env NAME=value command` for one-shot environment variables.
+- Prefer macOS-native tools in examples: `brew`, `open`, `pbcopy`/`pbpaste`, `security`, and `xcode-select`. Avoid `apt`, `yum`, `systemctl`, `xdg-open`, or Linux clipboard tools unless the target environment requires them.
+- Homebrew is available under the Apple Silicon prefix when an absolute path is necessary; prefer `brew --prefix` in reusable commands.
+
+## Shell Examples
+
+The user's interactive shell is Fish. When giving commands for the user to copy/paste into their terminal, prefer Fish-compatible syntax:
+
+- Use `set -gx NAME value` for exported variables, or `env NAME=value command` for one command.
+- Use Fish command substitution: `(command)`, not `$(command)`.
+- Avoid Bash-only snippets in interactive examples: `export NAME=value`, `VAR=value command`, `source venv/bin/activate`, arrays, heredocs, and `for x in ...; do ...; done`.
+- If a snippet is specifically a script file, use Bash/sh with a shebang and say to run it as `bash script.sh` or `sh script.sh`.
+- Agent-executed commands may still use the harness shell; this guidance is for user-facing copy/paste examples.
+
 ### TypeScript
 
 - In TypeScript codebases NEVER, EVER use `any` we are better than that. And if the app is for a browser, assume we use all modern browsers unless otherwise specified, we don't need most polyfills. Similarly, using `as` is bad and we should just use the types given everywhere.
@@ -47,3 +64,7 @@ widening the search.
 - Never read files like `locals.fish`, `.zshrc`, `.zprofile`, `.bashrc`, `.bash_profile`, `config.fish`, or similar shell startup or local secret-bearing files unless the user explicitly asks for that file to be edited.
 - Do not run commands like `env`, `printenv`, `set`, `export`, or equivalent probes for this purpose.
 - If authentication or local setup may be the issue, run the target tool or command directly and report the failure without probing the environment first.
+
+## HTML Artifacts
+
+When a task warrants a self-contained HTML artifact (interactive UI, ≥3-axis comparison, status snapshot, throwaway editor), use the `html-artifacts` skill — invoke by name; Codex has no `/artifact` slash command, so state intent (durable vs. throwaway, voice vs. silent) in the prompt. Output paths: `docs/.ai/artifacts/<topic>.html` (durable; `git add -f` to track since `docs/.ai/` is globally ignored) or `docs/.ai/tools/<topic>.html` (throwaway). Voice summaries (opt-in) go through the `speak` skill, never `tts-notify.py` directly. Format rules and self-check live in the skill body.

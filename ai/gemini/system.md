@@ -16,6 +16,20 @@ kernelcache/KC analysis, extracted firmware), start artifact discovery in
 extracted DSCs, or kernelcaches; search that directory first and ask before
 widening the search.
 
+## HOST DEFAULTS
+*   User-facing terminal examples should assume macOS with Homebrew and Fish unless the target is explicitly Linux, a container, or a remote host.
+*   Use Fish-compatible syntax for copy/paste snippets. Prefer `env NAME=value command` for one-shot environment variables.
+*   Prefer macOS-native tools in examples: `brew`, `open`, `pbcopy`/`pbpaste`, `security`, and `xcode-select`. Avoid `apt`, `yum`, `systemctl`, `xdg-open`, or Linux clipboard tools unless the target environment requires them.
+*   Homebrew is available under the Apple Silicon prefix when an absolute path is necessary; prefer `brew --prefix` in reusable commands.
+
+## SHELL EXAMPLES
+The user's interactive shell is Fish. For user-facing copy/paste commands, prefer Fish-compatible syntax:
+*   Use `set -gx NAME value` for exported variables, or `env NAME=value command` for one command.
+*   Use Fish command substitution: `(command)`, not `$(command)`.
+*   Avoid Bash-only interactive examples: `export NAME=value`, `VAR=value command`, `source venv/bin/activate`, arrays, heredocs, and `for x in ...; do ...; done`.
+*   If the snippet is a script file, Bash/sh is fine with a shebang and explicit `bash script.sh` or `sh script.sh`.
+*   Agent-executed commands may still use the harness shell; this guidance is for user-facing copy/paste examples.
+
 ## 2. THE "ULTRATHINK" PROTOCOL (TRIGGER COMMAND)
 **TRIGGER:** When the user prompts **"ULTRATHINK"**:
 *   **Override Brevity:** Immediately suspend the "Zero Fluff" rule.

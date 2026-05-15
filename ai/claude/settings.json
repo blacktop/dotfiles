@@ -84,8 +84,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "afplay /System/Library/Sounds/Morse.aiff",
-            "async": true
+            "command": "python3 \"$HOME/.agents/hooks/tts-notify.py\" claude-hook --background",
+            "timeout": 30
           }
         ]
       }
@@ -95,19 +95,31 @@
         "hooks": [
           {
             "type": "command",
-            "command": "afplay /System/Library/Sounds/Glass.aiff",
-            "async": true
+            "command": "python3 \"$HOME/.agents/hooks/tts-notify.py\" claude-hook --background",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.agents/hooks/tts-notify.py\" claude-hook --background",
+            "timeout": 30
           }
         ]
       }
     ],
     "Notification": [
       {
+        "matcher": "permission_prompt|elicitation_dialog",
         "hooks": [
           {
             "type": "command",
-            "command": "afplay /System/Library/Sounds/Hero.aiff",
-            "async": true
+            "command": "python3 \"$HOME/.agents/hooks/tts-notify.py\" claude-hook --background",
+            "timeout": 30
           }
         ]
       }
@@ -125,7 +137,6 @@
     "frontend-design@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
     "pr-review-toolkit@claude-plugins-official": true,
-    "plugin-dev@claude-plugins-official": true,
-    "flow@blacktop-flow": true
+    "plugin-dev@claude-plugins-official": true
   }
 }

@@ -75,6 +75,13 @@ kernelcache/KC analysis, extracted firmware), start artifact discovery in
 extracted DSCs, or kernelcaches; search that directory first and ask before
 widening the search.
 
+### Host Defaults
+
+- User-facing terminal examples should assume macOS with Homebrew and Fish unless the target is explicitly Linux, a container, or a remote host.
+- Use Fish-compatible syntax for copy/paste snippets. Prefer `env NAME=value command` for one-shot environment variables.
+- Prefer macOS-native tools in examples: `brew`, `open`, `pbcopy`/`pbpaste`, `security`, and `xcode-select`. Avoid `apt`, `yum`, `systemctl`, `xdg-open`, or Linux clipboard tools unless the target environment requires them.
+- Homebrew is available under the Apple Silicon prefix when an absolute path is necessary; prefer `brew --prefix` in reusable commands.
+
 ### CLI tools
 
 | tool | replaces | usage |
@@ -211,6 +218,16 @@ similar_names = "allow"
 
 All scripts must start with `set -euo pipefail`. Lint: `shellcheck script.sh && shfmt -d script.sh`
 
+### Shell Examples
+
+The user's interactive shell is Fish. When giving commands for the user to copy/paste into their terminal, prefer Fish-compatible syntax:
+
+- Use `set -gx NAME value` for exported variables, or `env NAME=value command` for one command.
+- Use Fish command substitution: `(command)`, not `$(command)`.
+- Avoid Bash-only snippets in interactive examples: `export NAME=value`, `VAR=value command`, `source venv/bin/activate`, arrays, heredocs, and `for x in ...; do ...; done`.
+- If a snippet is specifically a script file, use Bash/sh with a shebang and say to run it as `bash script.sh` or `sh script.sh`.
+- Agent-executed commands may still use the harness shell; this guidance is for user-facing copy/paste examples.
+
 ### GitHub Actions
 
 Pin actions to SHA hashes with version comments: `actions/checkout@<full-sha>  # vX.Y.Z` (use `persist-credentials: false`). Scan workflows with `zizmor` before committing. Configure Dependabot with 7-day cooldowns and grouped updates.
@@ -240,6 +257,10 @@ Pin actions to SHA hashes with version comments: `actions/checkout@<full-sha>  #
 Describe what the code does now — not discarded approaches, prior iterations, or alternatives. Only describe what's in the diff.
 
 Use plain, factual language. A bug fix is a bug fix, not a "critical stability improvement." Avoid: critical, crucial, essential, significant, comprehensive, robust, elegant.
+
+### HTML artifacts
+
+When a task warrants a self-contained HTML artifact (interactive UI, ≥3-axis comparison, status snapshot, throwaway editor), use the `html-artifacts` skill — invoke via `/artifact` in Claude or by name in Codex. Output paths: `docs/.ai/artifacts/<topic>.html` (durable; `git add -f` to track since `docs/.ai/` is globally ignored) or `docs/.ai/tools/<topic>.html` (throwaway). Voice summaries (opt-in) go through the `speak` skill, never `tts-notify.py` directly. Format rules and self-check live in the skill body.
 
 ## Final Handoff
 
