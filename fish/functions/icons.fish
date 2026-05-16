@@ -2,7 +2,7 @@ function icons -d "Translates program names to icons, so we an use them in our t
     switch $argv[1]
         case ack fd find fzf grep rg
             echo 
-        case atop htop top
+        case atop htop btop top
             echo 
         case bash fish zsh sh ash
             echo 
@@ -10,16 +10,16 @@ function icons -d "Translates program names to icons, so we an use them in our t
             echo 
         case clx
             echo 
+        case copilot
+            echo 
         case cp duplicate
             echo 
-        case crush
-            echo ♥
+        case diff
+            echo 
         case mv
             echo 󰉒
         case curl http pint lynx wget w3m
             echo 
-        case diff
-            echo 
         case docker docker-compose podman
             echo 
         case lf ls nnn ranger lsd
@@ -44,8 +44,10 @@ function icons -d "Translates program names to icons, so we an use them in our t
             echo 
         case nano pico
             echo 
-        case node npm yarn
-            echo 
+        case node
+            echo 
+        case npm pnpm
+            echo 
         case 'nix*'
             echo 󱄅
         case vim vi
@@ -58,6 +60,8 @@ function icons -d "Translates program names to icons, so we an use them in our t
             echo 
         case rsync
             echo 
+        case rust cargo rustup
+            echo 
         case ruby irb
             echo 
         case scp ssh
@@ -74,6 +78,62 @@ function icons -d "Translates program names to icons, so we an use them in our t
             echo 
         case youtube-dl
             echo 
+        case age bw gpg op pass pinentry
+            echo 
+        case ansible
+            echo 
+        case bun
+            echo 
+        case composer
+            echo 
+        case deno
+            echo 󰟓
+        case dig nslookup ping traceroute mtr nc netcat nmap tcpdump
+            echo 󰛳
+        case du df ncdu dust
+            echo 
+        case eslint
+            echo 
+        case ffmpeg mpv yt-dlp
+            echo 
+        case helm
+            echo ⎈
+        case imagemagick magick convert
+            echo 
+        case jq yq
+            echo 󰘦
+        case mongo mongosh
+            echo 
+        case mysql mariadb
+            echo 
+        case openssl
+            echo 
+        case psql
+            echo 
+        case redis-cli
+            echo 
+        case screen
+            echo 
+        case sqlite sqlite3
+            echo 
+        case swift
+            echo 
+        case tar zip unzip gzip gunzip
+            echo 
+        case terraform tofu tflint
+            echo 
+        case time
+            echo 
+        case tsc
+            echo 
+        case watch
+            echo 
+        case xcodebuild
+            echo 
+        case yarn
+            echo 
+        case zig
+            echo 
         case '*'
             echo $argv[1]
     end
