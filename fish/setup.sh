@@ -22,8 +22,21 @@ if [ ! -f "$FISHER" ]; then
 fi
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Setup fish config (symlinks)..."
-mkdir -p "$HOME/.config/fish/functions"
+mkdir -p "$HOME/.config/fish/conf.d" "$HOME/.config/fish/functions"
 ln -sf "$FISH_DIR/config.fish" "$HOME/.config/fish/config.fish"
+for f in "$HOME/.config/fish/conf.d"/*.fish; do
+    [ -L "$f" ] || continue
+    target="$(readlink "$f")"
+    case "$target" in
+    "$FISH_DIR"/conf.d/*.fish)
+        [ -e "$target" ] || unlink "$f"
+        ;;
+    esac
+done
+for f in "$FISH_DIR"/conf.d/*.fish; do
+    [ -e "$f" ] || continue
+    ln -sf "$f" "$HOME/.config/fish/conf.d/$(basename "$f")"
+done
 for f in "$HOME/.config/fish/functions"/*.fish; do
     [ -L "$f" ] || continue
     target="$(readlink "$f")"
