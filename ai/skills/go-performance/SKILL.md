@@ -7,6 +7,13 @@ description: Measure and improve Go program performance on modern Go (1.24+). Us
 
 Start with measurement, not rewriting.
 
+## When to use this skill
+
+- Profile Go code with `pprof`, `runtime/trace`, flight recording, or IDE-collected pprof-compatible profiles.
+- Diagnose CPU hot paths, allocation pressure, retained heap growth, goroutine pileups, scheduler delay, or lock/channel contention.
+- Write or repair Go benchmarks and compare performance changes with `benchstat`.
+- Decide whether a measured Go optimization is worth the added complexity.
+
 ## When NOT to use this skill
 
 - No measurement of an actual performance problem exists yet. Write the benchmark or capture the profile first; do not optimize speculatively.
@@ -24,7 +31,7 @@ Start with measurement, not rewriting.
 1. Reproduce the problem and name the metric that matters: `ns/op`, `B/op`, `allocs/op`, throughput, tail latency, pause time, goroutine growth, or CPU saturation.
 2. Add or repair a benchmark before changing code. On Go 1.24+ prefer `b.Loop()` for new or edited benchmarks unless the repo must support older Go.
 3. Run the benchmark repeatedly and compare with `benchstat`; do not trust one run.
-4. Collect one diagnostic at a time: CPU, heap/allocs, mutex, block, or trace. Do not mix profiles unless you must; diagnostics can distort each other.
+4. Choose the profile that matches the symptom: CPU for active compute, heap/allocs for memory, goroutine/block/mutex for waiting and contention, trace for scheduler timelines. Do not mix high-overhead diagnostics unless the issue requires correlation.
 5. Fix the dominant cost first: algorithmic complexity, redundant work, bad data layout, excess allocation, or contention.
 6. Re-run the same benchmark and compare with `benchstat`.
 7. Apply PGO only after the code path is correct and the profile is representative.

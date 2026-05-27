@@ -1,6 +1,6 @@
 # Measurement Workflow
 
-Source snapshot: refreshed 2026-03-12 from official Go 1.26 docs and blog posts
+Source snapshot: refreshed 2026-05-26 from official Go 1.26 docs and selected profiling guides
 
 - Go 1.26 release notes: https://go.dev/doc/go1.26
 - Diagnostics overview: https://go.dev/doc/diagnostics
@@ -10,6 +10,7 @@ Source snapshot: refreshed 2026-03-12 from official Go 1.26 docs and blog posts
 - `runtime/trace` and flight recorder: https://pkg.go.dev/runtime/trace and https://go.dev/blog/flight-recorder
 - PGO: https://go.dev/doc/pgo
 - `benchstat`: https://pkg.go.dev/golang.org/x/perf/cmd/benchstat
+- JetBrains Go profiling guide: https://blog.jetbrains.com/go/2026/05/20/golang-profiling-guide/
 
 ## Benchmark first
 
@@ -81,6 +82,20 @@ go install golang.org/x/perf/cmd/benchstat@latest
 
 The Go docs explicitly warn that diagnostics can interfere with each other. Collect focused data.
 
+### Profile chooser
+
+Match the profile to the symptom before collecting data:
+
+| Symptom | Start with | What it does and does not show |
+| --- | --- | --- |
+| CPU is saturated, a benchmark regressed, or PGO needs input | CPU profile | Samples active execution. It finds compute hot paths, not time spent blocked on locks, channels, network, or timers. |
+| RSS or live heap grows | Heap profile | Defaults to `inuse_space`, which shows retained heap. Use `gc=1` or `runtime.GC()` when the question is "what is still live after GC?" |
+| GC work or allocation rate is high | Allocs profile or memory profile with `alloc_space` / `alloc_objects` | Shows cumulative allocation pressure, including objects that were already collected. Profiles are sampled, not exact. |
+| CPU is low but latency is high | Goroutine dump, then block and mutex profiles | Goroutine shows current stacks; block shows where goroutines waited; mutex shows lock holders that made others wait. |
+| Scheduler behavior or intermittent latency is unclear | Trace or Go 1.25+ flight recorder | Captures a runtime timeline instead of aggregate samples. Use for runnable queues, network polling, syscalls, and goroutine scheduling. |
+
+Block and mutex profiles are disabled by default and add overhead. Enable them only for the narrow benchmark or a short production investigation window.
+
 ### CPU
 
 ```bash
@@ -93,9 +108,13 @@ go tool pprof -http=:0 cpu.pprof
 
 ```bash
 go test -run='^$' -bench='^BenchmarkFoo$' -memprofile=mem.pprof ./pkg
+go tool pprof -top -sample_index=inuse_space mem.pprof
+go tool pprof -top -sample_index=inuse_objects mem.pprof
 go tool pprof -top -sample_index=alloc_space mem.pprof
 go tool pprof -top -sample_index=alloc_objects mem.pprof
 ```
+
+Heap and allocs profiles expose the same four sample types. Heap defaults to `inuse_space` for retained live heap; allocs defaults to `alloc_space` for cumulative allocation pressure.
 
 Use `-memprofilerate=1` only when you need more precise allocation data and can tolerate the extra overhead.
 
@@ -104,8 +123,20 @@ Use `-memprofilerate=1` only when you need more precise allocation data and can 
 ```bash
 go test -run='^$' -bench='^BenchmarkFoo$' -mutexprofile=mutex.pprof -mutexprofilefraction=1 ./pkg
 go test -run='^$' -bench='^BenchmarkFoo$' -blockprofile=block.pprof ./pkg
-go tool pprof -top mutex.pprof
-go tool pprof -top block.pprof
+go tool pprof -top -sample_index=contentions mutex.pprof
+go tool pprof -top -sample_index=contentions block.pprof
+go tool pprof -top -sample_index=delay mutex.pprof
+go tool pprof -top -sample_index=delay block.pprof
+```
+
+For mutex and block profiles, check both delay and contentions. High delay with low contentions means a few waits were expensive; high contentions with low delay means many short waits.
+
+### Goroutine dump
+
+Use goroutine profiles for current pileups, leaks, and deadlocks. Text is often more useful than a graph:
+
+```bash
+curl 'http://localhost:6060/debug/pprof/goroutine?debug=2'
 ```
 
 ### Trace
@@ -117,6 +148,27 @@ go test -run='^$' -bench='^BenchmarkFoo$' -trace=trace.out ./pkg
 go tool trace trace.out
 ```
 
+## Inspecting pprof output
+
+Start with both flat and cumulative views:
+
+```bash
+go tool pprof -text cpu.pprof
+go tool pprof -top -cum cpu.pprof
+go tool pprof -tree mutex.pprof
+go tool pprof -list='mypkg.(*Cache).Get' cpu.pprof
+go tool pprof -peek='mypkg.(*Cache).Get' cpu.pprof
+go tool pprof -http=:0 cpu.pprof
+```
+
+Interpretation rules:
+
+- Flat cost is work done directly in the function. High flat cost points at the function body.
+- Cumulative cost includes callees. High cumulative cost points at a caller or workflow that creates expensive downstream work.
+- Flame graph width is cost; stack height is call depth, not importance.
+- For memory profiles, always state the sample index used (`inuse_space`, `alloc_space`, `inuse_objects`, or `alloc_objects`).
+- For block and mutex profiles, always state whether the result is ordered by delay or contentions.
+
 ## Service profiling
 
 For a long-running service, prefer `net/http/pprof` or `runtime/pprof`.
@@ -126,8 +178,23 @@ import _ "net/http/pprof"
 ```
 
 ```bash
+# CPU: 30-second active execution sample
 go tool pprof 'http://localhost:6060/debug/pprof/profile?seconds=30'
-go tool pprof http://localhost:6060/debug/pprof/heap
+
+# Live heap, forcing GC first when retained objects are the question
+go tool pprof 'http://localhost:6060/debug/pprof/heap?gc=1'
+
+# Cumulative allocation pressure since process start
+go tool pprof 'http://localhost:6060/debug/pprof/allocs'
+
+# Contention profiles; useful only if runtime rates were enabled
+go tool pprof 'http://localhost:6060/debug/pprof/block'
+go tool pprof 'http://localhost:6060/debug/pprof/mutex'
+
+# Current goroutine pileup, usually best read as text
+curl 'http://localhost:6060/debug/pprof/goroutine?debug=2'
+
+# Runtime timeline
 curl -o trace.out 'http://localhost:6060/debug/pprof/trace?seconds=5'
 go tool trace trace.out
 ```
@@ -135,7 +202,10 @@ go tool trace trace.out
 Notes:
 
 - `net/http/pprof` endpoints must be requested with `GET`.
-- heap, allocs, mutex, block, and goroutine endpoints support `seconds=N` delta profiles.
+- Heap with `gc=1` forces garbage collection first; use `gc=0` or omit it when forcing GC would hide short-lived garbage or allocation spikes.
+- Block and mutex endpoints are useful only after `runtime.SetBlockProfileRate` or `runtime.SetMutexProfileFraction` has been configured.
+- For short investigation windows, `runtime.SetBlockProfileRate(1)` and `runtime.SetMutexProfileFraction(1)` capture every event; use lower-overhead sampling for production.
+- Heap, allocs, mutex, block, and goroutine endpoints support `seconds=N` delta profiles.
 - CPU and trace endpoints use `seconds=N` as capture duration.
 
 ## Flight recorder
