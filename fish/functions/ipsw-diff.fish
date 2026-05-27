@@ -82,6 +82,7 @@ function ipsw-diff --description 'Diff two IPSWs with comprehensive analysis'
         --ent \
         --fw \
         --launchd \
+        --loc \
         --feat \
         --strs \
         --files \
