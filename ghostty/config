@@ -33,6 +33,7 @@ keybind = super+shift+home=scroll_to_top
 keybind = shift+enter=text:\n
 
 # Ghostty tab switching
+keybind = shift+cmd+t=new_tab
 keybind = cmd+left=previous_tab
 keybind = cmd+right=next_tab
 
