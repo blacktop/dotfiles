@@ -28,7 +28,27 @@ shell-integration-features = cursor,no-sudo,title,ssh-terminfo,ssh-env
 keybind = ctrl+shift+j=write_screen_file:paste
 keybind = global:cmd+alt+s=toggle_quick_terminal
 keybind = super+shift+home=scroll_to_top
+
+# Claude Code
 keybind = shift+enter=text:\n
+
+# Ghostty tab switching
+keybind = cmd+left=previous_tab
+keybind = cmd+right=next_tab
+
+# tmux keymaps using C-a prefix
+keybind = cmd+t=text:\x01c
+keybind = cmd+d=text:\x01i
+keybind = shift+cmd+d=text:\x01u
+keybind = cmd+digit_1=text:\x011
+keybind = cmd+digit_2=text:\x012
+keybind = cmd+digit_3=text:\x013
+keybind = cmd+digit_4=text:\x014
+keybind = cmd+digit_5=text:\x015
+keybind = cmd+digit_6=text:\x016
+keybind = cmd+digit_7=text:\x017
+keybind = cmd+digit_8=text:\x018
+keybind = cmd+digit_9=text:\x019
 
 # ── Bell & notifications ─────────────────────────────────────────────────────
 bell-audio-path = /System/Library/Sounds/Bottle.aiff
@@ -47,6 +67,7 @@ clipboard-paste-bracketed-safe = true
 theme = Tokyonight Storm
 # theme = catppuccin-mocha
 # theme = Rose Pine Moon
+# background = #000000
 
 # ── Appearance ───────────────────────────────────────────────────────────────
 background-opacity = 0.9
@@ -80,7 +101,7 @@ font-feature = liga
 
 # ── Nerd Font glyph mapping ─────────────────────────────────────────────────
 # https://github.com/ryanoasis/nerd-fonts/wiki/Glyph-Sets-and-Code-Points
-font-codepoint-map = U+e0b0-U+e0b3,U+e0b4-U+e0c8,U+e0cc-U+e0d4,U+e0ca= Cousine Nerd Font Mono
-font-codepoint-map = U+f000-U+f2e0,U+e200-U+e2a9= Cousine Nerd Font Mono
-font-codepoint-map = U+e5fa-U+e6b1= Cousine Nerd Font Mono
-font-codepoint-map = U+ea60-U+ebeb= Cousine Nerd Font Mono
+font-codepoint-map = U+e0b0-U+e0b3,U+e0b4-U+e0c8,U+e0cc-U+e0d4,U+e0ca=Cousine Nerd Font Mono
+font-codepoint-map = U+f000-U+f2e0,U+e200-U+e2a9=Cousine Nerd Font Mono
+font-codepoint-map = U+e5fa-U+e6b1=Cousine Nerd Font Mono
+font-codepoint-map = U+ea60-U+ebeb=Cousine Nerd Font Mono
