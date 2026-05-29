@@ -31,6 +31,12 @@ fi
 git config --global core.editor "${EDITOR:-vi}"
 git config --global core.pager delta
 git config --global core.excludesFile "$HOME/.gitignore_global"
+git config --global core.precomposeUnicode true
+
+# Filesystem watcher for fast `git status` on large checkouts. Spawns one
+# lightweight daemon per active repo (event-based, negligible idle cost).
+git config --global core.fsmonitor true
+git config --global core.untrackedCache true
 
 # ── User ─────────────────────────────────────────────────────────────────────
 # Install a per-directory blacktop identity override. The global default is
@@ -49,15 +55,47 @@ git config --global 'includeIf.gitdir:~/Developer/Mine/badapple/.path' "$HOME/.g
 # ── Push / Pull / Rebase ────────────────────────────────────────────────────
 git config --global push.autoSetupRemote true
 git config --global push.default current
+git config --global push.followTags true
 git config --global pull.rebase true
 git config --global rebase.autoStash true
+git config --global rebase.autoSquash true
+git config --global rebase.updateRefs true
 git config --global init.defaultBranch main
+
+# ── Fetch ────────────────────────────────────────────────────────────────────
+# NOTE: deliberately NOT setting fetch.pruneTags — it makes fetch mirror remote
+# tags non-forced, which rejects + aborts pulls on repos with rolling tags
+# (e.g. ipsw's v0.0.0-prerelease, ghostty's tip).
+git config --global fetch.prune true
+git config --global fetch.all true
+
+# ── Rerere (reuse recorded conflict resolutions) ─────────────────────────────
+git config --global rerere.enabled true
+git config --global rerere.autoUpdate true
 
 # ── Aliases ──────────────────────────────────────────────────────────────────
 git config --global alias.undo "reset --soft HEAD^"
+git config --global alias.please "push --force-with-lease"
+git config --global alias.unshallow "fetch --prune --tags --unshallow"
 
 # ── Diff ─────────────────────────────────────────────────────────────────────
 git config --global diff.ignoreSubmodules dirty
+git config --global diff.algorithm histogram
+git config --global diff.colorMoved plain
+git config --global diff.mnemonicPrefix true
+git config --global diff.renames true
+
+# ── Merge ────────────────────────────────────────────────────────────────────
+git config --global merge.conflictStyle zdiff3
+
+# ── Branch / Tag / Column sorting ────────────────────────────────────────────
+git config --global branch.sort -committerdate
+git config --global tag.sort "version:refname"
+git config --global column.ui auto
+
+# ── Commit / Help UX ─────────────────────────────────────────────────────────
+git config --global commit.verbose true
+git config --global help.autocorrect prompt
 
 # ── Delta (pager) ────────────────────────────────────────────────────────────
 git config --global delta.line-numbers true
@@ -78,6 +116,11 @@ git config --global credential.https://github.com.helper ""
 git config --global credential.https://github.com.helper "!/opt/homebrew/bin/gh auth git-credential"
 git config --global credential.https://gist.github.com.helper ""
 git config --global credential.https://gist.github.com.helper "!/opt/homebrew/bin/gh auth git-credential"
+
+# ── Object integrity (security) ──────────────────────────────────────────────
+# Verify objects on fetch/receive: rejects malformed objects, malicious
+# .gitmodules, and embedded .GIT dirs. fetch/receive inherit this value.
+git config --global transfer.fsckObjects true
 
 # ── Global gitignore ────────────────────────────────────────────────────────
 ln -sf "$SCRIPT_DIR/gitignore_global" "$HOME/.gitignore_global"
@@ -202,6 +245,17 @@ if [ -f "$SEP_PUB_KEY" ]; then
     else
         echo "$(gum style --bold --foreground "#FF9400" "  ⚠") Run 'gh auth login' then rerun this script to upload SSH key to GitHub"
     fi
+fi
+
+# ── Background maintenance (launchd scheduler) ───────────────────────────────
+# Installs the per-user scheduler (incremental strategy) and registers this
+# repo. Register large repos (e.g. IPSW/firmware checkouts) yourself with:
+#   git -C <repo> maintenance register
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+if git -C "$REPO_ROOT" maintenance start >/dev/null 2>&1; then
+    echo "$(gum style --bold --foreground "#00C853" "  ✓") Background maintenance scheduler installed"
+else
+    echo "$(gum style --bold --foreground "#FF9400" "  ⚠") Could not start git maintenance (run 'git maintenance start' in a repo)"
 fi
 
 # ── gh-dash ──────────────────────────────────────────────────────────────────
