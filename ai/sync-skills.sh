@@ -10,7 +10,7 @@ mkdir -p "$AGENTS_SKILLS"
 
 # Claude Code looks at $CLAUDE_CONFIG_DIR/skills/; codex CLI looks at $CODEX_HOME/skills/.
 # Symlink each variant to the unified ~/.agents/skills location so skills live in one place.
-for agent_dir in "$HOME/.claude" "$HOME/.claude-team" "$HOME/.codex" "$HOME/.codex-team"; do
+for agent_dir in "$HOME/.claude" "$HOME/.claude-team" "$HOME/.claude-ddb" "$HOME/.codex" "$HOME/.codex-team"; do
 	[ -d "$agent_dir" ] || continue
 	skills_path="$agent_dir/skills"
 	if [ ! -L "$skills_path" ]; then

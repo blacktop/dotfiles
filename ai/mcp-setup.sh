@@ -73,14 +73,21 @@ prompt_key "openai" "OpenAI API key"
 prompt_key "gemini" "Gemini API key"
 
 # ── Claude Code MCP servers ─────────────────────────────────────────────────
-# `claude mcp add --scope user` writes to $CLAUDE_CONFIG_DIR/.claude.json,
-# so each variant must be registered separately.
+# `claude mcp add --scope user` writes to $CLAUDE_CONFIG_DIR/.claude.json, so each
+# variant is registered separately. Plain `claude` uses the default config file at
+# ~/.claude.json (CLAUDE_CONFIG_DIR=$HOME); the -team/-ddb wrappers set
+# CLAUDE_CONFIG_DIR to ~/.claude-team / ~/.claude-ddb (see their fish functions).
+# Base-account MCP config lives in ~/.claude.json, NOT ~/.claude/.claude.json —
+# pointing at ~/.claude here would write to a file the default `claude` never reads.
 
 if ! command -v claude >/dev/null 2>&1; then
     warn "claude CLI not found — skipping Claude MCP setup"
 else
-    for variant in claude claude-team; do
-        config_dir="$HOME/.$variant"
+    for variant in claude claude-team claude-ddb; do
+        case "$variant" in
+        claude) config_dir="$HOME" ;;
+        *) config_dir="$HOME/.$variant" ;;
+        esac
         [ -d "$config_dir" ] || continue
         export CLAUDE_CONFIG_DIR="$config_dir"
         msg "Configuring Claude Code MCP servers for $variant..."

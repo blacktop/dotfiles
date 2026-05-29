@@ -143,13 +143,13 @@ msg "Install gemini-cli..."
 brew install --quiet gemini-cli
 
 # Create config directories (including unified ~/.agents for hooks and skills)
-mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.codex" "$HOME/.codex-team" "$HOME/.gemini" "$HOME/.agents/hooks" "$HOME/.agents/skills"
+mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.claude-ddb" "$HOME/.codex" "$HOME/.codex-team" "$HOME/.gemini" "$HOME/.agents/hooks" "$HOME/.agents/skills"
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync shared AI hooks..."
 rsync -a --exclude='.DS_Store' --exclude='__pycache__' "$SCRIPT_DIR/hooks/" "$HOME/.agents/hooks/"
 
-# Sync claude + claude-team from the same source tree (settings.json gated by FORCE_SYNC)
-for variant in claude claude-team; do
+# Sync claude + claude-team + claude-ddb from the same source tree (settings.json gated by FORCE_SYNC)
+for variant in claude claude-team claude-ddb; do
     msg "Sync $variant config..."
     rsync -a --exclude='.DS_Store' --exclude='skills' --exclude='settings.json' \
         "$SCRIPT_DIR/claude/" "$HOME/.$variant/"
@@ -183,7 +183,7 @@ echo "$(gum style --bold --foreground "#BE05D0" "  -") Install gemini extensions
 # `claude plugin` writes to $CLAUDE_CONFIG_DIR/plugins/, so each variant needs its own pass.
 if command -v claude >/dev/null 2>&1; then
     echo "$(gum style --bold --foreground "#BE05D0" "  -") Install claude plugins..."
-    for variant in claude claude-team; do
+    for variant in claude claude-team claude-ddb; do
         config_dir="$HOME/.$variant"
         [ -d "$config_dir" ] || continue
         export CLAUDE_CONFIG_DIR="$config_dir"
