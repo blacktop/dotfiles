@@ -70,10 +70,11 @@ When adding dependencies, CI actions, or tool versions, always look up the curre
 ### Apple platform artifacts
 
 For Apple iOS/macOS research and tooling (`ipsw`, DSC/dyld_shared_cache work,
-kernelcache/KC analysis, extracted firmware), start artifact discovery in
-`~/Documents/IPSWs`. Do not scan the whole filesystem looking for IPSWs,
-extracted DSCs, or kernelcaches; search that directory first and ask before
-widening the search.
+kernelcache/KC analysis, extracted firmware), start artifact discovery in the
+directory named by the `$APPLE_FIRMWARE_DIR` environment variable (resolve it
+with `echo $APPLE_FIRMWARE_DIR`; it currently points at `~/Apple`). Do not scan
+the whole filesystem looking for IPSWs, extracted DSCs, or kernelcaches; search
+that directory first and ask before widening the search.
 
 ### Host Defaults
 
