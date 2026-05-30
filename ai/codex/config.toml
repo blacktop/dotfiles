@@ -14,7 +14,6 @@ service_tier = "fast"
 personality = "pragmatic"
 web_search = "live"
 file_opener = "vscode"
-notify = ["python3", "${HOME}/.agents/hooks/tts-notify.py", "codex-notify", "--background"]
 
 # ── Project docs & roots ────────────────────────────────────────────────────
 project_doc_max_bytes = 65536

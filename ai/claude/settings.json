@@ -77,26 +77,15 @@
             "command": "CMD=$(jq -r '.tool_input.command'); if echo \"$CMD\" | grep -qE 'git[[:space:]]+push.*(main|master)'; then echo 'BLOCKED: Use feature branches, not direct push to main' >&2; exit 2; fi"
           }
         ]
-      }
-    ],
-    "Stop": [
+      },
       {
+        "matcher": "AskUserQuestion|ExitPlanMode",
         "hooks": [
           {
             "type": "command",
             "command": "python3 \"$HOME/.agents/hooks/tts-notify.py\" claude-hook --background",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$HOME/.agents/hooks/tts-notify.py\" claude-hook --background",
-            "timeout": 30
+            "async": true,
+            "timeout": 10
           }
         ]
       }
@@ -107,7 +96,8 @@
           {
             "type": "command",
             "command": "python3 \"$HOME/.agents/hooks/tts-notify.py\" claude-hook --background",
-            "timeout": 30
+            "async": true,
+            "timeout": 10
           }
         ]
       }
@@ -119,7 +109,8 @@
           {
             "type": "command",
             "command": "python3 \"$HOME/.agents/hooks/tts-notify.py\" claude-hook --background",
-            "timeout": 30
+            "async": true,
+            "timeout": 10
           }
         ]
       }
