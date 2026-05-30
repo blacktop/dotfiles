@@ -46,13 +46,13 @@ end
 
 # STYLE #########################################
 set fish_greeting
-if test -f "$HOME/.config/fish/themes/TokyoNight Moon.theme"
+if test -f "$HOME/.config/fish/themes/Rosé Pine.theme"
     while read -l name value
         if string match -qr '^(#|$)' -- "$name"
             continue
         end
         set -g $name $value
-    end < "$HOME/.config/fish/themes/TokyoNight Moon.theme"
+    end < "$HOME/.config/fish/themes/Rosé Pine.theme"
 end
 # Prompt
 set hydro_color_pwd brcyan

@@ -1,0 +1,1 @@
+set -gx APPLE_FIRMWARE_DIR $HOME/Apple
