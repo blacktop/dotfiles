@@ -17,7 +17,7 @@ value means "no -v", so say_tts speaks with the macOS System Voice (a Siri voice
 Speech goes through `mcp-tts say_tts`, whose system-wide lock
 (/tmp/mcp-tts-global.lock.d, taken via atomic mkdir) serializes audio across
 every agent and hook so alerts never talk over each other. A bare `say` is the
-last-resort fallback when the mcp-tts binary is missing.
+last-resort fallback when the mcp-tts binary is missing, using the same lock.
 """
 
 from __future__ import annotations
@@ -32,6 +32,8 @@ import subprocess
 import sys
 import textwrap
 import time
+import tomllib
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -44,6 +46,28 @@ MAX_CHARS = 200
 MCP_PROTOCOL_VERSION = "2025-06-18"
 MCP_DEADLINE_SECS = 45.0
 SAY_TIMEOUT_SECS = 45
+SPEECH_LOCK_DIR = Path("/tmp/mcp-tts-global.lock.d")
+SPEECH_LOCK_POLL_SECS = 0.1
+AUTO_REVIEWERS = frozenset({"auto_review"})
+NON_HUMAN_PERMISSION_MODES = frozenset({"dontAsk", "bypassPermissions"})
+TRANSIENT_STOP_FAILURE_MARKERS = frozenset(
+    {
+        "api_error",
+        "connection",
+        "econn",
+        "network",
+        "overloaded",
+        "rate limit",
+        "rate_limit",
+        "server error",
+        "server_error",
+        "temporar",
+        "timeout",
+        "502",
+        "503",
+        "504",
+    }
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -94,14 +118,58 @@ def project(event: dict[str, Any]) -> str:
     return (Path(cwd).name or cwd) if cwd else Path.cwd().name
 
 
+def codex_home() -> Path:
+    raw = os.environ.get("CODEX_HOME")
+    return Path(raw).expanduser() if raw else Path.home() / ".codex"
+
+
+@cache
+def codex_config_approvals_reviewer() -> str:
+    try:
+        with (codex_home() / "config.toml").open("rb") as handle:
+            config = tomllib.load(handle)
+    except (OSError, tomllib.TOMLDecodeError):
+        return ""
+    value = config.get("approvals_reviewer") if isinstance(config, dict) else ""
+    return value if isinstance(value, str) else ""
+
+
+def codex_approval_needs_human(event: dict[str, Any]) -> bool:
+    if field(event, "permission_mode") in NON_HUMAN_PERMISSION_MODES:
+        return False
+
+    reviewer = (
+        field(event, "approvals_reviewer")
+        if "approvals_reviewer" in event
+        else codex_config_approvals_reviewer()
+    )
+    return reviewer not in AUTO_REVIEWERS
+
+
+def claude_permission_prompt_needs_human(event: dict[str, Any]) -> bool:
+    mode = field(event, "permission_mode")
+    return bool(mode) and mode not in NON_HUMAN_PERMISSION_MODES
+
+
+def stop_failure_needs_human(event: dict[str, Any]) -> bool:
+    values = [
+        field(event, "error"),
+        field(event, "error_type"),
+        field(event, "message"),
+        field(event, "reason"),
+    ]
+    raw = " ".join(value for value in values if value).lower()
+    return not raw or not any(
+        marker in raw for marker in TRANSIENT_STOP_FAILURE_MARKERS
+    )
+
+
 def build(mode: str, event: dict[str, Any]) -> tuple[str, str]:
     """Return (spoken_text, voice) for 'needs-you' events; ('', '') = stay silent.
 
     Fires only on events that mean a human is genuinely required. AskUserQuestion,
     ExitPlanMode, and elicitation are mode-proof (auto modes can't answer them).
-    `permission_prompt` is gated on permission_mode because it fires spuriously
-    (phantom events + auto-allowed checks) in the auto modes — see Claude Code
-    issues #16102 / #29212.
+    `permission_prompt` events without a mode are treated as phantom events.
     """
     hook = field(event, "hook_event_name")
     phrase, voice = "", ""
@@ -114,18 +182,21 @@ def build(mode: str, event: dict[str, Any]) -> tuple[str, str]:
             phrase, voice = "has a plan for you to review.", VOICE_INPUT
     elif hook == "Notification":
         ntype = field(event, "notification_type")
-        # permission_prompt is a real, blocking prompt only in `default` mode;
-        # the auto modes auto-resolve it (and the field is often absent on
-        # phantom events) -> stay silent; PreToolUse triggers cover real needs.
-        if ntype == "permission_prompt" and field(event, "permission_mode") == "default":
+        if (
+            ntype == "permission_prompt"
+            and claude_permission_prompt_needs_human(event)
+        ):
             phrase, voice = "needs your approval.", VOICE_APPROVAL
         elif ntype == "elicitation_dialog":
             phrase, voice = "needs your input.", VOICE_INPUT
     elif hook == "StopFailure":
-        err = clean(event.get("error") or event.get("error_type")) or "an error"
-        phrase, voice = f"stopped on {err}.", VOICE_FAILURE
-    elif hook == "PermissionRequest":  # Codex approval gate (fires only on real asks)
-        phrase, voice = f"needs approval for {clean(event.get('tool_name')) or 'a tool'}.", VOICE_APPROVAL
+        if stop_failure_needs_human(event):
+            err = clean(event.get("error") or event.get("error_type")) or "an error"
+            phrase, voice = f"stopped on {err}.", VOICE_FAILURE
+    elif hook == "PermissionRequest":  # Codex approval gate.
+        if codex_approval_needs_human(event):
+            tool = clean(event.get("tool_name")) or "a tool"
+            phrase, voice = f"needs approval for {tool}.", VOICE_APPROVAL
 
     if not phrase:
         return "", ""
@@ -174,9 +245,10 @@ def speak_via_mcp(text: str, voice: str) -> bool:
 
         deadline = time.monotonic() + MCP_DEADLINE_SECS
         while time.monotonic() < deadline:
-            ready, _, _ = select.select(
-                [proc.stdout], [], [], min(deadline - time.monotonic(), 0.5)
-            )
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            ready, _, _ = select.select([proc.stdout], [], [], min(remaining, 0.5))
             if not ready:
                 if proc.poll() is not None:
                     return False
@@ -197,7 +269,7 @@ def speak_via_mcp(text: str, voice: str) -> bool:
                 and result.get("isError") is not True
             )
         return False
-    except OSError:
+    except (OSError, ValueError):
         return False
     finally:
         proc.terminate()
@@ -207,16 +279,49 @@ def speak_via_mcp(text: str, voice: str) -> bool:
             proc.kill()
 
 
-def speak_native(text: str, voice: str) -> bool:
+def acquire_speech_lock() -> bool:
+    deadline = time.monotonic() + SAY_TIMEOUT_SECS
+    while True:
+        try:
+            SPEECH_LOCK_DIR.mkdir()
+            return True
+        except FileExistsError:
+            if time.monotonic() >= deadline:
+                return False
+            time.sleep(SPEECH_LOCK_POLL_SECS)
+        except OSError:
+            return False
+
+
+def release_speech_lock() -> None:
+    try:
+        SPEECH_LOCK_DIR.rmdir()
+    except OSError:
+        pass
+
+
+def speak_native_unlocked(text: str, voice: str) -> bool:
     say = shutil.which("say") or "/usr/bin/say"
     cmd = [say]
     if voice:
         cmd += ["-v", voice]
     cmd += ["-r", str(RATE), text]
     try:
-        return subprocess.run(cmd, check=False, timeout=SAY_TIMEOUT_SECS).returncode == 0
+        return (
+            subprocess.run(cmd, check=False, timeout=SAY_TIMEOUT_SECS).returncode
+            == 0
+        )
     except (OSError, subprocess.TimeoutExpired):
         return False
+
+
+def speak_native(text: str, voice: str) -> bool:
+    if not acquire_speech_lock():
+        return False
+    try:
+        return speak_native_unlocked(text, voice)
+    finally:
+        release_speech_lock()
 
 
 def spawn_background(text: str, voice: str, mode: str) -> int:
