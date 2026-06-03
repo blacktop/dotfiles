@@ -26,6 +26,7 @@ if test -d /opt/homebrew
     if not contains /opt/homebrew/share/info $INFOPATH
         set -gx INFOPATH /opt/homebrew/share/info $INFOPATH
     end
+    set -gx HOMEBREW_REQUIRE_TAP_TRUST 1
 end
 
 # locals.fish is a home for anything machine specific
