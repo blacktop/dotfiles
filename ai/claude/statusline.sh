@@ -18,6 +18,7 @@ C_YELLOW=$'\033[38;5;179m' # yellow — dirty git
 C_RED=$'\033[38;5;167m'    # red — high context / INSERT mode
 C_CYAN=$'\033[38;5;73m'    # cyan — agent / worktree / NORMAL mode
 C_ORANGE=$'\033[38;5;173m' # orange — context warning
+C_MAGENTA=$'\033[38;5;140m' # magenta — ddb / custom variant
 
 SEP="${C_MUTED}·${RESET}"
 
@@ -54,8 +55,8 @@ if [ -n "$cwd" ] && git -C "$cwd" rev-parse --git-dir >/dev/null 2>&1; then
     porcelain=$(git -C "$cwd" status --porcelain 2>/dev/null)
     staged=$(echo "$porcelain" | grep -c '^[MADRC]' || true)
     modified=$(echo "$porcelain" | grep -c '^.[MD]' || true)
-    ahead=$(git -C "$cwd" rev-list --count @{u}..HEAD 2>/dev/null || echo 0)
-    behind=$(git -C "$cwd" rev-list --count HEAD..@{u} 2>/dev/null || echo 0)
+    ahead=$(git -C "$cwd" rev-list --count '@{u}..HEAD' 2>/dev/null || echo 0)
+    behind=$(git -C "$cwd" rev-list --count 'HEAD..@{u}' 2>/dev/null || echo 0)
 
     flags=""
     [ "${ahead:-0}" -gt 0 ] && flags+="⇡${ahead}"
@@ -96,6 +97,20 @@ fi
 
 # ── assemble ───────────────────────────────────────────────────────────────────
 parts=()
+
+# variant label first (far left) — from CLAUDE_CONFIG_DIR; nothing for plain ~/.claude
+variant_part=""
+_cfg="${CLAUDE_CONFIG_DIR:-}"
+if [ -n "$_cfg" ]; then
+    _base=$(basename "$_cfg")
+    case "$_base" in
+        .claude) ;;  # default, no label
+        .claude-team) variant_part="${C_YELLOW}team${RESET}" ;;
+        .claude-ddb)  variant_part="${C_MAGENTA}ddb${RESET}" ;;
+        .claude-*)    variant_part="${C_CYAN}${_base#.claude-}${RESET}" ;;
+    esac
+fi
+[ -n "$variant_part" ] && parts+=("$variant_part")
 
 # vim mode (only when active)
 if [ -n "$vim_mode" ]; then
