@@ -5,6 +5,8 @@ use ratatui::{
     widgets::Paragraph,
 };
 
+// Minimal demo: `expect` keeps it short. Real apps return Result and
+// propagate with `?` (see the simple-app template).
 fn main() {
     let mut terminal = ratatui::init();
     loop {

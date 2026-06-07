@@ -4,8 +4,9 @@ description: |
   Build terminal UIs with ratatui following 2026 Rust best practices.
   Use when: (1) Creating new TUI apps, (2) Adding widgets/layouts,
   (3) Keyboard navigation/state management, (4) Image integration via
-  ratatui-image, (5) Async event handling, (6) Release optimization.
-  Covers v0.30.0+ API, Elm Architecture, StatefulWidget, color-eyre.
+  ratatui-image, (5) Async event handling, (6) Shimmer/loading animations
+  via tui-shimmer, (7) Reviewing TUI code, (8) Release optimization.
+  Covers v0.30.1 API, Elm Architecture, StatefulWidget, color-eyre.
 ---
 
 # Ratatui TUI Development
@@ -17,10 +18,31 @@ description: |
    cp -r ~/.agents/skills/ratatui-tui/assets/templates/<template>/* .
    ```
 
+   Or generate from the official templates repo:
+   ```bash
+   cargo install --locked cargo-generate
+   cargo generate ratatui/templates
+   ```
+
 2. **Run**:
    ```bash
    cargo run
    ```
+
+## Version Notes (0.30.x)
+
+Current stable: **0.30.1** (2026-06-05, MSRV 1.88, edition 2024).
+
+- **Modular workspace**: apps keep depending on `ratatui`; widget *libraries*
+  should depend on `ratatui-core` for API stability and fewer dependencies.
+- **`ratatui::run(|terminal| ...)`**: initializes the terminal, installs a
+  panic hook that restores it, runs the closure, and restores on exit.
+- **`Block::shadow(...)`** (new in 0.30.1): drop shadows for blocks/popups.
+- **Breaking since 0.29**: `block::Title` removed, `layout::Alignment` renamed
+  to `HorizontalAlignment`, `Flex::SpaceAround` now matches flexbox semantics
+  (use `Flex::SpaceEvenly` for the old behavior), `Marker` is non-exhaustive.
+- **Performance**: disabling `default-features` also disables `layout-cache`;
+  re-enable it explicitly or layout performance drops sharply.
 
 ## Template Selection
 
@@ -69,6 +91,9 @@ dirs = "6"
 
 # Optional: image support
 ratatui-image = { version = "5", features = ["chafa-static"] }
+
+# Optional: shimmer text animation
+tui-shimmer = "0.1"
 ```
 
 ### Release Profile
@@ -245,14 +270,16 @@ See: [references/async-patterns.md](references/async-patterns.md)
 use ratatui_image::{picker::Picker, StatefulImage, Resize};
 use std::thread;
 
-// Query terminal protocol support once at startup
-let mut picker = Picker::from_query_stdio()?;
+// Query terminal protocol support once at startup; keep it on the app
+let picker = Picker::from_query_stdio()?;
 
-// Load and resize in background thread
+// Load and resize in a background thread (`area` is the target Rect
+// from your layout; clone the picker so the original stays reusable)
 let (tx, rx) = std::sync::mpsc::channel();
+let mut worker = picker.clone();
 thread::spawn(move || {
     let dyn_img = image::open("photo.png").unwrap();
-    let protocol = picker.new_protocol(dyn_img, area.into(), Resize::Fit(None));
+    let protocol = worker.new_protocol(dyn_img, area.into(), Resize::Fit(None));
     tx.send(protocol).unwrap();
 });
 
@@ -273,29 +300,52 @@ if let Some(ref mut img) = image_state {
 
 See: [references/image-integration.md](references/image-integration.md)
 
+## Shimmer / Loading Animation
+
+[tui-shimmer](https://github.com/vinhnx/tui-shimmer) sweeps a highlight
+across text — the "Loading…"/"Thinking…" effect used by coding-agent TUIs.
+
+```rust
+use ratatui::style::Style;
+use ratatui::text::Line;
+use tui_shimmer::{shimmer_spans_with_style, shimmer_spans_with_style_at_phase};
+
+// Time-driven (call every frame; re-render on a tick to animate)
+let spans = shimmer_spans_with_style("Loading...", Style::new().cyan());
+frame.render_widget(Line::from(spans), area);
+
+// Deterministic: drive phase (0.0..1.0) from app state — testable, pausable
+let phase = (self.start.elapsed().as_secs_f32() / 2.0) % 1.0;
+let spans = shimmer_spans_with_style_at_phase("Working...", Style::new().cyan(), phase);
+```
+
+**Key points:**
+- Animation needs redraws: add a tick event (~80-120ms) to the event loop
+  (`select!` with `tokio::time::interval`, or `event::poll` timeout)
+- Prefer the `_at_phase` variant with phase stored in the Model — keeps
+  rendering pure and animation testable
+- True color with automatic fallback for limited terminals
+- API is experimental until 1.0 — pin and review minor bumps
+
 ## Error Handling
+
+`ratatui::run()` / `ratatui::init()` install a panic hook that restores the
+terminal before panicking — do not write one by hand. Install color-eyre
+**first** so the terminal is restored before its report prints:
 
 ```rust
 use color_eyre::eyre::Result;
 
 fn main() -> Result<()> {
-    // Install hooks before anything else
-    color_eyre::install()?;
-
-    // Set panic hook to restore terminal
-    let original_hook = std::panic::take_hook();
-    std::panic::set_hook(Box::new(move |panic_info| {
-        let _ = crossterm::terminal::disable_raw_mode();
-        let _ = crossterm::execute!(
-            std::io::stdout(),
-            crossterm::terminal::LeaveAlternateScreen
-        );
-        original_hook(panic_info);
-    }));
-
-    run()
+    color_eyre::install()?;        // eyre hooks before terminal init
+    // App::run is the app's own main loop (see templates), not a ratatui API
+    let result = ratatui::run(|terminal| App::default().run(terminal));
+    Ok(result?)
 }
 ```
+
+Only write a manual panic hook when constructing `Terminal`/`Backend` by
+hand instead of via `ratatui::init()`.
 
 **Error propagation:**
 ```rust
@@ -315,7 +365,8 @@ cargo build --release
 
 Binary at `target/release/<name>`.
 
-**Size optimization:**
+**Size optimization** — replaces the Release Profile block above when binary
+size matters more than speed:
 ```toml
 [profile.release]
 lto = true
@@ -368,6 +419,16 @@ fn centered_rect(percent_x: u16, percent_y: u16, area: Rect) -> Rect {
 }
 ```
 
+With a drop shadow (0.30.1+):
+```rust
+use ratatui::layout::Offset;
+use ratatui::widgets::{Block, Shadow};
+
+let popup = Block::bordered()
+    .title("Confirm")
+    .shadow(Shadow::dark_shade().offset(Offset::new(2, 1)));
+```
+
 ### Key Bindings Display
 ```rust
 let help = Line::from(vec![
@@ -388,6 +449,27 @@ let status = Line::from(vec![
 ]);
 ```
 
+## Multi-Agent TUI Review Workflow
+
+[workflows/tui-review.js](workflows/tui-review.js) is a dynamic-workflow
+template for Claude Code's `Workflow` tool. It fans out one reviewer per
+TUI dimension — TEA architecture, terminal safety, styling, event handling,
+render performance — then adversarially verifies each finding before
+reporting, so only confirmed issues survive.
+
+Treat it as a **template, not a script to run verbatim**: adjust the target
+path, dimensions, and severity threshold to the codebase. Run it after
+substantial TUI changes or before a release:
+
+```
+Workflow({
+  scriptPath: "~/.agents/skills/ratatui-tui/workflows/tui-review.js",
+  args: { path: "src/" },
+})
+```
+
+Or ask: "run the TUI review workflow from the ratatui-tui skill on src/".
+
 ## Checklist
 
 Before shipping:
@@ -395,6 +477,6 @@ Before shipping:
 - [ ] `cargo fmt`
 - [ ] `cargo clippy --all-features` clean
 - [ ] No `unwrap()` outside tests
-- [ ] Panic hook restores terminal
+- [ ] Terminal restored on all exit paths (`ratatui::run()` or `init`/`restore`)
 - [ ] `cargo build --release` succeeds
 - [ ] Test on target terminal(s)
