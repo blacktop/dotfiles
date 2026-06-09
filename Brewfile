@@ -1,9 +1,9 @@
 #
 # Auto-generated using `brew bundle --dump --describe`.
 #
-tap "blacktop/tap"
-tap "buo/cask-upgrade"
-tap "oven-sh/bun"
+tap "blacktop/tap", trusted: true
+tap "buo/cask-upgrade", trusted: true
+tap "oven-sh/bun", trusted: true
 
 brew "actionlint"
 brew "argp-standalone"
