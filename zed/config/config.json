@@ -37,6 +37,8 @@
     "calt": true,
     "titl": true
   },
+  "markdown_preview_font_family": ".SystemUIFont",
+  "markdown_preview_code_font_family": "SF Mono",
 
   // Terminal
   "terminal": {
@@ -149,6 +151,7 @@
       "provider": "copilot_chat",
       "model": "claude-sonnet-4.6"
     },
+    "commit_message_instructions": "Follow this repo's commit-message style. Output the raw commit subject only: no surrounding backticks, quotes, Markdown, bullets, or explanation. Use a concise Conventional Commit subject (`feat`, `fix`, `chore`, `docs`, `ci`, `refactor`) with an optional short scope, e.g. `fix(pkg): corrected issue in pkg packge`. Keep it imperative and specific, describe the actual change instead of the file or a `style guide`, and reserve `[skip ci]` for generated DB/key refresh commits that already follow that pattern. Do not use generic `Update <file>` subjects for normal authored changes; leave that style for mechanical generated-file churn.",
     "inline_assistant_model": {
       "provider": "copilot_chat",
       "model": "claude-sonnet-4.6"

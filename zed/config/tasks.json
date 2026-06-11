@@ -1,0 +1,44 @@
+// Global Zed tasks (~/.config/zed/tasks.json).
+// Tasks tagged "git-command" appear in the Git Graph commit context menu and
+// must live in this global file — worktree-local tasks.json is not supported
+// for them yet. $ZED_GIT_* variables resolve against the selected commit, and
+// the task runs from the selected repository root.
+[
+  {
+    // Merges the selected commit's branch into the repo's default branch.
+    // Uses sh explicitly: the default task shell is fish, and this script is POSIX.
+    "label": "Merge $ZED_GIT_SHA_SHORT into default branch",
+    "command": "sh",
+    "args": [
+      "-c",
+      "set -eu; default=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||') || default=; if [ -z \"$default\" ]; then for b in main master; do if git show-ref -q --verify refs/heads/$b; then default=$b; break; fi; done; fi; if [ -z \"$default\" ]; then echo 'error: cannot determine default branch (no origin/HEAD, no main/master)' >&2; exit 1; fi; target=$(git branch --format='%(refname:short)' --points-at \"$ZED_GIT_SHA\" | grep -vx \"$default\" | head -n1); if [ -z \"$target\" ]; then target=$ZED_GIT_SHA; fi; git switch \"$default\"; if git rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then git pull --ff-only; fi; git merge --no-ff --no-edit \"$target\""
+    ],
+    "tags": ["git-command"]
+  },
+  {
+    "label": "Cherry-pick $ZED_GIT_SHA_SHORT onto current branch",
+    "command": "git",
+    "args": ["cherry-pick", "$ZED_GIT_SHA"],
+    "tags": ["git-command"]
+  },
+  {
+    "label": "Revert $ZED_GIT_SHA_SHORT",
+    "command": "git",
+    "args": ["revert", "--no-edit", "$ZED_GIT_SHA"],
+    "tags": ["git-command"]
+  },
+  {
+    "label": "Branches containing $ZED_GIT_SHA_SHORT",
+    "command": "git",
+    "args": ["branch", "-a", "--contains", "$ZED_GIT_SHA"],
+    "tags": ["git-command"]
+  },
+  {
+    "label": "Open $ZED_GIT_SHA_SHORT on GitHub",
+    "command": "gh",
+    "args": ["browse", "$ZED_GIT_SHA"],
+    "tags": ["git-command"],
+    "reveal": "no_focus",
+    "hide": "on_success"
+  }
+]
