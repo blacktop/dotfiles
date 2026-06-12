@@ -455,7 +455,9 @@ let status = Line::from(vec![
 template for Claude Code's `Workflow` tool. It fans out one reviewer per
 TUI dimension — TEA architecture, terminal safety, styling, event handling,
 render performance — then adversarially verifies each finding before
-reporting, so only confirmed issues survive.
+reporting, so only confirmed issues survive. In agents without the
+`Workflow` tool (Codex, Gemini), skip the script and apply those five
+dimensions as a manual review checklist instead.
 
 Treat it as a **template, not a script to run verbatim**: adjust the target
 path, dimensions, and severity threshold to the codebase. Run it after
