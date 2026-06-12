@@ -5,14 +5,18 @@
 // the task runs from the selected repository root.
 [
   {
-    // Merges the selected commit's branch into the repo's default branch.
-    // Uses sh explicitly: the default task shell is fish, and this script is POSIX.
-    "label": "Merge $ZED_GIT_SHA_SHORT into default branch",
-    "command": "sh",
-    "args": [
-      "-c",
-      "set -eu; default=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||') || default=; if [ -z \"$default\" ]; then for b in main master; do if git show-ref -q --verify refs/heads/$b; then default=$b; break; fi; done; fi; if [ -z \"$default\" ]; then echo 'error: cannot determine default branch (no origin/HEAD, no main/master)' >&2; exit 1; fi; target=$(git branch --format='%(refname:short)' --points-at \"$ZED_GIT_SHA\" | grep -vx \"$default\" | head -n1); if [ -z \"$target\" ]; then target=$ZED_GIT_SHA; fi; git switch \"$default\"; if git rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then git pull --ff-only; fi; git merge --no-ff --no-edit \"$target\""
-    ],
+    // Squash-merges the selected commit's branch into the repo's default
+    // branch, like GitHub's "Squash and merge": one ordinary commit, message
+    // reused from a single-commit branch, or branch name + bulleted commit
+    // subjects for multi-commit branches (amend afterwards to reword).
+    // The script is POSIX, so it must not run under the default task shell
+    // (fish): Zed concatenates command+args unquoted into `<shell> -i -c`,
+    // which is also why the script lives in "command" instead of `sh -c` args.
+    // No shell ${...} expansions allowed here: Zed claims ${VAR:default} as
+    // its own template syntax and rewrites it before the shell ever runs.
+    "label": "Squash-merge $ZED_GIT_SHA_SHORT into default branch",
+    "command": "set -eu; git diff --cached --quiet || { echo 'error: staged changes present; commit or stash them first' >&2; exit 1; }; default=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||') || default=; if [ -z \"$default\" ]; then for b in main master; do if git show-ref -q --verify refs/heads/$b; then default=$b; break; fi; done; fi; if [ -z \"$default\" ]; then echo 'error: cannot determine default branch (no origin/HEAD, no main/master)' >&2; exit 1; fi; branch=$(git branch --format='%(refname:short)' --points-at \"$ZED_GIT_SHA\" | grep -vx \"$default\" | head -n1); if [ -n \"$branch\" ]; then target=$branch; else target=$ZED_GIT_SHA; fi; git switch \"$default\"; if git rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then git pull --ff-only; fi; count=$(git rev-list --count \"$default..$target\"); if [ \"$count\" -eq 0 ]; then echo 'error: nothing to merge' >&2; exit 1; fi; git merge --squash \"$target\"; if [ \"$count\" -eq 1 ]; then git commit -m \"$(git log -1 --format=%B \"$target\")\"; else if [ -n \"$branch\" ]; then subject=$branch; else subject=$(git log -1 --format=%s \"$target\"); fi; { echo \"$subject\"; echo; git log --reverse --format='* %s' \"$default..$target\"; } | git commit -F -; fi",
+    "shell": { "program": "sh" },
     "tags": ["git-command"]
   },
   {
