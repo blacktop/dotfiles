@@ -35,7 +35,7 @@ function brewu -d "Update All the things"
 
     echo "Checking npm global packages..."
     __brewu_npm_update @openai/codex codex
-    __brewu_npm_update @google/gemini-cli gemini
+    #__brewu_npm_update @google/gemini-cli gemini
     __brewu_npm_update @anthropic-ai/claude-code claude
     __brewu_npm_update @github/copilot copilot
     __brewu_npm_update @mariozechner/pi-coding-agent pi
