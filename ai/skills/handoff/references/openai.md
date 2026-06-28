@@ -1,65 +1,85 @@
 # OpenAI GPT-5.x / Codex Handoff Patterns
 
-Source snapshot: refreshed 2026-03-12 from official OpenAI docs
+Source snapshot: refreshed 2026-06-12 from official OpenAI docs
 
-- [Prompt guidance for GPT-5.4](https://developers.openai.com/api/docs/guides/prompt-guidance/)
-- [Using GPT-5.4](https://developers.openai.com/api/docs/guides/latest-model/)
-- [GPT-5 prompting guide](https://developers.openai.com/cookbook/examples/gpt-5/gpt-5_prompting_guide/)
-- [GPT-5.2 prompting guide](https://developers.openai.com/cookbook/examples/gpt-5/gpt-5-2_prompting_guide/)
+- [Prompt guidance (GPT-5.5)](https://developers.openai.com/api/docs/guides/prompt-guidance)
+- [Using GPT-5.5](https://developers.openai.com/api/docs/guides/latest-model)
+- [Codex prompting guide](https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide)
+
+## Model lineup
+
+- **GPT-5.5**: current flagship; strongest agentic coding line. Reasoning
+  effort defaults to `medium`; levels none/low/medium/high/xhigh.
+- **gpt-5.3-codex**: Codex-tuned variant for agentic coding via API; the
+  Codex CLI ships its own tuned defaults.
 
 ## Start here
 
-- Prefer the Responses API or an agent wrapper that preserves tool state across turns.
-- State the objective, tool-use rules, completion criteria, verification plan, and output contract explicitly.
-- Use labeled blocks or clearly separated sections so the model can keep context, constraints, and deliverables distinct.
-- Ask for structured outputs or strict schemas when another system will parse the result.
-- Tell the agent whether to act proactively or stop after analysis.
+- Outcome-first, shorter prompts beat process-heavy prompt stacks: define the
+  target outcome, success criteria, constraints, and available evidence, then
+  let the model choose the path.
+- Migrating a handoff from an older GPT? Start from a fresh minimal prompt
+  that preserves the contract — do not carry the old instruction stack over.
+- Reserve `ALWAYS`/`NEVER`/`must` for true invariants (safety rules, required
+  output fields). For judgment calls (when to search, ask, iterate), write
+  decision rules instead.
+- Ask for structured outputs or strict schemas when another system parses the
+  result.
 
 ## Handoff emphasis
 
-- Name the tools or files the agent should use first.
-- Separate scope boundaries from background context.
+- For coding agents, be explicit about: code reuse expectations, subagent
+  delegation, test expectations, acceptance criteria, and when to continue vs
+  ask for help.
+- Give retrieval budgets — stopping rules for search: what needs supporting
+  evidence, what counts as enough, and what to do when evidence is missing
+  (absence of evidence is not a factual "no").
+- For long or tool-heavy tasks, ask for a short preamble (acknowledge + first
+  step) and progress preambles with tool calls.
 - Give concrete stop rules for destructive, broad, or expensive actions.
-- Include exact verification commands when correctness matters.
-- Prefer direct operational language over conversational setup.
 
 ## Runtime knobs
 
-If the receiving harness exposes model settings, prefer these there instead of spelling them out in prose:
+If the receiving harness exposes model settings, prefer these there instead
+of spelling them out in prose:
 
-- `reasoning.effort`: use `none` or `low` for extraction, classification, and formatting; use `medium` or `high` for debugging, coding, and multi-step planning.
-- `text.verbosity`: use `low`, `medium`, or `high` to control response length without rewriting the whole prompt.
-- structured outputs or strict tool schemas: use them whenever machine-readable output is required.
+- `reasoning.effort`: `medium` is the balanced default; `low` often suffices
+  and should be evaluated before escalating; `high`/`xhigh` only for the
+  hardest agentic work where evals justify the latency. Higher effort is not
+  automatically better — with conflicting instructions or weak stopping
+  criteria it produces overthinking and unnecessary searching.
+- `text.verbosity`: low/medium/high controls response length without
+  rewriting the prompt.
+- Responses API with `previous_response_id` preserves reasoning state across
+  tool calls; if replaying assistant items manually, preserve `phase` values.
 
 ## Good shape
 
 ```text
 Context
-[Only facts the agent needs]
+[Only facts the agent needs, plus why the work matters]
 
 Task
-[Single concrete outcome]
+[Single concrete outcome with acceptance criteria]
 
 Tool use
-- [Which tools/files to use]
-- [Whether to act proactively]
+- [Which tools/files to use; delegation and reuse expectations]
+- [Retrieval budget: when enough evidence is enough]
 
 Constraints
-- [Scope limits]
-- [What not to change]
+- [True invariants only; decision rules for judgment calls]
 
 Verification
-- [Checks to run]
+- [Checks to run; test expectations]
 
 Output contract
-- [Exact format to return]
-- [Artifacts to write]
+- [Exact format to return; artifacts to write]
 ```
 
 ## Avoid
 
-- vague goals like "improve this"
-- hidden completion criteria
-- mixing examples, constraints, and background in one paragraph
-- relying only on broad negative instructions when a positive target behavior can be stated
-- asking for internal reasoning when a final answer, checklist, or evidence summary is enough
+- carrying over instruction stacks written for older GPT versions
+- absolute rules (`ALWAYS`/`NEVER`) for judgment calls
+- vague goals like "improve this" or hidden completion criteria
+- escalating reasoning effort without a measured quality gain
+- asking for internal reasoning when findings or evidence summaries suffice

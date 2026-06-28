@@ -1,11 +1,21 @@
 ---
 name: handoff
-description: Generate optimized handoff prompts for delegating work to another LLM agent. Use when handing work to GPT-5.x/Codex, Claude 4.x, Gemini 3.x, or Grok 4.x, either as a shared-workspace sub-task handoff or a fresh-context handoff for a new session or model. Triggers on requests like "create a handoff prompt", "delegate this task to another agent", "hand this off", or "prepare context for another agent".
+description: Generate optimized handoff prompts for delegating work to another LLM agent. Use when handing work to Claude (Fable 5 or the 4.x line incl. Opus 4.8), GPT-5.x/Codex, Gemini 3.x, or Grok 4.x/Grok Build, either as a shared-workspace sub-task handoff or a fresh-context handoff for a new session or model. Triggers on requests like "create a handoff prompt", "delegate this task to another agent", "hand this off", or "prepare context for another agent".
 ---
 
 # Handoff Prompt Generator
 
 Generate a prompt that another agent can execute without guessing.
+
+## When NOT to Use
+
+- Saving the current session to resume the same work later — use the
+  save-session skill.
+- Decomposing and running sub-tasks from this session — use the orchestrate
+  skill.
+- Ongoing supervision of live agents in tmux panes — use the tmux-pm skill
+  (handoff covers the one-shot context transfer, not the PM loop).
+- The receiving agent is this same conversation continuing; no handoff needed.
 
 ## Choose the handoff mode
 
@@ -19,10 +29,10 @@ Read only the reference that matches the receiving model:
 
 | Target model family | Reference |
 | --- | --- |
+| Anthropic Claude (Fable 5 / 4.x line incl. Opus 4.8) | [references/anthropic.md](references/anthropic.md) |
 | OpenAI GPT-5.x / Codex | [references/openai.md](references/openai.md) |
-| Anthropic Claude 4.x | [references/anthropic.md](references/anthropic.md) |
-| Google Gemini 3.x | [references/google.md](references/google.md) |
-| xAI Grok 4.x / Grok Code | [references/xai.md](references/xai.md) |
+| Google Gemini 3.x (3.5 Flash / 3.1 Pro) | [references/google.md](references/google.md) |
+| xAI Grok 4.3 / Grok Build | [references/xai.md](references/xai.md) |
 
 If the requested model version is newer than the reference, verify the latest official docs before drafting the handoff.
 
@@ -124,10 +134,21 @@ Use placeholders like `[TODO: exact path]` instead of inventing repository facts
 
 After drafting the base handoff:
 
-- add only the adjustments from the matching reference file
+- apply the matching reference's adjustments, and restructure to its "Good
+  shape" when its section order differs from the base template (Gemini wants
+  the task and critical constraints at the end)
 - prefer external runtime settings when the receiving harness exposes them
 - avoid inventing API-only controls inside plain chat prompts
-- generate one prompt per target model if the user wants multiple versions
+
+## Calibrate prescription to the model generation
+
+Current frontier models (Fable 5, GPT-5.5, Gemini 3.x, Grok 4.3) perform best
+with shorter, outcome-first handoffs: state the outcome, success criteria,
+constraints, and evidence, then let the model choose the path. Anthropic,
+OpenAI, and Google explicitly document that process-heavy instruction stacks
+written for older models degrade current-model output; xAI's guidance points
+the same direction on scope and conciseness. Enumerate steps only when order
+genuinely matters or the receiving model is an older generation.
 
 ## Hold the quality bar
 
