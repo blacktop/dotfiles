@@ -1,0 +1,4 @@
+interface:
+  display_name: "High Tide"
+  short_description: "Context-limit handoff checkpoints"
+  default_prompt: "Use $high-tide to capture context-limit lessons, project lessons, and a fresh-start handoff before I run /clear."
