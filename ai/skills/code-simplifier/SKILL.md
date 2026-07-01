@@ -1,51 +1,122 @@
 ---
 name: code-simplifier
-description: Simplifies and refines code for clarity, consistency, and maintainability while preserving all functionality. Focuses on recently modified code unless instructed otherwise.
+description: Behavior-preserving cleanup for recently changed code. Use after implementing or modifying code, when explicitly invoked as `$code-simplifier`, or when the user asks to simplify, clean up, or refactor the current diff without widening scope.
 ---
 
-You are an expert code simplification specialist focused on enhancing code clarity, consistency, and maintainability while preserving exact functionality. Your expertise lies in applying project-specific best practices to simplify and improve code without altering its behavior. You prioritize readable, explicit code over overly compact solutions. This is a balance that you have mastered as a result your years as an expert software engineer.
+# Code Simplifier
 
-You will analyze recently modified code and apply refinements that:
+## Contents
 
-1. **Preserve Functionality**: Never change what the code does - only how it does it. All original features, outputs, and behaviors must remain intact.
+- [When to Use](#when-to-use)
+- [When NOT to Use](#when-not-to-use)
+- [Scope](#scope)
+- [Before Editing](#before-editing)
+- [Core Rules](#core-rules)
+- [Unused Code](#unused-code)
+- [Stale References](#stale-references)
+- [Language Guides](#language-guides)
+- [After Editing](#after-editing)
+- [Final Response](#final-response)
 
-2. **Apply Project Standards**: Follow the established coding standards from AGENTS.md (or repo guidelines) including:
+Simplify recently changed code for clarity, consistency, and maintainability while preserving exact behavior. Prefer readable, explicit code over cleverness or line-count reductions.
 
-   - Use ES modules with proper import sorting and extensions
-   - Prefer `function` keyword over arrow functions
-   - Use explicit return type annotations for top-level functions
-   - Follow proper React component patterns with explicit Props types
-   - Use proper error handling patterns (avoid try/catch when possible)
-   - Maintain consistent naming conventions
+## When to Use
 
-3. **Enhance Clarity**: Simplify code structure by:
+- Use after the agent has written or modified code and should tighten the current diff before final verification.
+- Use when the user invokes `$code-simplifier` or asks to simplify, clean up, refactor, reduce duplication, or remove unnecessary complexity.
+- Use during final review when local cleanup can improve maintainability without changing APIs, outputs, side effects, or observable behavior.
 
-   - Reducing unnecessary complexity and nesting
-   - Eliminating redundant code and abstractions
-   - Improving readability through clear variable and function names
-   - Consolidating related logic
-   - Removing unnecessary comments that describe obvious code
-   - IMPORTANT: Avoid nested ternary operators - prefer switch statements or if/else chains for multiple conditions
-   - Choose clarity over brevity - explicit code is often better than overly compact code
+## When NOT to Use
 
-4. **Maintain Balance**: Avoid over-simplification that could:
+- Do not start a broad refactor or architecture rewrite.
+- Do not change public APIs, exported types, CLI flags, output formats, persistence formats, or externally visible behavior.
+- Do not simplify code that is outside the current diff unless it is directly orphaned by the change or is stale inside a file already being edited.
+- Do not touch tests unless the user asked, the tests were already part of the current change, or a behavior-preserving cleanup requires removing now-stale test-only helpers.
+- Do not add dependencies, compatibility layers, or speculative abstractions.
 
-   - Reduce code clarity or maintainability
-   - Create overly clever solutions that are hard to understand
-   - Combine too many concerns into single functions or components
-   - Remove helpful abstractions that improve code organization
-   - Prioritize "fewer lines" over readability (e.g., nested ternaries, dense one-liners)
-   - Make the code harder to debug or extend
+## Scope
 
-5. **Focus Scope**: Only refine code that has been recently modified or touched in the current session, unless explicitly instructed to review a broader scope.
+Default scope is the current session's touched files and the current `git diff` against the base branch.
 
-Your refinement process:
+Two narrow exceptions may leave the diff:
 
-1. Identify the recently modified code sections
-2. Analyze for opportunities to improve elegance and consistency
-3. Apply project-specific best practices and coding standards
-4. Ensure all functionality remains unchanged
-5. Verify the refined code is simpler and more maintainable
-6. Document only significant changes that affect understanding
+- code orphaned by the simplification chain
+- stale comments, docs, or names that now falsely describe behavior changed in the current work
 
-You operate autonomously and proactively, refining code immediately after it's written or modified without requiring explicit requests. Your goal is to ensure all code meets the highest standards of elegance and maintainability while preserving its complete functionality.
+Stay surgical. If cleanup grows beyond the current concern, crosses unrelated ownership boundaries, or expands the diff by roughly more than 50 lines, stop and report the proposed cleanup before continuing.
+
+## Before Editing
+
+1. Check the current diff and identify the files actually in scope.
+2. Read the nearest `AGENTS.md`, `CONTRIBUTING.md`, and local surrounding code that controls style.
+3. If relevant tests are cheap and the baseline is unknown, run a focused baseline first. If the baseline is already red, record it and avoid mixing simplification with unrelated failure repair.
+4. For each language present in the changed files, read the matching file under `languages/` and apply it only where it agrees with repo instructions and surrounding style.
+
+## Core Rules
+
+- Preserve behavior exactly. No API, signature, output, error, timing, persistence, or permission behavior changes.
+- Apply project standards first. User instructions, `AGENTS.md`, and nearby patterns override this skill and language guides.
+- Prefer clarity over brevity. A clear one-liner is fine; a dense clever expression is not.
+- Flatten unnecessary nesting with early returns or guard clauses when that improves readability.
+- Prefer statements over nested expressions. Do not introduce nested ternaries or clever chains.
+- Remove redundant code, redundant abstractions, and one-call helpers when inlining makes the result clearer.
+- Do not add abstractions. Only extract a helper when it removes real repeated complexity and has more than one meaningful caller.
+- Keep imports in the repo's established order. Do not churn imports just for style.
+- Delete comments that restate the code. Keep or improve comments that explain why the code exists.
+- Prefer standard library and existing dependencies over adding a package.
+- Keep default visibility private. Do not expose items unless the existing public API requires it.
+- Use DRY when it improves the code, but do not merge unrelated cases just because they look similar.
+
+## Unused Code
+
+Simplification can orphan code. After edits, look for now-unreferenced functions, methods, types, constants, variables, imports, and files.
+
+In scope:
+
+- code directly orphaned by the current simplification, even if the reference chain leaves the edited file
+- code already stale inside files being edited
+
+Out of scope:
+
+- unrelated repo-wide dead-code hunts
+- exported or public API surfaces that external consumers might call
+- plugin, reflection, string-dispatch, template, generated-code, or configuration registrations unless the repo's tools prove they are dead
+
+Confirm before deleting. Search the whole repo for references and lean on the compiler, linter, or type checker where available. Repeat until deleting one item no longer orphans another in the current chain.
+
+## Stale References
+
+Code cleanup can make comments, docstrings, local names, and docs false.
+
+- In files being edited, update or delete comments and docstrings that describe removed reasons, old workarounds, or behavior that no longer exists.
+- When the change retires a specific named workaround or concept, search for that exact concept and fix references that are now false.
+- Do not rename exported/public identifiers solely for wording cleanup.
+- Do not invent a new rationale. Delete false comments unless the new reason is known.
+
+## Language Guides
+
+Read only the guides matching changed file extensions:
+
+- `.css`, `.scss`, `.sass`: `languages/css.md`
+- `.go`: `languages/go.md`
+- `.js`, `.jsx`, `.mjs`, `.cjs`: `languages/javascript.md`
+- `.py`, `.pyi`: `languages/python.md`
+- `.rs`: `languages/rust.md`
+- `.ts`, `.tsx`, `.mts`, `.cts`: `languages/typescript.md`
+
+If a guide is missing or conflicts with repo instructions, proceed with the general rules and note the conflict only when it affected the cleanup.
+
+## After Editing
+
+1. Rerun focused tests, linters, type checks, or formatters that cover the touched code.
+2. Confirm the final diff is narrower, clearer, and behavior-preserving.
+3. Check for new unused-code warnings.
+4. Do not commit. Leave staging and commit messages to the user unless explicitly asked.
+
+## Final Response
+
+Summarize the simplification in behavior-preserving terms:
+
+- what was cleaned up
+- what verification ran and whether it passed
+- any skipped cleanup because it risked behavior or public API changes
