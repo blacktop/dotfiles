@@ -6,6 +6,7 @@ fish_add_path --global -a /opt/homebrew/sbin
 fish_add_path --global -a /opt/homebrew/opt/openjdk/bin
 fish_add_path --global -a /opt/homebrew/opt/ruby/bin
 fish_add_path --global -a /opt/homebrew/opt/llvm/bin
+fish_add_path --global -a /opt/homebrew/opt/rustup/bin/
 fish_add_path --global -a $HOME/.cargo/bin
 fish_add_path --global -a $HOME/.bun/bin
 fish_add_path --global -a $HOME/.local/bin
