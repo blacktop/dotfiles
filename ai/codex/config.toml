@@ -12,8 +12,10 @@ tool_output_token_limit = 25000
 plan_mode_reasoning_effort = "xhigh"
 service_tier = "fast"
 personality = "pragmatic"
-web_search = "live"
+web_search = "cached"
 file_opener = "vscode"
+cli_auth_credentials_store = "keyring"
+mcp_oauth_credentials_store = "keyring"
 
 # ── Project docs & roots ────────────────────────────────────────────────────
 project_doc_max_bytes = 65536
@@ -111,6 +113,24 @@ terminal_title = ["spinner", "project", "git-branch"]
 theme = "catppuccin-mocha"
 
 # ── Hooks ────────────────────────────────────────────────────────────────────
+[[hooks.PreToolUse]]
+matcher = "^Bash$"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = 'bash "${HOME}/.codex/hooks/block-dangerous-command.sh"'
+timeout = 30
+statusMessage = "Checking command policy"
+
+[[hooks.PreToolUse]]
+matcher = "^Bash$"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = 'bash "${HOME}/.codex/hooks/enforce-package-manager.sh"'
+timeout = 30
+statusMessage = "Checking package manager"
+
 [[hooks.PermissionRequest]]
 
 [[hooks.PermissionRequest.hooks]]
