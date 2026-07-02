@@ -30,6 +30,20 @@ prefix_rule(
 )
 
 prefix_rule(
+    pattern = ["git", "add", "--force"],
+    decision = "forbidden",
+    justification = "Do not force-add ignored files from Codex. Use plain `git add`, or have the user force-add intentionally.",
+    match = ["git add --force docs/.ai/report.md"],
+)
+
+prefix_rule(
+    pattern = ["git", "add", "-f"],
+    decision = "forbidden",
+    justification = "Do not force-add ignored files from Codex. Use plain `git add`, or have the user force-add intentionally.",
+    match = ["git add -f docs/.ai/report.md"],
+)
+
+prefix_rule(
     pattern = ["git", "push", "--force"],
     decision = "forbidden",
     justification = "Do not force-push unless the user explicitly requested it.",

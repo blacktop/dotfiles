@@ -11,6 +11,8 @@ cmd=$(printf '%s' "$input" | jq -r '.tool_input.command // empty')
 [[ -z "$cmd" ]] && exit 0
 
 command_prefix='(^|;[[:space:]]*|&&[[:space:]]*|[|][|][[:space:]]*|[|][[:space:]]*)'
+git_add_force_re="${command_prefix}git[[:space:]]+add([^;&|]*)--force"
+git_add_force_re+='|'"${command_prefix}"'git[[:space:]]+add([^;&|]*)[[:space:]]-f([[:space:]]|$)'
 push_force_re='git[[:space:]]+push([^;&|]*)--force'
 push_force_re+='|git[[:space:]]+push([^;&|]*)[[:space:]]-f([[:space:]]|$)'
 direct_main_re='git[[:space:]]+push([^;&|]*[[:space:]])?'
@@ -41,6 +43,10 @@ fi
 
 if printf '%s\n' "$cmd" | grep -qiE 'wget[^|]*[|][[:space:]]*(bash|sh)([[:space:]]|$)'; then
 	block "Do not pipe downloaded scripts directly into a shell."
+fi
+
+if printf '%s\n' "$cmd" | grep -qiE "$git_add_force_re"; then
+	block "Do not force-add ignored files from Codex. Use plain git add, or have the user force-add intentionally."
 fi
 
 if printf '%s\n' "$cmd" | grep -qiE "$push_force_re"; then
