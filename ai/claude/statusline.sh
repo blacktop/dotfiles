@@ -73,6 +73,40 @@ fi
 ctx_part=""
 pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty' 2>/dev/null)
 if [ -n "$pct" ] && [ "$pct" != "null" ]; then
+    telemetry_root="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+    telemetry_dir="$telemetry_root/statusline"
+    telemetry_file="$telemetry_dir/context.json"
+    telemetry_tmp="$telemetry_file.$$"
+    telemetry_time=$(date -u '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || date)
+    if mkdir -p "$telemetry_dir" 2>/dev/null; then
+        old_umask=$(umask)
+        umask 077
+        if echo "$input" | jq -c --arg generated_at "$telemetry_time" '
+          {
+            source: "claude-statusline",
+            generated_at: $generated_at,
+            context_window: (.context_window // {}),
+            workspace: { current_dir: (.workspace.current_dir // null) },
+            model:
+              (if (.model | type) == "object" then
+                { id: (.model.id // null), display_name: (.model.display_name // null) }
+              else
+                .model
+              end),
+            agent: { name: (.agent.name // null) },
+            worktree: { branch: (.worktree.branch // .worktree.name // null) },
+            session_id: (.session_id // .session.id // null),
+            transcript_path: (.transcript_path // null)
+          }
+        ' >"$telemetry_tmp" 2>/dev/null; then
+            mv "$telemetry_tmp" "$telemetry_file" 2>/dev/null || rm -f "$telemetry_tmp"
+            chmod 600 "$telemetry_file" 2>/dev/null || true
+        else
+            rm -f "$telemetry_tmp"
+        fi
+        umask "$old_umask"
+    fi
+
     pct_int=$(printf '%.0f' "$pct" 2>/dev/null || echo "$pct")
     if [ "${pct_int:-0}" -gt 85 ]; then
         ctx_color=$C_RED

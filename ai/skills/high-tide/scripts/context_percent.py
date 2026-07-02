@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Normalize measured context usage into a used percentage.
 
-The helper accepts Claude status-line JSON, rendered status text, or Codex
-`/status` snippets. It intentionally does not read environment variables or
-infer usage from transcript length.
+The helper accepts Claude status-line JSON, rendered status text, Codex
+`/status` snippets, or persisted statusline telemetry. It intentionally does
+not treat environment variables as context values or infer usage from
+transcript length.
 """
 
 from __future__ import annotations
@@ -11,8 +12,10 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import re
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -47,6 +50,8 @@ TOTAL_TOKEN_KEYS = (
     "window_tokens",
     "context_window",
 )
+
+DEFAULT_TELEMETRY_RELATIVE = Path("statusline") / "context.json"
 
 
 @dataclass(frozen=True)
@@ -307,6 +312,39 @@ def extract_payload(text: str, mode: str) -> Result | None:
     return extract_text(stripped, mode)
 
 
+def default_context_files(max_age_seconds: float) -> list[Path]:
+    candidates: list[Path] = []
+    override = os.environ.get("HIGH_TIDE_CONTEXT_FILE")
+    if override:
+        candidates.append(Path(override).expanduser())
+
+    claude_config = os.environ.get("CLAUDE_CONFIG_DIR")
+    if claude_config:
+        candidates.append(Path(claude_config).expanduser() / DEFAULT_TELEMETRY_RELATIVE)
+
+    home = Path.home()
+    for dirname in (".claude", ".claude-team", ".claude-ddb"):
+        candidates.append(home / dirname / DEFAULT_TELEMETRY_RELATIVE)
+
+    seen: set[Path] = set()
+    fresh: list[Path] = []
+    now = time.time()
+    for path in candidates:
+        resolved = path.expanduser()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        try:
+            stat = resolved.stat()
+        except OSError:
+            continue
+        if max_age_seconds > 0 and now - stat.st_mtime > max_age_seconds:
+            continue
+        fresh.append(resolved)
+
+    return sorted(fresh, key=lambda path: path.stat().st_mtime, reverse=True)
+
+
 def load_sources(args: argparse.Namespace) -> list[tuple[str, str]]:
     sources: list[tuple[str, str]] = []
 
@@ -320,7 +358,16 @@ def load_sources(args: argparse.Namespace) -> list[tuple[str, str]]:
     if args.input:
         sources.append(("argv", " ".join(args.input)))
     elif not sys.stdin.isatty():
-        sources.append(("stdin", sys.stdin.read()))
+        stdin_text = sys.stdin.read()
+        if stdin_text.strip():
+            sources.append(("stdin", stdin_text))
+
+    if not sources and not args.no_default_files:
+        for path in default_context_files(args.max_age_seconds):
+            try:
+                sources.append((str(path), path.read_text(encoding="utf-8")))
+            except OSError as exc:
+                raise SystemExit(f"error: failed to read {path}: {exc}") from exc
 
     return sources
 
@@ -392,6 +439,17 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     )
     parser.add_argument("input", nargs="*", help="Literal status text to parse. Omit to read stdin.")
     parser.add_argument("-f", "--file", action="append", help="Read a status payload or status text file.")
+    parser.add_argument(
+        "--no-default-files",
+        action="store_true",
+        help="Do not read fresh Claude statusline telemetry when stdin/files/input are absent.",
+    )
+    parser.add_argument(
+        "--max-age-seconds",
+        type=float,
+        default=1800.0,
+        help="Maximum age for default telemetry files. Use 0 to allow stale files.",
+    )
     parser.add_argument(
         "--mode",
         choices=("auto", "used", "remaining"),
