@@ -40,7 +40,7 @@ samply record [OPTIONS] <COMMAND> [ARGS...]
 | `--save-only` | Don't open browser, just save profile |
 | `-o <FILE>` | Output file path (default: profile.json) |
 | `--iteration-count <N>` | Run command N times |
-| `-p <PID>` | Attach to existing process (Linux only) |
+| `-p <PID>` | Attach to an existing process; on macOS run `samply setup` first |
 
 ### `samply load`
 
@@ -102,6 +102,20 @@ samply setup
 - Lower sampling rate: `--rate 100`
 - Profile shorter duration
 - Filter to specific thread with `--thread`
+
+### RSS grows but no leak is obvious
+
+Treat rising RSS as a separate symptom from CPU time. A service that allocates and frees many small objects at high rate can look leaky even when ownership is correct; allocator fragmentation may leave unusable holes and drive RSS upward until it plateaus. Source: https://kerkour.com/rust-high-performance-memory-fragmentation-allocations.
+
+Triage steps:
+
+1. Confirm whether `malloc`, `free`, `realloc`, `alloc::alloc`, `__rust_alloc`, or `__rust_dealloc` appear in the profile. If they do, optimize allocation rate before tuning compiler flags.
+2. Track RSS over a representative load window and compare it with request throughput or work units. A fragmentation signature often grows under churn and then stabilizes instead of growing without bound.
+3. Run an allocator comparison as an experiment, not as proof of root cause. Try the system allocator, `jemallocator`, and `mimalloc` on the same workload, then compare RSS, throughput, and tail latency.
+4. If a high-throughput allocator improves RSS, still inspect the allocation sites. The allocator may mitigate fragmentation while the root cause remains too many short-lived heap objects.
+5. For embedded or `no_std`-friendly code, prefer bounded buffers and caller-provided storage where the API can support it. Heap fragmentation can be fatal on small heaps even when server builds tolerate it.
+
+Report allocator experiments with the exact allocator, target OS, workload, duration, RSS metric, and any throughput or latency tradeoff.
 
 ## Understanding the Output
 

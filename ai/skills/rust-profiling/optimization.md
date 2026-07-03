@@ -33,13 +33,29 @@ These are the changes flamegraph analysis typically points to:
 | Pattern | When | Example |
 |---|---|---|
 | **Pre-allocate** `Vec::with_capacity(n)` | hot loop showing `realloc`/`grow` in flamegraph | `Vec::with_capacity((total / capacity) + 1)` |
-| **`SmallVec<[T; N]>`** | small collections (≤16 items typical) — avoids heap alloc | `pub items: SmallVec<[usize; 8]>` |
+| **`SmallVec<[T; N]>`** | small collections (≤16 items typical) — avoids heap alloc until inline capacity is exceeded | `pub items: SmallVec<[usize; 8]>` |
+| **`heapless::Vec<T, N>` / fixed-capacity buffers** | known upper bound, embedded/no_std-friendly paths, protocol fields with sane limits | reject out-of-policy inputs instead of allocating unboundedly |
+| **`bytes::Bytes`** | network/parser buffers that need cheap clones or slices | slice shared input instead of cloning `Vec<u8>` |
 | **`#[inline(always)]`** | tiny hot functions called in inner loops where call overhead dominates | `#[inline(always)] fn find_best_fit(...)` |
 | **`#[cold]`** | error/slow paths so the optimizer pushes them out of the icache footprint | `#[cold] fn open_new_bin(...)` |
 | **Early termination in propagation loops** | tree/graph updates where ancestors don't need touching once a value stabilises | `if self.tree[idx] == new_val { break; }` |
 | **Avoid `clone()` in hot loops** | flamegraph shows `Drop` / `__rust_dealloc` near a loop body | reuse via `&mut`, swap with `mem::replace`, or use indices |
 
 Apply one at a time, re-profile to confirm the win — don't shotgun.
+
+### Allocation churn and fragmentation
+
+When profiles show allocator frames or RSS grows under sustained throughput, decide whether the symptom is allocation CPU, allocator fragmentation, or both. A workload with thousands of short-lived DNS/HTTP/JSON-style objects per second can drive RSS upward without a Rust ownership leak.
+
+Use this order:
+
+1. **Reduce allocation count first.** Pre-size `Vec`/`HashMap`, reuse buffers, pass scratch buffers into hot functions, replace repeated `String`/`Vec` construction with borrowed views, and remove avoidable clones.
+2. **Use bounded storage when the maximum is real.** For protocol fields, hashes, IDs, ALPN-like names, and embedded-friendly APIs, a fixed-capacity `heapless` buffer plus explicit rejection of abnormal sizes can be better than an unbounded heap allocation.
+3. **Use shared byte buffers for parser/network data.** `bytes::Bytes` is useful when data arrives as a buffer and many decoded structures need owned, sliceable views without copying.
+4. **Use inline-small collections for mostly-small data.** `SmallVec` can keep common cases off the heap but still spill for rare larger values. Avoid it when large inline capacity would bloat structs or stack frames.
+5. **Try allocator swaps as evidence.** `jemalloc` or `mimalloc` can sharply reduce fragmentation/RSS on server workloads, but they are mitigation, not a substitute for reducing high-rate small allocations. Benchmark throughput, RSS, and latency for each allocator.
+
+Do not blindly move everything to the stack. Stack allocation is cheap, but large inline buffers can inflate structs, increase copies, blow stack budgets, and hurt cache behavior. Pick the representation that matches the measured hot path and API constraints.
 
 ---
 
@@ -101,7 +117,7 @@ llvm-bolt ./binary -o binary.bolt \
 | `RUSTFLAGS="-C target-cpu=native"` | ~0% on scalar integer/pointer code; can **regress 5-8%** on already-optimized code due to AVX-512/AVX2 register pressure. Breaks portability — distribution wheels must use generic `x86_64`/`aarch64`. |
 | Switching to nightly for `-Zthreads=N` | Compile-time only; runtime unchanged. |
 | Replacing `Vec` with `Box<[T]>` | Marginal. The grow path is what `with_capacity` already fixes. |
-| Custom global allocators (mimalloc, jemalloc) | High variance — sometimes wins, sometimes loses. Measure per-workload; don't cargo-cult. |
+| Custom global allocators (mimalloc, jemalloc) | Useful experiment for allocator fragmentation/RSS under churn, but high variance. Measure per-workload and still reduce hot allocation sites. |
 
 ---
 
