@@ -8,6 +8,8 @@ Behavior-preserving simplifications idiomatic to Rust. Apply only what fits surr
 - Prefer explicit error handling over `unwrap`, `expect`, or `panic`; do not introduce panics outside tests.
 - Use `ok_or`, `ok_or_else`, `map`, `and_then`, `unwrap_or`, and `unwrap_or_else` when they improve readability without hiding control flow.
 - Use `if let` or `let else` when one branch is trivial and it flattens the code.
+- Preserve recover-and-report semantics. If code continues with a default/fallback value while collecting diagnostics, warnings, partial failures, or multiple errors, do not simplify it into `?`, `.ok()?`, `unwrap_or_default`, or a plain `Result` unless the caller no longer needs the successful value and the reported failure.
+- Treat error accumulators, diagnostic vectors, `MultiError`-style parameters, and `(value, Option<E>)` / `(value, Vec<E>)` returns as meaningful when the function is designed to keep working after an error. Simplify the local shape only when both the value path and error-reporting path remain observable.
 
 ## Iterators and Control Flow
 
