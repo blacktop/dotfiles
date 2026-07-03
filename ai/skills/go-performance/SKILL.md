@@ -23,7 +23,7 @@ Start with measurement, not rewriting.
 ## Read the right reference
 
 - Read [references/measurement.md](references/measurement.md) for benchmark setup, `go test` flags, `pprof`, trace, flight recording, runtime metrics, and PGO workflow.
-- Read [references/optimization.md](references/optimization.md) when changing code after measurement or reviewing hot-path code.
+- Read [references/optimization.md](references/optimization.md) when changing code after measurement or reviewing hot-path code, including Linux zero-copy I/O fast paths in `io.Copy`.
 - Read [references/hot-path.md](references/hot-path.md) only after profiling names a single dominant CPU kernel: covers inlining cost budget, dispatch cost (generics/interface/closure), bounds-check-elimination hints, register-pressure diagnosis, and assembly/SIMD escalation.
 
 ## Default workflow

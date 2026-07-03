@@ -148,6 +148,22 @@ go test -run='^$' -bench='^BenchmarkFoo$' -trace=trace.out ./pkg
 go tool trace trace.out
 ```
 
+### Linux zero-copy I/O verification
+
+When profiling a file server, TCP proxy, or other `io.Copy`-heavy Linux path, verify whether the runtime kept the zero-copy path active before rewriting code. Source: Segflow, "Zero-copy in Go: sendfile, splice, and the cost of io.Copy" (2024-01-22).
+
+```bash
+strace -c -e trace=read,write,sendfile,splice ./server
+```
+
+Interpret the syscall mix:
+
+- File-to-socket fast path should show `sendfile` carrying the data transfer, with only incidental `read`/`write` setup noise.
+- Socket-to-socket proxy fast path should show `splice` carrying the data transfer.
+- A large number of paired `read` and `write` calls usually means `io.Copy` fell back to the default userspace buffer path. In Go that buffer is commonly 32 KiB, so syscall counts can explode even if wall-clock throughput on loopback looks acceptable.
+
+Use this only for Linux-specific data paths. Other platforms and higher-level wrappers such as `http.ResponseWriter` can route differently, so state the OS, Go version, transport, and concrete source/destination types when reporting zero-copy evidence.
+
 ## Inspecting pprof output
 
 Start with both flat and cumulative views:

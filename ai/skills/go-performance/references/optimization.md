@@ -88,6 +88,29 @@ Bad examples:
 
 Keep pointer parameters when mutation, identity, or large-struct copying is the real requirement.
 
+### Preserve `io.Copy` zero-copy fast paths
+
+For Linux file serving and TCP proxy code, `io.Copy` may already dispatch to kernel zero-copy operations. Do not add wrappers around `io.Reader` or `io.Writer` on these paths unless measurement shows the cost is irrelevant or the wrapper preserves the optional interfaces.
+
+Common fast paths:
+
+- `io.Copy(conn, file)` where `conn` is a `*net.TCPConn` and `file` is a `*os.File` can use `sendfile(2)`.
+- `io.Copy(conn, io.LimitReader(file, n))` can still use `sendfile(2)` because the runtime knows how to unwrap `*io.LimitedReader` around a file.
+- `io.Copy(dstTCP, srcTCP)` between `*net.TCPConn` values can use `splice(2)` for socket-to-socket forwarding.
+
+Common ways to lose the fast path:
+
+- hide `*os.File` behind a custom `io.Reader` for logging, counting, tracing, rate limiting, or checksumming
+- hide either side of a TCP proxy behind a custom reader or writer
+- convert concrete values to opaque interface-shaped middleware before the final `io.Copy`
+
+If a wrapper is required, preserve dispatch by forwarding the optional interfaces:
+
+- source wrappers should implement `io.WriterTo` when they can delegate to the wrapped source
+- destination wrappers should implement `io.ReaderFrom` when they can delegate to the wrapped destination
+
+Verify with [measurement.md#linux-zero-copy-io-verification](measurement.md#linux-zero-copy-io-verification). In the Segflow file-serving example, hiding a file behind a no-op reader changed the path from `sendfile` to thousands of 32 KiB `read`/`write` transfers and roughly tripled server CPU per byte. Treat this as a measured hot-path rule, not a generic ban on middleware.
+
 ## Concurrency and contention
 
 If CPU is low but latency is bad, suspect waiting rather than compute:
