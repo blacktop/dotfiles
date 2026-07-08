@@ -1,0 +1,47 @@
+{
+  "skill_name": "know-your-unknowns",
+  "evals": [
+    {
+      "id": 0,
+      "name": "design-directions",
+      "prompt": "i'm building a small macos menu bar app that monitors my homelab — uptime for a few services, disk usage on the NAS, and CPU temps. i need the main popover UI but honestly i have zero design sense, not even sure what style fits a menu bar utility. can you mock something up so i can figure out what i want?",
+      "expected_output": "A single self-contained HTML page rendering 3-4 wildly different design directions of the same popover with the same realistic fake data, each direction embodying a distinct philosophy, with per-element reaction affordances (steal/skip or similar) that assemble into a copyable reply. Baseline likely produces one generic mock.",
+      "files": [],
+      "assertions": [
+        "Renders at least 3 visually distinct design directions on a single page, each with a different design philosophy (not just color swaps)",
+        "All directions display the same underlying homelab data (same services, disk figures, temps) so they are directly comparable",
+        "Includes reaction affordances (steal/skip chips, checkboxes, or per-direction selectors) whose selections assemble into a copyable reply the user can send back",
+        "HTML is fully self-contained: no external scripts, stylesheets, fonts, images, or fetch calls",
+        "Fake data is realistic homelab content (plausible service names, disk usage, temperatures), not lorem ipsum or placeholder text"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "ambiguous-export",
+      "prompt": "scanledger currently just prints a table to stdout. add an export feature so i can save scan results and share them with my team.",
+      "expected_output": "Instead of guessing a format and implementing, surface the load-bearing decisions first (format(s), destination, schema stability, how 'share with team' actually works), ordered by architectural impact, with concrete options — then either wait for answers or implement conservatively with a documented decisions table. Baseline likely picks JSON-to-file silently.",
+      "files": ["files/scanledger"],
+      "assertions": [
+        "Surfaces the ambiguous decisions (export format, destination, what 'share with my team' means) to the user instead of silently picking defaults",
+        "Decision points come with concrete options and tradeoffs, prioritized by how much the answer changes the implementation",
+        "If code was written, every choice made is documented as an explicit revisable default (a decisions table or equivalent), not buried",
+        "The original fixture project at evals/files/scanledger was not modified",
+        "If code was written, the project copy still builds cleanly with 'go build ./...'"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "tweakable-plan",
+      "prompt": "i want to add tagging to scanledger: let me attach labels to individual findings (like 'wontfix' or 'sprint-3'), filter reports by label, and have labels survive across re-scans even as line numbers shift. write me an implementation plan first — i want to review it before you build anything.",
+      "expected_output": "A plan ordered by likelihood of revision, not build order: judgment calls first (finding identity/matching across scans, persistence format and location, CLI interface) each with the chosen option AND flagged alternatives plus effort estimates; mechanical work collapsed at the bottom marked skippable; ends with the top decisions awaiting reaction. Baseline likely produces a linear step-by-step plan.",
+      "files": ["files/scanledger"],
+      "assertions": [
+        "Plan leads with the judgment-call decisions (finding identity across re-scans, label persistence format/location, CLI surface) rather than a linear build sequence",
+        "Each flagged decision presents the plan's chosen option AND at least one considered alternative the user could switch to",
+        "Mechanical/plumbing work is separated at the bottom and explicitly marked as containing no judgment calls / safe to skip",
+        "Plan explicitly addresses how findings keep their identity across re-scans when line numbers shift (the hard problem in the request)",
+        "Plan ends with a short high-leverage list of the top decisions awaiting the user's reaction"
+      ]
+    }
+  ]
+}
