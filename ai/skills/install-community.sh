@@ -30,6 +30,8 @@ install_skill https://github.com/jeffallan/claude-skills swift-expert
 install_skill https://github.com/jamesrochabrun/skills swiftui-animation
 install_skill https://github.com/existential-birds/beagle swiftui-code-review
 install_skill https://github.com/wshobson/agents mobile-ios-design
+# Design
+install_skill https://github.com/leonxlnx/taste-skill
 # Productivity
 #install_skill https://github.com/subsy/ralph-tui
 # install_skill https://github.com/clawdbot/clawdbot things-mac
