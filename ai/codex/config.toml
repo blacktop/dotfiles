@@ -13,7 +13,6 @@ plan_mode_reasoning_effort = "max"
 # service_tier = "fast"
 personality = "pragmatic"
 web_search = "cached"
-file_opener = "zed"
 cli_auth_credentials_store = "keyring"
 mcp_oauth_credentials_store = "keyring"
 
