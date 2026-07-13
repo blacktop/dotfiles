@@ -1,19 +1,19 @@
 #:schema https://developers.openai.com/codex/config-schema.json
 
 # ── Model ────────────────────────────────────────────────────────────────────
-model = "gpt-5.5"
-review_model = "gpt-5.5"
-model_reasoning_effort = "xhigh"
+model = "gpt-5.6-sol"
+review_model = "gpt-5.6-sol"
+model_reasoning_effort = "high"
 model_reasoning_summary = "none"
-model_verbosity = "medium"
-model_context_window = 1000000
-model_auto_compact_token_limit = 960000
+model_verbosity = "low"
+# model_context_window = 1000000
+# model_auto_compact_token_limit = 960000
 tool_output_token_limit = 25000
-plan_mode_reasoning_effort = "xhigh"
-service_tier = "fast"
+plan_mode_reasoning_effort = "max"
+# service_tier = "fast"
 personality = "pragmatic"
 web_search = "cached"
-file_opener = "vscode"
+file_opener = "zed"
 cli_auth_credentials_store = "keyring"
 mcp_oauth_credentials_store = "keyring"
 
