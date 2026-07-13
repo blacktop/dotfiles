@@ -1,169 +1,208 @@
 ---
 name: handoff
-description: Generate optimized handoff prompts for delegating work to another LLM agent. Use when handing work to Claude (Fable 5 or the 4.x line incl. Opus 4.8), GPT-5.x/Codex, Gemini 3.x, or Grok 4.x/Grok Build, either as a shared-workspace sub-task handoff or a fresh-context handoff for a new session or model. Triggers on requests like "create a handoff prompt", "delegate this task to another agent", "hand this off", or "prepare context for another agent".
+description: >-
+  Generate execution-ready, model-specific prompts for handing work to a
+  different LLM agent or fresh session. Use for shared-workspace delegation,
+  cold-start continuation, cross-model transfer, one-shot worker directives,
+  or requests such as "create a handoff prompt", "delegate this", "hand this
+  off", and "prepare context for another agent". Supports current Anthropic
+  Claude, OpenAI GPT/Codex, Google Gemini, and xAI Grok families.
+version: 2.0.0
 ---
 
 # Handoff Prompt Generator
 
-Generate a prompt that another agent can execute without guessing.
+Generate the smallest prompt another agent can execute without guessing.
+
+## When to Use
+
+- Delegate one bounded task to an agent that shares the current workspace.
+- Continue work in a fresh session, after `/clear`, or on another platform.
+- Transfer work between model families and apply the receiver's preferred
+  prompt structure.
+- Prepare a one-shot worker directive when another orchestrator owns routing,
+  supervision, lifecycle, and integration.
+- Produce separate optimized prompts for multiple target models.
 
 ## When NOT to Use
 
-- Saving the current session to resume the same work later — use the
-  save-session skill.
-- Decomposing and running sub-tasks from this session — use the orchestrate
-  skill.
-- Ongoing supervision of live agents in tmux panes — use the tmux-pm skill
-  (handoff covers the one-shot context transfer, not the PM loop).
-- The receiving agent is this same conversation continuing; no handoff needed.
+- Save a session identifier for later resumption; use `save-session`.
+- Decompose and execute subtasks from this session; use `orchestrate`.
+- Supervise live tmux agents continuously; use `tmux-pm`. This skill may tune
+  a worker directive, but does not own routing, panes, merges, or DONE messages.
+- Continue in the same conversation when no context boundary exists.
 
-## Choose the handoff mode
+## Choose the Handoff Mode
 
-- Use a shared-workspace handoff when the receiving agent can access the same repo, files, and artifacts.
-- Use a fresh-context handoff when the receiving agent starts cold, in another session, or on another platform.
-- Ask for the target model family if it is not implied by the user's request. If it still is not known, draft a vendor-neutral base prompt and mark any missing model-specific adjustments.
+- **Shared workspace:** receiver can inspect the same repo, files, branches,
+  worktrees, logs, and artifacts. Prefer paths over pasted content.
+- **Fresh context:** receiver starts cold or after a reset. Include enough
+  verified state to reconstruct the work without the prior transcript.
 
-## Read one model reference
+## Preserve Target Identity and Authority
 
-Read only the reference that matches the receiving model:
+Resolve the receiver in this order:
 
-| Target model family | Reference |
+1. Exact model, account, harness, and effort supplied by the user or caller.
+2. Exact current model/harness when building a same-session-family restart and
+   that identity is known.
+3. Model family supplied by the user or caller.
+4. Vendor-neutral prompt when neither model nor family is known.
+
+Never silently change a caller-supplied model, account, effort, permission
+mode, or security lane. Model references tune prompt shape; they do not reroute
+runtime settings. Put unresolved identity in a placeholder instead of guessing.
+
+## Read One Vendor Reference
+
+Read only the reference matching the receiving family:
+
+| Family | Reference |
 | --- | --- |
-| Anthropic Claude (Fable 5 / 4.x line incl. Opus 4.8) | [references/anthropic.md](references/anthropic.md) |
-| OpenAI GPT-5.x / Codex | [references/openai.md](references/openai.md) |
-| Google Gemini 3.x (3.5 Flash / 3.1 Pro) | [references/google.md](references/google.md) |
-| xAI Grok 4.3 / Grok Build | [references/xai.md](references/xai.md) |
+| Anthropic Claude | [references/anthropic.md](references/anthropic.md) |
+| OpenAI GPT / Codex | [references/openai.md](references/openai.md) |
+| Google Gemini | [references/google.md](references/google.md) |
+| xAI Grok / Grok Build | [references/xai.md](references/xai.md) |
 
-If the requested model version is newer than the reference, verify the latest official docs before drafting the handoff.
+### Freshness rule
 
-## Gather only execution-critical context
+Verify official vendor documentation before drafting when any condition holds:
 
-Collect the minimum information that removes ambiguity:
+- the user asks for the latest, current, newest, best, or recommended model;
+- the target version is absent from the matching reference;
+- the reference snapshot is more than 30 days old;
+- a sibling skill or caller supplies a newer explicit route;
+- model availability, IDs, effort levels, or prompting behavior conflict.
 
-- objective
-- success criteria
-- scope boundaries
-- relevant files, commands, URLs, or artifacts
-- current state and known blockers
-- verification steps
-- output location or return format
-- coordination notes for parallel work
+Use primary vendor sources. Update the reference snapshot only after verifying
+the facts. If live verification is unavailable, preserve the caller's route and
+label any model-specific advice as potentially stale.
 
-Do not pad the handoff with background that does not change the receiver's next action.
+## Gather Execution-Critical Context
 
-## Build the base handoff
+Collect only facts that change the receiver's next action:
 
-Use flat labeled sections. Prefer direct operational language over narrative explanation.
+- objective and why the outcome matters;
+- observable success criteria and completion bar;
+- current verified state, baseline, blockers, and open questions;
+- files, branches, worktrees, commands, URLs, logs, and artifacts;
+- ownership boundaries and areas not to touch;
+- authorization, side-effect, and stop boundaries;
+- verification commands and expected results;
+- output location, report schema, and coordination contract.
+
+Do not paste large logs or history when the receiver can read the artifact.
+Distinguish verified facts from assumptions and stale handoff claims.
+
+## Build the Base Handoff
+
+Start with a minimal execution contract. Apply only the model-specific changes
+from the selected reference; do not blend guidance from other families.
 
 ### Shared-Workspace Handoff
 
 ```text
-Target model: [family/version]
-Handoff type: shared-workspace sub-task
+Target: [exact model/account/harness/effort, or known family]
+Handoff type: shared workspace
 
 Objective
-[One concrete outcome]
+[One concrete outcome and why it matters]
 
 Success criteria
 - [Observable completion condition]
 - [Verification condition]
 
-Context
-- [Only facts needed for this slice of work]
+Verified context
+- [Current state and relevant facts]
 
-Inputs and artifacts
-- [file paths, branches, logs, docs, prior outputs]
+Inputs
+- [Paths, branch/worktree, logs, docs, prior outputs]
 
-Ownership
-- [files or directories to modify]
-- [areas to avoid]
-
-Constraints
-- [technical limits]
-- [things the agent must not do]
+Ownership and constraints
+- Modify: [owned paths]
+- Do not touch: [excluded paths]
+- Authorization/stop rules: [state-changing or scope boundaries]
 
 Verification
-- [commands, tests, or review checks to run]
+- [Commands or evidence checks]
+- [Expected baseline/result]
 
-Output
-- [exact return format]
-- [where to write or save artifacts]
+Output contract
+- [Deliverable location or exact response shape]
+- [How to report blockers, uncertainty, and incomplete checks]
 
 Coordination
-- [how this work fits with parallel tasks]
+- [Relationship to parallel work and notification contract]
 ```
 
 ### Fresh-Context Handoff
 
 ```text
-Target model: [family/version]
+Target: [exact model/harness/effort when known; otherwise family]
 Handoff type: fresh context
 
-Project
-- name: [project name]
-- overview: [1-2 sentences]
-- entry points: [first files or docs to read]
+Project and objective
+- Project: [name and one-sentence purpose]
+- Outcome: [single concrete outcome and why it matters]
+- Start by reading: [entry points]
 
-Current state
-- completed: [what is already done]
-- remaining: [what still needs to be done]
-- blockers/baseline: [known failures, risks, or assumptions]
+Verified current state
+- Repo/worktree/branch: [paths and refs]
+- Completed: [verified work]
+- Remaining: [work still required]
+- Baseline/blockers: [known failures, risks, assumptions]
 
-Task
-- objective: [single outcome]
-- success criteria:
-  - [observable condition]
-  - [verification condition]
-
-Constraints
-- [scope limits]
-- [things not to change]
-- [environment or policy constraints]
+Task contract
+- Success criteria: [observable completion bar]
+- Scope: [owned paths or subsystem]
+- Do not change: [explicit exclusions]
+- Authorization/stop rules: [side-effect and scope boundaries]
 
 Verification
-- [commands, tests, or manual checks]
+- Already run: [commands and results]
+- Run next: [commands and expected result]
 
-Output
-- [exact deliverable shape]
-- [how to report open questions or TODOs]
+Output contract
+- [Deliverable shape and location]
+- [How to report mismatches, blockers, TODOs, and uncertainty]
 ```
 
-Use placeholders like `[TODO: exact path]` instead of inventing repository facts.
+Use `[TODO: exact path]` rather than inventing repository facts.
 
-## Apply model-specific tuning
+## Apply Model-Specific Tuning
 
-After drafting the base handoff:
+After the base contract exists:
 
-- apply the matching reference's adjustments, and restructure to its "Good
-  shape" when its section order differs from the base template (Gemini wants
-  the task and critical constraints at the end)
-- prefer external runtime settings when the receiving harness exposes them
-- avoid inventing API-only controls inside plain chat prompts
+- preserve the selected model and runtime settings exactly;
+- restructure to the vendor reference's **Good shape** when it differs;
+- add only guidance that changes behavior for this task and target model;
+- keep API-only controls outside plain chat prompts unless the handoff is for
+  an API harness configuration;
+- preserve the orchestrator's transport envelope. For example, a tmux worker's
+  worktree setup, commit policy, PM target, and exact DONE line remain intact.
 
-## Calibrate prescription to the model generation
+Do not assume every frontier model wants the same ordering. Gemini benefits
+from task and critical restrictions at the end; Claude often benefits from XML
+separation; GPT‑5.6 favors a lean outcome/evidence/completion contract; Grok
+Build benefits from precise paths while loading durable project rules itself.
 
-Current frontier models (Fable 5, GPT-5.5, Gemini 3.x, Grok 4.3) perform best
-with shorter, outcome-first handoffs: state the outcome, success criteria,
-constraints, and evidence, then let the model choose the path. Anthropic,
-OpenAI, and Google explicitly document that process-heavy instruction stacks
-written for older models degrade current-model output; xAI's guidance points
-the same direction on scope and conciseness. Enumerate steps only when order
-genuinely matters or the receiving model is an older generation.
+## Hold the Quality Bar
 
-## Hold the quality bar
+- Keep a worker task atomic unless the chosen model was explicitly routed for
+  long-horizon orchestration.
+- Define what done means and what evidence supports it.
+- Name files and commands whenever known.
+- Preserve exact values, scope words, account boundaries, and stop rules.
+- Ask for findings first on review tasks.
+- Define source boundaries, freshness, and citations for research.
+- Require the receiver to report failed or skipped verification honestly.
+- Do not ask for private chain-of-thought; request conclusions, evidence,
+  assumptions, checks, and concise reasoning summaries instead.
 
-- Keep the task atomic.
-- Define what "done" means.
-- Name files and commands whenever possible.
-- Reference shared artifacts by path instead of pasting large logs.
-- State explicit stop rules for destructive or broad changes.
-- Ask for findings first for review tasks.
-- Require source boundaries and citation expectations for research tasks.
+## Return Format
 
-## Return format
+When asked for a handoff prompt:
 
-When the user asks for a handoff prompt:
-
-1. Return the ready-to-send prompt in a fenced code block.
-2. List assumptions or placeholders after the prompt.
-3. Generate separate prompts when the user wants handoffs for multiple models.
+1. Return the ready-to-send prompt in one fenced block.
+2. List unresolved assumptions or placeholders after the block.
+3. Return separate prompts when multiple target models need different tuning.
