@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.blacktop.cargo-clean-big-targets</string>
+
+    <key>Program</key>
+    <string>__HOME__/.local/bin/cargo-clean-big-targets</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>__HOME__/.local/bin/cargo-clean-big-targets</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>__HOME__</string>
+        <key>PATH</key>
+        <string>__HOME__/.cargo/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>CARGO_CLEAN_ROOT</key>
+        <string>__HOME__/Developer</string>
+        <key>CARGO_CLEAN_MIN_MIB</key>
+        <string>10240</string>
+        <key>CARGO_CLEAN_INACTIVE_DAYS</key>
+        <string>14</string>
+    </dict>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key>
+        <integer>0</integer>
+        <key>Hour</key>
+        <integer>4</integer>
+        <key>Minute</key>
+        <integer>15</integer>
+    </dict>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+    <key>LowPriorityIO</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>__HOME__/Library/Logs/cargo-clean-big-targets.log</string>
+    <key>StandardErrorPath</key>
+    <string>__HOME__/Library/Logs/cargo-clean-big-targets.error.log</string>
+</dict>
+</plist>
