@@ -164,7 +164,11 @@ If `docs/.ai/` is gitignored, still write the file when writes are allowed and m
 
 ## Build The Handoff
 
-If the `handoff` skill is available, read it and use its fresh-context handoff shape for the restart prompt. In this install it usually lives at `/Users/blacktop/.agents/skills/handoff/SKILL.md`. Target the same agent family unless the user names another one. For Codex, use OpenAI/Codex.
+If the `handoff` skill is available, discover it by name, read it, and use its
+fresh-context shape for the restart prompt. Preserve the exact current model,
+harness, and effort when they are known, unless the user names a different
+target. If the exact model is unknown, preserve the model family; if even the
+family is unknown, use vendor-neutral tuning. For Codex, use OpenAI/Codex.
 
 Use this fallback format:
 
