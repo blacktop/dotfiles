@@ -152,8 +152,12 @@ fi
 
 # macOS
 if confirm_step "Configure macOS defaults?" "SETUP_MACOS_DEFAULTS"; then
-    echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Running 'config-osx.sh'")"
-    ./config-osx.sh
+    echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Running 'macos/setup.sh'")"
+    if [[ -t 0 && -t 1 ]]; then
+        ./macos/setup.sh
+    else
+        ./macos/setup.sh --all
+    fi
 fi
 
 # Offline profile
