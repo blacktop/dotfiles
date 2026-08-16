@@ -91,6 +91,8 @@ function ipsw-diff --description 'Diff two IPSWs with comprehensive analysis'
         --signatures ~/Developer/Mine/blacktop/symbolicator/kernel \
         --block-list '__TEXT.__info_plist' \
         --block-list '__AUTH_CONST.__auth_ptr' \
+        --block-list '__DATA.__bss' \
+        --ignore-build-timestamps \
         $ipsw_old \
         $ipsw_new
 
