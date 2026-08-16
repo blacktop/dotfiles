@@ -36,6 +36,7 @@ install_skill https://github.com/leonxlnx/taste-skill
 #install_skill https://github.com/subsy/ralph-tui
 # install_skill https://github.com/clawdbot/clawdbot things-mac
 #install_skill https://github.com/trevors/dot-claude jj-workflow
+install_skill https://github.com/ayghri/i-have-adhd i-have-adhd
 # CLI/TUI
 install_skill https://github.com/ast-grep/claude-skill ast-grep
 install_skill https://github.com/jeffallan/claude-skills cli-developer
