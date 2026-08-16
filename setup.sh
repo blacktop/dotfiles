@@ -34,12 +34,12 @@ function confirm_step() {
         env_value="${!env_name:-}"
         env_value_lower="$(printf '%s' "$env_value" | tr '[:upper:]' '[:lower:]')"
         case "$env_value_lower" in
-            1 | true | yes | y)
-                return 0
-                ;;
-            0 | false | no | n)
-                return 1
-                ;;
+        1 | true | yes | y)
+            return 0
+            ;;
+        0 | false | no | n)
+            return 1
+            ;;
         esac
     fi
 
@@ -98,12 +98,13 @@ export HOMEBREW_CASK_OPTS="--appdir=/Applications"
 brew update
 brew upgrade --cask
 brew autoremove
-brew cleanup || true
+brew cleanup --scrub --prune 0 || true
 
 info "Homebrew Version"
 brew --version
 
 brew bundle --file=Brewfile || true
+brew cleanup --scrub --prune 0 || true
 
 # Python tooling is managed by Brewfile/uv. Avoid mutating system Python.
 info "Skipping system pip package install"

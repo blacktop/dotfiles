@@ -13,6 +13,7 @@ SKIPPED_COUNT=0
 PREFERENCES_CHANGED=0
 RESTART_DOCK=0
 RESTART_FINDER=0
+RESTART_CONTROL_CENTER=0
 RESTART_SYSTEM_UI=0
 GUM="$(command -v gum || true)"
 
@@ -225,6 +226,13 @@ configure_general_input() {
 	defaults_write NSGlobalDomain NSAutomaticPeriodSubstitutionEnabled -bool false
 	defaults_write NSGlobalDomain AppleKeyboardUIMode -int 3
 	defaults_write NSGlobalDomain com.apple.swipescrolldirection -bool false
+	defaults_write com.apple.menuextra.clock ShowAMPM -bool true
+	defaults_write com.apple.menuextra.clock ShowDate -int 0
+	defaults_write com.apple.menuextra.clock ShowDayOfWeek -bool true
+	defaults_write com.apple.controlcenter 'NSStatusItem VisibleCC Battery' -bool true
+	defaults_write com.apple.controlcenter 'NSStatusItem VisibleCC Clock' -bool true
+	defaults_write com.apple.controlcenter 'NSStatusItem VisibleCC WiFi' -bool true
+	defaults_write com.apple.controlcenter 'NSStatusItem VisibleCC BentoBox-0' -bool true
 
 	defaults_write com.apple.AppleMultitouchTrackpad Clicking -bool true
 	defaults_write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
@@ -233,6 +241,7 @@ configure_general_input() {
 	defaults_write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool true
 	defaults_write com.apple.AppleMultitouchTrackpad HIDScrollZoomModifierMask -int 262144
 	defaults_write com.apple.driver.AppleBluetoothMultitouch.trackpad HIDScrollZoomModifierMask -int 262144
+	RESTART_CONTROL_CENTER=1
 	RESTART_SYSTEM_UI=1
 }
 
@@ -287,6 +296,7 @@ configure_dock() {
 
 	# Tahoe stores window-tiling preferences in WindowManager, not the Dock.
 	defaults_write com.apple.WindowManager EnableTiledWindowMargins -bool false
+	defaults_write com.apple.WindowManager HideDesktop -bool true
 
 	defaults_write com.apple.dock wvous-tr-corner -int 4
 	defaults_write com.apple.dock wvous-tr-modifier -int 0
@@ -296,6 +306,7 @@ configure_dock() {
 configure_safari() {
 	local safaridriver
 	quit_app Safari
+	warn 'Safari preference writes require Full Disk Access for the terminal running this script'
 
 	safaridriver=$(command -v safaridriver || true)
 	if [[ -n "${safaridriver}" ]]; then
@@ -416,6 +427,9 @@ finalize_preferences() {
 	if ((RESTART_DOCK)); then
 		run_quietly /usr/bin/killall Dock
 	fi
+	if ((RESTART_CONTROL_CENTER)); then
+		run_quietly /usr/bin/killall ControlCenter
+	fi
 	if ((RESTART_SYSTEM_UI)); then
 		run_quietly /usr/bin/killall SystemUIServer
 	fi
@@ -480,7 +494,7 @@ quit_app 'System Preferences'
 
 run_section \
 	'General UI and input' \
-	'Developer-friendly typing, trackpad, keyboard navigation, scrolling, and login-window info.' \
+	'Developer-friendly typing, trackpad, keyboard navigation, scrolling, menu bar, and login-window info.' \
 	configure_general_input
 run_section \
 	'Accessibility: Speak Selection' \

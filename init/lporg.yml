@@ -134,23 +134,22 @@ widgets:
   pages: []
 dock_items:
   apps:
-    - /System/Applications/Launchpad.app
+    - /System/Applications/Apps.app
+    - /System/Applications/Passwords.app
     - /System/Applications/App Store.app
     - /System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app
+    - /Applications/Firefox Developer Edition.app
     - /System/Applications/Mail.app
-    - /System/Applications/Messages.app
     - /System/Applications/Calendar.app
     - /System/Applications/Reminders.app
     - /System/Applications/Notes.app
     - /System/Applications/TV.app
     - /System/Applications/Music.app
-    - /System/Applications/Podcasts.app
     - /System/Applications/System Settings.app
-    - ""
     - /System/Applications/Calculator.app
-    - /Applications/Visual Studio Code.app
+    - /Applications/Zed Preview.app
+    - /Applications/Ghostty.app
     - /Applications/GitHub Desktop.app
-    - /Applications/iTerm.app
   others:
     - path: ~/Documents
       sort: 1

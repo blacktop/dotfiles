@@ -13,6 +13,11 @@ exclude_path() {
 	/usr/bin/sudo /usr/bin/tmutil addexclusion -p "$path"
 }
 
+is_ignored_build_output() {
+	local path=$1
+	/usr/bin/git -C "${path%/*}" check-ignore -q -- "$path" 2>/dev/null
+}
+
 # Fixed-path exclusions survive deletion and recreation, and they can be
 # registered before an optional tool creates its cache directory.
 exclusions=(
@@ -52,10 +57,10 @@ for path in "${exclusions[@]}"; do
 	exclude_path "$path"
 done
 
-# Exclude regenerable build output throughout Developer, including Rust, Swift,
-# Zig, Gradle, Python, and JavaScript artifacts nested below organization and
-# worktree folders. Pruning keeps the scan out of repositories' metadata and
-# large generated trees.
+# Exclude ignored, regenerable build output throughout Developer, including
+# Rust, Swift, Zig, Gradle, Python, and JavaScript artifacts nested below
+# organization and worktree folders. Pruning keeps the scan out of repositories'
+# metadata and large generated trees.
 /usr/bin/find "${HOME}/Developer" -maxdepth 6 \
 	\( -type d \( \
 	-name .git -o \
@@ -75,5 +80,6 @@ done
 	-name zig-cache \
 	\) -print0 -prune \) |
 	while IFS= read -r -d '' path; do
+		is_ignored_build_output "$path" || continue
 		exclude_path "$path"
 	done
