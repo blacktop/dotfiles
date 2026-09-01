@@ -1,25 +1,24 @@
 ---
 name: humanizer
-version: 2.2.0
+version: 2.3.0
+# upstream: 30c5c8d (Update humanizer plugin to upstream v2.2.0)
 description: |
-  Remove signs of AI-generated writing from text. Use when editing or reviewing
-  text to make it sound more natural and human-written. Based on Wikipedia's
-  comprehensive "Signs of AI writing" guide. Detects and fixes patterns including:
-  inflated symbolism, promotional language, superficial -ing analyses, vague
-  attributions, em dash overuse, rule of three, AI vocabulary words, negative
-  parallelisms, and excessive conjunctive phrases. 30c5c8d (Update humanizer plugin to upstream v2.2.0)
-allowed-tools:
-  - Read
-  - Write
-  - Edit
-  - Grep
-  - Glob
-  - AskUserQuestion
+  This skill should be used when the user asks to humanize text, remove
+  AI-sounding writing or slop, make a draft sound less like ChatGPT or
+  Claude, or make writing sound natural and human. Detects and fixes
+  patterns from Wikipedia's "Signs of AI writing" guide plus newer
+  model-specific tells: inflated significance, promotional language,
+  superficial -ing analyses, vague attributions, em dash overuse, rule of
+  three, AI vocabulary, negative parallelisms, cataphoric teasers, filler
+  phrases, chatbot artifacts, Claude-isms (punchy fragments, turn-of-phrase
+  building), GPT-isms (motivator register), fake-suspense fragments,
+  uniform rhythm, false singularity, and invented observations.
+allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion
 ---
 
 # Humanizer: Remove AI Writing Patterns
 
-You are a writing editor that identifies and removes signs of AI-generated text to make writing sound more natural and human. This guide is based on Wikipedia's "Signs of AI writing" page, maintained by WikiProject AI Cleanup.
+Identify and remove signs of AI-generated text to make writing sound natural and human.
 
 ## When to Use
 
@@ -35,16 +34,18 @@ You are a writing editor that identifies and removes signs of AI-generated text 
 - Direct quotes that must be preserved verbatim
 - Text that's already natural and well-written
 
-## Your Task
+## Workflow
 
 When given text to humanize:
 
 1. **Identify AI patterns** - Scan for the [known AI patterns](references/patterns.md)
 2. **Rewrite problematic sections** - Replace AI-isms with natural alternatives
-3. **Preserve meaning** - Keep the core message intact
+3. **Preserve meaning** - Keep the core message intact. Never invent facts, names, statistics, or citations to make vague text concrete — ask the user for real specifics (AskUserQuestion) or keep the claim general
 4. **Maintain voice** - Match the intended tone (formal, casual, technical, etc.)
 5. **Add soul** - Don't just remove bad patterns; inject actual personality
 6. **Do a final anti-AI pass** - Prompt: "What makes the below so obviously AI generated?" Answer briefly with remaining tells, then prompt: "Now make it not obviously AI generated." and revise
+
+The revised text should sound natural when read aloud, vary sentence structure, prefer specific details over vague claims (without inventing them), keep the tone appropriate for context, and use simple constructions (is/are/has) where they fit.
 
 ## Personality and Soul
 
@@ -73,6 +74,8 @@ Avoiding AI patterns is only half the job. Sterile, voiceless writing is just as
 
 **Be specific about feelings.** Not "this is concerning" but "there's something unsettling about agents churning away at 3am while nobody's watching."
 
+**Never fake the texture.** Adding voice does not mean inventing it. "Most people I've talked to..." when no one was talked to, "the thing that got me..." when nothing got you — fabricated anecdotes, reactions, and observations are themselves AI tells (see Fabrication Tells in the pattern catalog). Real voice comes from real opinions about the actual content, not from manufactured personal history.
+
 ### Before (clean but soulless):
 > The experiment produced interesting results. The agents generated 3 million lines of code. Some developers were impressed while others were skeptical. The implications remain unclear.
 
@@ -83,30 +86,23 @@ Avoiding AI patterns is only half the job. Sterile, voiceless writing is just as
 
 **Content patterns:** Inflated significance ("stands as a testament"), vague attributions ("experts believe"), promotional language ("vibrant", "nestled"), superficial -ing analyses ("highlighting the importance of...")
 
-**Language patterns:** AI vocabulary (additionally, crucial, delve, landscape, tapestry, underscore), copula avoidance ("serves as" instead of "is"), negative parallelisms ("not just X, but Y"), rule of three overuse
+**Language patterns:** AI vocabulary (additionally, crucial, delve, landscape, tapestry, underscore — plus newer: ensuring, fundamentally, nuanced, "plays a crucial role in shaping"), copula avoidance ("serves as" instead of "is"), negative parallelisms ("not just X, but Y" — the single most-cited AI tell), rule of three overuse
+
+**Filler and hedging:** Filler phrases ("In order to", "At its core"), sweeping openers ("In today's fast-paced world"), excessive hedging, generic positive conclusions ("the future looks bright")
+
+**Engagement bait:** Cataphoric teasers ("Here's the part nobody tells you..."), fake-suspense fragments ("The result? ...")
 
 **Style patterns:** Em dash overuse, excessive boldface, inline-header lists with bolded terms, title case in headings, emojis in professional content
 
-**Communication artifacts:** Chatbot phrases ("I hope this helps!"), knowledge-cutoff disclaimers, sycophantic tone ("Great question!")
+**Structural tells (survive vocabulary cleanup):** Uniform rhythm and templated paragraph shapes (claim → expansion → "however" → tidy bow), contraction deficit ("it is" in casual prose), connective metronome (However/Furthermore opening every paragraph), symmetrical both-sides hedging where a stance was wanted, italic function words, `---` section dividers
 
-See [references/patterns.md](references/patterns.md) for the complete catalog with examples.
+**Model dialects:** Claude-isms (dramatic sentence fragments — "Not a detail. A design decision." — "load-bearing", "full stop", colon-as-dramatic-pause, hedge-stacking, "You're absolutely right"); GPT-isms (motivator register: "game-changer", "unlock", "actionable", numbered framework + motivational close). Note: newest models dropped "delve"/"tapestry" — clean vocabulary proves nothing; check structure.
 
-## Process
+**Fabrication tells:** False singularity ("the thing that got me", "that's the whole game"), invented observations ("most people I've talked to"), stock fiction names (Elara Voss, Marcus Chen)
 
-1. Read the input text carefully
-2. Identify all instances of the patterns above
-3. Rewrite each problematic section
-4. Ensure the revised text:
-   - Sounds natural when read aloud
-   - Varies sentence structure naturally
-   - Uses specific details over vague claims
-   - Maintains appropriate tone for context
-   - Uses simple constructions (is/are/has) where appropriate
-5. Present a draft humanized version
-6. Prompt: "What makes the below so obviously AI generated?"
-7. Answer briefly with the remaining tells (if any)
-8. Prompt: "Now make it not obviously AI generated."
-9. Present the final version (revised after the audit)
+**Communication artifacts:** Chatbot phrases ("I hope this helps!"), knowledge-cutoff disclaimers, sycophantic tone ("Great question!"), needy sign-offs ("Would you like me to expand...")
+
+See [references/patterns.md](references/patterns.md) for the complete catalog with examples. Density is the signal: one tell means nothing; several clustered in a few hundred words is a fingerprint. And ban the register, not the word — fixing phrases one-by-one while keeping the underlying move (building to a turn of phrase, performing balance) produces well-disguised slop.
 
 ## Output Format
 
@@ -115,6 +111,8 @@ Provide:
 2. "What makes the below so obviously AI generated?" (brief bullets)
 3. Final rewrite
 4. A brief summary of changes made (optional, if helpful)
+
+For short inputs where the draft passes the audit clean, skip the draft and present the final version alone.
 
 ## Full Example
 
@@ -136,29 +134,30 @@ Provide:
 > In conclusion, the future looks bright. Exciting times lie ahead as we continue this journey toward excellence. Let me know if you'd like me to expand on any section!
 
 **Draft rewrite:**
-> AI coding assistants speed up some tasks. In a 2024 study by Google, developers using Codex completed simple functions 55% faster than a control group, but showed no improvement on debugging or architectural decisions.
+> AI coding assistants speed up some tasks. The tools are good at boilerplate: config files, test scaffolding, repetitive refactors. They are bad at knowing when they are wrong. A suggestion can compile, pass lint, and still do the wrong thing once the reviewer stops paying attention.
 >
-> The tools are good at boilerplate: config files, test scaffolding, repetitive refactors. They are bad at knowing when they are wrong. I have mass-accepted suggestions that compiled, passed lint, and still did the wrong thing because I stopped paying attention.
+> Some developers treat the assistant as autocomplete for boring code and review every line before committing. Others disable it after it keeps suggesting patterns from deprecated libraries.
 >
-> Mira, an engineer at a fintech startup I interviewed, said she uses Copilot "like autocomplete for boring code" but reviews every line before committing. Jake, a senior dev at a larger company, disabled it after it kept suggesting patterns from a deprecated internal library.
->
-> The productivity claims are hard to verify. GitHub says Copilot users "accept 30% of suggestions," but acceptance is not correctness, and correctness is not value. The 2024 Uplevel study found no statistically significant difference in pull-request throughput between teams with and without AI assistants.
+> The productivity claims are hard to verify. Acceptance rate is the number vendors like to quote, but acceptance is not correctness, and correctness is not value.
 >
 > None of this means the tools are useless. It means they are tools. They do not replace judgment, and they do not eliminate the need for tests. If you do not have tests, you cannot tell whether the suggestion is right.
 
+(Note the original's "significantly faster" and "featured in The New York Times, Wired, and The Verge" claims were unsourced, so the rewrite stays general rather than inventing studies, names, numbers, or personal anecdotes to replace them.)
+
 **What makes the below so obviously AI generated?**
 - The rhythm is still a bit too tidy (clean contrasts, evenly paced paragraphs).
-- The named people and study citations can read like plausible-but-made-up placeholders unless they're real and sourced.
+- The "some do X, others do Y" split is a neat binary a person rarely commits to so cleanly.
+- The stiff no-contraction register ("do not", "cannot") reads formal for the context.
 - The closer leans a touch slogan-y ("If you do not have tests...") rather than sounding like a person talking.
 
 **Now make it not obviously AI generated.**
-> AI coding assistants can make you faster at the boring parts. Not everything. Definitely not architecture.
+> AI coding assistants can make you faster at the boring parts. Architecture isn't one of them.
 >
-> They're great at boilerplate: config files, test scaffolding, repetitive refactors. They're also great at sounding right while being wrong. I've accepted suggestions that compiled, passed lint, and still missed the point because I stopped paying attention.
+> They're great at boilerplate: config files, test scaffolding, repetitive refactors. They're also great at sounding right while being wrong. A suggestion can compile, pass lint, and still miss the point. The failure mode is the reviewer who stopped reading.
 >
-> People I talk to tend to land in two camps. Some use it like autocomplete for chores and review every line. Others disable it after it keeps suggesting patterns they don't want. Both feel reasonable.
+> Using one as autocomplete for chores and reviewing every line is reasonable. So is turning it off when it keeps pushing deprecated patterns.
 >
-> The productivity metrics are slippery. GitHub can say Copilot users "accept 30% of suggestions," but acceptance isn't correctness, and correctness isn't value. If you don't have tests, you're basically guessing.
+> The productivity metrics are slippery. Vendors quote acceptance rates, but acceptance isn't correctness, and correctness isn't value. If you don't have tests, you're basically guessing.
 
 **Changes made:**
 - Removed chatbot artifacts ("Great question!", "I hope this helps!", "Let me know if...")
@@ -169,14 +168,15 @@ Provide:
 - Removed negative parallelism ("It's not just X; it's Y")
 - Removed rule-of-three patterns and synonym cycling ("catalyst/partner/foundation")
 - Removed false ranges ("from X to Y, from A to B")
-- Removed em dashes, emojis, boldface headers, and curly quotes
+- Removed em dashes, emojis, and boldface headers
 - Removed copula avoidance ("serves as", "functions as", "stands as") in favor of "is"/"are"
 - Removed formulaic challenges section ("Despite challenges... continues to thrive")
 - Removed knowledge-cutoff hedging ("While specific details are limited...")
 - Removed excessive hedging ("could potentially be argued that... might have some")
 - Removed filler phrases ("In order to", "At its core")
 - Removed generic positive conclusion ("the future looks bright", "exciting times lie ahead")
-- Made the voice more personal and less "assembled" (varied rhythm, fewer placeholders)
+- Varied the rhythm so the paragraphs stopped feeling evenly paced and "assembled"
+- Kept unsourced claims general instead of inventing studies, names, statistics, or personal anecdotes to replace them
 
 ## Reference
 
