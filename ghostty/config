@@ -32,24 +32,13 @@ keybind = super+shift+home=scroll_to_top
 # Claude Code
 keybind = shift+enter=text:\n
 
+# Use Ghostty's macOS defaults: Cmd+T new tab, Cmd+D split right,
+# Cmd+Shift+D split down, Cmd+1-8 select tab,
+# and Cmd+9 last tab. Use Ctrl+A bindings inside tmux.
+
 # Ghostty tab switching
-keybind = shift+cmd+t=new_tab
 keybind = cmd+left=previous_tab
 keybind = cmd+right=next_tab
-
-# tmux keymaps using C-a prefix
-keybind = cmd+t=text:\x01c
-keybind = cmd+d=text:\x01i
-keybind = shift+cmd+d=text:\x01u
-keybind = cmd+digit_1=text:\x011
-keybind = cmd+digit_2=text:\x012
-keybind = cmd+digit_3=text:\x013
-keybind = cmd+digit_4=text:\x014
-keybind = cmd+digit_5=text:\x015
-keybind = cmd+digit_6=text:\x016
-keybind = cmd+digit_7=text:\x017
-keybind = cmd+digit_8=text:\x018
-keybind = cmd+digit_9=text:\x019
 
 # ── Bell & notifications ─────────────────────────────────────────────────────
 bell-audio-path = /System/Library/Sounds/Bottle.aiff
