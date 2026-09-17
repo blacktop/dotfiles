@@ -9,7 +9,8 @@ AGENTS_SKILLS="$HOME/.agents/skills"
 mkdir -p "$AGENTS_SKILLS"
 
 # Claude Code looks at $CLAUDE_CONFIG_DIR/skills/; codex CLI looks at $CODEX_HOME/skills/.
-# Symlink each variant to the unified ~/.agents/skills location so skills live in one place.
+# Symlink each normal variant to the unified ~/.agents/skills location so skills live in one place.
+# ~/.claude-fable is intentionally excluded so its Fable sessions stay vanilla.
 for agent_dir in "$HOME/.claude" "$HOME/.claude-team" "$HOME/.claude-ddb" "$HOME/.codex" "$HOME/.codex-team"; do
 	[ -d "$agent_dir" ] || continue
 	skills_path="$agent_dir/skills"
@@ -21,10 +22,6 @@ for agent_dir in "$HOME/.claude" "$HOME/.claude-team" "$HOME/.claude-ddb" "$HOME
 		ln -s "$AGENTS_SKILLS" "$skills_path"
 	fi
 done
-
-# Gemini scans ~/.agents/skills natively; remove any stale symlink from older setups.
-gemini_skills="$HOME/.gemini/skills"
-[ -L "$gemini_skills" ] && rm "$gemini_skills"
 
 # Install community skills (installs directly to ~/.agents/skills)
 if [ -x "$SCRIPT_DIR/skills/install-community.sh" ]; then
@@ -38,5 +35,13 @@ for skill_dir in "$SCRIPT_DIR/skills"/*/; do
 	[ -f "$skill_dir/SKILL.md" ] || continue
 	# Remove trailing slash
 	skill_dir="${skill_dir%/}"
-	rsync -a --exclude='.DS_Store' "$skill_dir" "$AGENTS_SKILLS/"
+	# evals/ holds skill-creator benchmark fixtures and __pycache__ holds compiled
+	# bytecode — both are dev-only and gitignored, so don't deploy them.
+	# --delete prunes files removed from the repo copy. It is scoped to the single
+	# skill directory being transferred, so sibling skills (including community
+	# ones) in $AGENTS_SKILLS are never touched. Excluded paths are also protected
+	# on the receiving side, so a stray evals/ there survives rather than being
+	# pruned. Verified identical on openrsync (/usr/bin) and rsync 3.x (Homebrew).
+	rsync -a --delete --exclude='.DS_Store' --exclude='evals' --exclude='__pycache__' \
+		"$skill_dir" "$AGENTS_SKILLS/"
 done
