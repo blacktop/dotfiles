@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Agent Graphs"
+  short_description: "Design, audit, and simplify grounded agent workflows"
+  default_prompt: "Use $design-agent-graphs to design, audit, or simplify a grounded agent workflow with explicit authority, containment, evidence, and stop conditions, adding only the smallest structure each named failure requires. Reach for it when replacing a fragile single-agent loop, or when diagnosing agent thrash, circular review, Goodhart behavior, stale evals, conflicting goals, agents converging on one answer, agents contending for one scarce resource, agents interfering with each other's workspaces, or consensus formed before the evidence."
