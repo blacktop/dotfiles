@@ -70,7 +70,8 @@ echo ""
 prompt_key "context7" "Context7 API key"
 prompt_key "elevenlabs" "ElevenLabs API key"
 prompt_key "openai" "OpenAI API key"
-prompt_key "gemini" "Gemini API key"
+# GEMINI_API_KEY powers mcp-tts Google voices (the speak skill), not the Gemini CLI.
+prompt_key "gemini" "Google AI API key (for TTS voices)"
 
 # ── Claude Code MCP servers ─────────────────────────────────────────────────
 # `claude mcp add --scope user` writes to $CLAUDE_CONFIG_DIR/.claude.json, so each
@@ -183,11 +184,18 @@ for line in template_lines:
 if not managed_tables:
     raise SystemExit(f"no [mcp_servers.*] tables found in {template_path}")
 
-managed_prefixes = tuple(f"{name}." for name in managed_tables)
+# Remove legacy local servers that should be opt-in rather than inherited by
+# every Codex session. IDA remains as a disabled managed table in the template.
+retired_tables = {
+    "mcp_servers.computer-use",
+    "mcp_servers.node_repl",
+}
+target_tables = managed_tables | retired_tables
+managed_prefixes = tuple(f"{name}." for name in target_tables)
 
 
 def is_managed_table(name):
-    return name in managed_tables or name.startswith(managed_prefixes)
+    return name in target_tables or name.startswith(managed_prefixes)
 
 
 with open(config_path, encoding="utf-8") as fh:
@@ -251,30 +259,6 @@ for variant in codex codex-team; do
     config="$HOME/.$variant/config.toml"
     sync_codex_mcp_config "$variant" "$config" "$(dirname "$0")/codex/config.toml"
 done
-
-# ── Gemini CLI MCP servers ───────────────────────────────────────────────────
-# Patch ~/.gemini/settings.json to register the keyless Exa endpoint.
-# (Gemini's settings.json is user-owned; we merge with jq instead of overwriting.)
-
-gemini_settings="$HOME/.gemini/settings.json"
-if command -v jq >/dev/null 2>&1; then
-    msg "Configuring Gemini MCP servers..."
-    mkdir -p "$(dirname "$gemini_settings")"
-    if [ ! -f "$gemini_settings" ]; then
-        printf '{\n  "mcpServers": {}\n}\n' >"$gemini_settings"
-        ok "Gemini: created settings.json"
-    fi
-    tmp=$(mktemp)
-    if jq '.mcpServers = (.mcpServers // {}) | .mcpServers.exa = {"httpUrl": "https://mcp.exa.ai/mcp"}' "$gemini_settings" >"$tmp"; then
-        mv "$tmp" "$gemini_settings"
-        ok "Gemini: exa (http, keyless)"
-    else
-        warn "Gemini: failed to patch settings.json (kept original)"
-        rm -f "$tmp"
-    fi
-else
-    warn "jq not found — skipping Gemini MCP setup"
-fi
 
 # ── Reminder ─────────────────────────────────────────────────────────────────
 
