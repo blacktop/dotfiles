@@ -1,208 +1,139 @@
 ---
 name: handoff
 description: >-
-  Generate execution-ready, model-specific prompts for handing work to a
-  different LLM agent or fresh session. Use for shared-workspace delegation,
-  cold-start continuation, cross-model transfer, one-shot worker directives,
-  or requests such as "create a handoff prompt", "delegate this", "hand this
-  off", and "prepare context for another agent". Supports current Anthropic
-  Claude, OpenAI GPT/Codex, Google Gemini, and xAI Grok families.
-version: 2.0.0
+  This skill should be used when a user asks for an execution-ready prompt to
+  hand work to another LLM agent or fresh session. Trigger phrases include
+  "write a prompt for Claude/Codex/Gemini/Grok", "hand this off to another
+  agent", "draft a directive for a worker", and "write a prompt so a fresh
+  session can continue this". It drafts prompts only; it does not spawn, route,
+  or supervise agents. Supports Claude, GPT/Codex, Gemini, Grok, and
+  vendor-neutral targets.
 ---
 
 # Handoff Prompt Generator
 
 Generate the smallest prompt another agent can execute without guessing.
 
-## When to Use
+## When to use
 
-- Delegate one bounded task to an agent that shares the current workspace.
-- Continue work in a fresh session, after `/clear`, or on another platform.
-- Transfer work between model families and apply the receiver's preferred
-  prompt structure.
-- Prepare a one-shot worker directive when another orchestrator owns routing,
-  supervision, lifecycle, and integration.
-- Produce separate optimized prompts for multiple target models.
+Use this skill to draft an execution-ready prompt for a named LLM target or a
+fresh session, in the caller's supplied model, account, and effort.
 
-## When NOT to Use
+Do not use it to run, route, or supervise agents — that is `orchestrate`. Do not
+draft a `tmux-pm` implementation directive here; render and validate that in
+`tmux-pm` (see the commit-first overlay below). This skill produces prompt text
+only.
 
-- Save a session identifier for later resumption; use `save-session`.
-- Decompose and execute subtasks from this session; use `orchestrate`.
-- Supervise live tmux agents continuously; use `tmux-pm`. This skill may tune
-  a worker directive, but does not own routing, panes, merges, or DONE messages.
-- Continue in the same conversation when no context boundary exists.
-
-## Choose the Handoff Mode
-
-- **Shared workspace:** receiver can inspect the same repo, files, branches,
-  worktrees, logs, and artifacts. Prefer paths over pasted content.
-- **Fresh context:** receiver starts cold or after a reset. Include enough
-  verified state to reconstruct the work without the prior transcript.
-
-## Preserve Target Identity and Authority
+## Preserve authority
 
 Resolve the receiver in this order:
 
-1. Exact model, account, harness, and effort supplied by the user or caller.
-2. Exact current model/harness when building a same-session-family restart and
-   that identity is known.
-3. Model family supplied by the user or caller.
-4. Vendor-neutral prompt when neither model nor family is known.
+1. Exact model, account, harness, and effort supplied by the caller.
+2. Supplied model family.
+3. Vendor-neutral prompt.
 
-Never silently change a caller-supplied model, account, effort, permission
-mode, or security lane. Model references tune prompt shape; they do not reroute
-runtime settings. Put unresolved identity in a placeholder instead of guessing.
+Never reroute a caller-selected model, account, effort, permission mode, or
+security lane. Do not add commit, signing, clean-worktree, review, or delegation
+requirements unless the caller, repository, or orchestrator requires them.
 
-## Read One Vendor Reference
+Read only the matching target reference, one per named target:
 
-Read only the reference matching the receiving family:
-
-| Family | Reference |
+| Target | Reference |
 | --- | --- |
-| Anthropic Claude | [references/anthropic.md](references/anthropic.md) |
-| OpenAI GPT / Codex | [references/openai.md](references/openai.md) |
-| Google Gemini | [references/google.md](references/google.md) |
-| xAI Grok / Grok Build | [references/xai.md](references/xai.md) |
+| Claude | [references/anthropic.md](references/anthropic.md) |
+| GPT / Codex | [references/openai.md](references/openai.md) |
+| Gemini | [references/google.md](references/google.md) |
+| Grok | [references/xai.md](references/xai.md) |
 
-### Freshness rule
+Skip vendor references for a vendor-neutral target. If current model guidance
+matters, verify it from the vendor's primary documentation. Report reference
+drift; do not edit bundled references unless the user explicitly asks.
 
-Verify official vendor documentation before drafting when any condition holds:
+## Gather only execution-critical facts
 
-- the user asks for the latest, current, newest, best, or recommended model;
-- the target version is absent from the matching reference;
-- the reference snapshot is more than 30 days old;
-- a sibling skill or caller supplies a newer explicit route;
-- model availability, IDs, effort levels, or prompting behavior conflict.
+Collect:
 
-Use primary vendor sources. Update the reference snapshot only after verifying
-the facts. If live verification is unavailable, preserve the caller's route and
-label any model-specific advice as potentially stale.
-
-## Gather Execution-Critical Context
-
-Collect only facts that change the receiver's next action:
-
-- objective and why the outcome matters;
-- observable success criteria and completion bar;
-- current verified state, baseline, blockers, and open questions;
-- files, branches, worktrees, commands, URLs, logs, and artifacts;
-- ownership boundaries and areas not to touch;
-- authorization, side-effect, and stop boundaries;
+- one objective and its observable completion bar;
+- verified current state, blockers, and assumptions;
+- exact paths, branch/worktree, artifacts, and commands;
+- owned and excluded scope;
+- authorization and genuine stop conditions;
+- required tools, evidence rules, and any delegation cap;
 - verification commands and expected results;
-- output location, report schema, and coordination contract.
+- exact output or notification contract.
 
-Do not paste large logs or history when the receiver can read the artifact.
-Distinguish verified facts from assumptions and stale handoff claims.
+Prefer paths over copied history when the receiver shares the workspace. Prefer
+a reference over a description: point at the source file, test, schema, or
+mockup that already encodes the intent instead of paraphrasing it. Label unknown
+facts with `[TODO: ...]` instead of inventing them.
 
-## Build the Base Handoff
-
-Start with a minimal execution contract. Apply only the model-specific changes
-from the selected reference; do not blend guidance from other families.
-
-### Shared-Workspace Handoff
+## Base template
 
 ```text
-Target: [exact model/account/harness/effort, or known family]
-Handoff type: shared workspace
+Target: [exact model/account/harness/effort, family, or vendor-neutral]
+Handoff type: [shared workspace | fresh context]
 
 Objective
 [One concrete outcome and why it matters]
 
 Success criteria
-- [Observable completion condition]
-- [Verification condition]
+- [Observable result]
+- [Verification result]
 
 Verified context
-- [Current state and relevant facts]
+- [Current state, baseline, and blockers]
+- [Paths, branch/worktree, artifacts, and commands]
 
-Inputs
-- [Paths, branch/worktree, logs, docs, prior outputs]
+Scope and authority
+- Own: [paths or subsystem]
+- Do not touch: [explicit exclusions]
+- Stop for: [external authority, destructive action, or material scope change]
 
-Ownership and constraints
-- Modify: [owned paths]
-- Do not touch: [excluded paths]
-- Authorization/stop rules: [state-changing or scope boundaries]
+Tools and evidence
+- [Tools or sources the receiver must use, and what each claim must cite]
+- [Delegation: whether subagents are warranted, and the cap]
 
 Verification
-- [Commands or evidence checks]
-- [Expected baseline/result]
+- [Exact commands or evidence checks]
 
-Output contract
+Output
 - [Deliverable location or exact response shape]
-- [How to report blockers, uncertainty, and incomplete checks]
-
-Coordination
-- [Relationship to parallel work and notification contract]
+- [How to report blockers and skipped checks]
 ```
 
-### Fresh-Context Handoff
+Apply only target-specific ordering or formatting that materially changes the
+receiver's behavior. State every rule once. Do not paste large logs, repeat
+permission prose, or ask for private chain-of-thought.
 
-```text
-Target: [exact model/harness/effort when known; otherwise family]
-Handoff type: fresh context
+Write the completion bar, not the working method. Receivers that already verify
+and self-correct are made worse by "double-check your work" or "verify before
+responding"; the target reference says which ones. Exact commands listed under
+Verification are a contract and stay.
 
-Project and objective
-- Project: [name and one-sentence purpose]
-- Outcome: [single concrete outcome and why it matters]
-- Start by reading: [entry points]
+## Commit-first overlay
 
-Verified current state
-- Repo/worktree/branch: [paths and refs]
-- Completed: [verified work]
-- Remaining: [work still required]
-- Baseline/blockers: [known failures, risks, assumptions]
+When a `tmux-pm` lane is the consumer, do not draft the directive here. Render
+the template in `~/.agents/skills/tmux-pm/SKILL.md` and prove it:
 
-Task contract
-- Success criteria: [observable completion bar]
-- Scope: [owned paths or subsystem]
-- Do not change: [explicit exclusions]
-- Authorization/stop rules: [side-effect and scope boundaries]
-
-Verification
-- Already run: [commands and results]
-- Run next: [commands and expected result]
-
-Output contract
-- [Deliverable shape and location]
-- [How to report mismatches, blockers, TODOs, and uncertainty]
+```fish
+~/.agents/skills/tmux-pm/scripts/validate-directive.sh <directive-file>
 ```
 
-Use `[TODO: exact path]` rather than inventing repository facts.
+That validator is the specification. It requires a PM pane ID, a signing mode,
+a PM notification contract, exact commit and verification commands, and a
+strict section order, and it rejects anything this skill invents on its own. Ask
+the PM which signing mode applies rather than assuming one: the signed and
+unsigned variants differ in completion bar, verification commands, and commit
+command.
 
-## Apply Model-Specific Tuning
+For a caller or repository that requires a checkpoint commit outside `tmux-pm`,
+extend the base template rather than starting a second shape. Add owned paths,
+the exact focused check and commit commands, and a single `DONE <ROLE>:
+branch=<BRANCH> commit=<sha> ...` output line. Preserve any caller-supplied
+retry limit exactly; do not invent one.
 
-After the base contract exists:
+## Return
 
-- preserve the selected model and runtime settings exactly;
-- restructure to the vendor reference's **Good shape** when it differs;
-- add only guidance that changes behavior for this task and target model;
-- keep API-only controls outside plain chat prompts unless the handoff is for
-  an API harness configuration;
-- preserve the orchestrator's transport envelope. For example, a tmux worker's
-  worktree setup, commit policy, PM target, and exact DONE line remain intact.
-
-Do not assume every frontier model wants the same ordering. Gemini benefits
-from task and critical restrictions at the end; Claude often benefits from XML
-separation; GPT‑5.6 favors a lean outcome/evidence/completion contract; Grok
-Build benefits from precise paths while loading durable project rules itself.
-
-## Hold the Quality Bar
-
-- Keep a worker task atomic unless the chosen model was explicitly routed for
-  long-horizon orchestration.
-- Define what done means and what evidence supports it.
-- Name files and commands whenever known.
-- Preserve exact values, scope words, account boundaries, and stop rules.
-- Ask for findings first on review tasks.
-- Define source boundaries, freshness, and citations for research.
-- Require the receiver to report failed or skipped verification honestly.
-- Do not ask for private chain-of-thought; request conclusions, evidence,
-  assumptions, checks, and concise reasoning summaries instead.
-
-## Return Format
-
-When asked for a handoff prompt:
-
-1. Return the ready-to-send prompt in one fenced block.
-2. List unresolved assumptions or placeholders after the block.
-3. Return separate prompts when multiple target models need different tuning.
+Return the ready-to-send handoff in one fenced block. List unresolved
+assumptions after it. Return separate prompts only when target-specific tuning
+actually differs.
