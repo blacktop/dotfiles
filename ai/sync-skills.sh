@@ -2,7 +2,7 @@
 # Sync AI skills to ~/.agents/skills (standardized location for all AI agents)
 set -o errexit -o nounset
 
-SCRIPT_DIR="$(dirname "$0")"
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname "$0")" && pwd)
 AGENTS_SKILLS="$HOME/.agents/skills"
 
 # Create the standardized skills directory
@@ -34,6 +34,10 @@ for skill_dir in "$SCRIPT_DIR/skills"/*/; do
 	[ -f "$skill_dir/SKILL.md" ] || continue
 	# Remove trailing slash
 	skill_dir="${skill_dir%/}"
+	if [ -L "$AGENTS_SKILLS/$(basename "$skill_dir")" ]; then
+		printf 'Refusing to overwrite linked skill: %s\n' "$(basename "$skill_dir")" >&2
+		exit 1
+	fi
 	# evals/ holds skill-creator benchmark fixtures and __pycache__ holds compiled
 	# bytecode — both are dev-only and gitignored, so don't deploy them.
 	# --delete prunes files removed from the repo copy. It is scoped to the single
@@ -44,3 +48,7 @@ for skill_dir in "$SCRIPT_DIR/skills"/*/; do
 	rsync -a --delete --exclude='.DS_Store' --exclude='evals' --exclude='__pycache__' \
 		"$skill_dir" "$AGENTS_SKILLS/"
 done
+
+# Private content stays outside this repository. Links follow local Git updates.
+"$SCRIPT_DIR/sync-private-skills.sh" \
+	"${PRIVATE_SKILLS_DIR:-$SCRIPT_DIR/../../private-skills}" "$AGENTS_SKILLS"

@@ -185,7 +185,7 @@ if not managed_tables:
     raise SystemExit(f"no [mcp_servers.*] tables found in {template_path}")
 
 # Remove legacy local servers that should be opt-in rather than inherited by
-# every Codex session. IDA remains as a disabled managed table in the template.
+# every Codex session. node_repl is replaced by its disabled managed table.
 retired_tables = {
     "mcp_servers.computer-use",
     "mcp_servers.node_repl",

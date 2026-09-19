@@ -9,20 +9,20 @@ export DISABLE_TELEMETRY=1
 export DO_NOT_TRACK=1
 
 install_skill() {
-    repo="$1"
-    skill="${2:-}"
-    name="${skill:-$(basename "$repo")}"
-    printf "%s %s\n" "$(gum style --foreground "#BE05D0" "      +")" "$(gum style --bold "$name")"
-    # Install to ~/.agents/skills via --agent amp -g (global/user scope)
-    if [ -n "$skill" ]; then
-        set -- --skill "$skill"
-    else
-        set --
-    fi
-    if ! npx -y "skills@$SKILLS_CLI_VERSION" add "$repo" "$@" --agent amp -g -y; then
-        printf "%s\n" "$(gum style --foreground "#FF0000" "      ✗ Failed to install $name")" >&2
-        return 1
-    fi
+	repo="$1"
+	skill="${2:-}"
+	name="${skill:-$(basename "$repo")}"
+	printf "%s %s\n" "$(gum style --foreground "#BE05D0" "      +")" "$(gum style --bold "$name")"
+	# Install to ~/.agents/skills via --agent amp -g (global/user scope)
+	if [ -n "$skill" ]; then
+		set -- --skill "$skill"
+	else
+		set --
+	fi
+	if ! npx -y "skills@$SKILLS_CLI_VERSION" add "$repo" "$@" --agent amp -g -y; then
+		printf "%s\n" "$(gum style --foreground "#FF0000" "      ✗ Failed to install $name")" >&2
+		return 1
+	fi
 }
 
 # Swift
