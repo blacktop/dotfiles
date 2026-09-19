@@ -49,6 +49,9 @@ if printf '%s\n' "$cmd" | grep -qiE "$git_add_force_re"; then
 	block "Do not force-add ignored files from Codex. Use plain git add, or have the user force-add intentionally."
 fi
 
+script_dir=$(CDPATH='' cd -- "$(dirname "$0")" && pwd)
+python3 "$script_dir/check-git-push.py" "$cmd" || block "Git push policy check rejected this command."
+
 if printf '%s\n' "$cmd" | grep -qiE "$push_force_re"; then
 	block "Do not force-push unless the user explicitly requested it."
 fi

@@ -44,6 +44,22 @@ prefix_rule(
 )
 
 prefix_rule(
+    pattern = [["git", "/usr/bin/git", "/opt/homebrew/bin/git"], "push"],
+    decision = "forbidden",
+    justification = "Do not run `git push` from Codex; the user pushes manually.",
+    match = ["git push", "git push origin feature", "git push -u origin feature", "/usr/bin/git push", "/opt/homebrew/bin/git push"],
+)
+
+# Prefix rules cannot skip arbitrary values of -C/-c/--git-dir. The hook parses
+# those forms; outside the sandbox, unmatched Git forms also require review.
+prefix_rule(
+    pattern = [["git", "/usr/bin/git", "/opt/homebrew/bin/git"]],
+    decision = "prompt",
+    justification = "Review Git invocations with global options; git push is prohibited and must be performed manually by the user.",
+    match = ["git -C /tmp/repo push", "git -c core.pager=cat status", "/usr/bin/git --git-dir=/tmp/repo/.git push"],
+)
+
+prefix_rule(
     pattern = ["git", "push", "--force"],
     decision = "forbidden",
     justification = "Do not force-push unless the user explicitly requested it.",

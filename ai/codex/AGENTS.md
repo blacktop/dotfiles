@@ -2,16 +2,60 @@
 
 ### Rust
 
-- Do NOT use unwraps or anything that can panic in Rust code, handle errors. Obviously in tests unwraps and panics are fine!
+- Follow the repository's pinned toolchain, MSRV, target matrix, feature matrix,
+  CI commands, and local guidance before applying global defaults.
+- Do NOT use unwraps or anything that can panic in production Rust code; handle
+  errors. Tests may use panics when they make failures clearer.
 - In Rust code I prefer using `crate::` to `super::`; please don't use `super::`. If you see a lingering `super::` from someone else clean it up.
 - Avoid `pub use` on imports unless you are re-exposing a dependency so downstream consumers do not have to depend on it directly.
 - Skip global state via `lazy_static!`, `Once`, or similar; prefer passing explicit context structs for any shared state.
+- Treat indexing, integer arithmetic, recursion, lock poisoning, and task/thread
+  joins as panic or exhaustion surfaces. Use checked APIs and explicit bounds
+  when values are externally controlled.
+- Do not use `debug_assert!` to enforce input validation or an invariant needed
+  for correct release behavior.
+- Bound external inputs, allocation sizes, recursion depth, concurrency, queues,
+  caches, connection pools, retries, and external I/O with explicit timeouts.
+- Keep `unsafe` blocks small and document each with a `// SAFETY:` argument that
+  covers the relevant validity, aliasing, lifetime, alignment, thread-safety,
+  ownership, and FFI unwind invariants. Require explicit unsafe blocks inside
+  unsafe functions (`unsafe_op_in_unsafe_fn`).
+
+#### Rust Failure Model
+
+- Decide `panic = "unwind"` versus `"abort"` at the final binary/deployment
+  boundary. Never impose either strategy on a reusable library.
+- Use `catch_unwind` only at an explicit isolation boundary with a defined
+  `UnwindSafe` contract. It is not general recovery and cannot catch aborting
+  failures.
+- Panic hooks run for panics under both unwind and abort strategies, but not for
+  arbitrary process termination. They are observability only: keep them bounded
+  and non-blocking, redact secrets and raw user data, and never rely on them for
+  correctness or cleanup.
+- Observe every spawned task/thread failure. Do not let a worker panic silently
+  leave a service partially degraded.
+- Long-running services must define graceful shutdown, readiness versus
+  liveness, backpressure, and dependency-failure behavior.
+- musl, alternative allocators/linkers, sandboxing, LTO, and
+  `target-cpu=native` require target-specific evidence; they are not universal
+  Rust defaults.
 
 #### Rust Workflow Checklist
 
+1. Discover and run the repository's CI/`just` checks and intended feature/target
+   combinations. They override the fallbacks below.
 1. Run `cargo fmt`.
-1. Run `cargo clippy --all --benches --tests --examples --all-features` and address warnings.
-1. Execute the relevant `cargo test` or `just` targets to cover unit and end-to-end paths.
+1. Run `cargo clippy --workspace --all-targets --all-features -- -D warnings`
+   unless the project has mutually exclusive features or a narrower canonical
+   command.
+1. Execute the relevant `cargo test` or `just` targets for unit, integration,
+   doc, and end-to-end behavior.
+1. Add risk-based checks: release-mode tests for optimization-sensitive,
+   arithmetic-heavy, unsafe, FFI, or `cfg(debug_assertions)` code; targeted Miri
+   for unsafe code; fuzz/property tests for parsers and untrusted inputs; and
+   `cargo deny`/`cargo vet` when configured. Test a built binary in a subprocess
+   when panic-strategy behavior matters because the Rust test harness does not
+   honor `panic = "abort"`.
 
 ## Final Handoff
 
@@ -65,7 +109,3 @@ that directory first and ask before widening the search.
 - Never read files like `locals.fish`, `.zshrc`, `.zprofile`, `.bashrc`, `.bash_profile`, `config.fish`, or similar shell startup or local secret-bearing files unless the user explicitly asks for that file to be edited.
 - Do not run commands like `env`, `printenv`, `set`, `export`, or equivalent probes for this purpose.
 - If authentication or local setup may be the issue, run the target tool or command directly and report the failure without probing the environment first.
-
-## HTML Artifacts
-
-When a task warrants a self-contained HTML artifact (interactive UI, ≥3-axis comparison, status snapshot, throwaway editor), use the `html-artifacts` skill — invoke by name; Codex has no `/artifact` slash command, so state intent (durable vs. throwaway, voice vs. silent) in the prompt. Output paths: `docs/.ai/artifacts/<topic>.html` (durable; `git add -f` to track since `docs/.ai/` is globally ignored) or `docs/.ai/tools/<topic>.html` (throwaway). Voice summaries (opt-in) go through the `speak` skill, never `tts-notify.py` directly. Format rules and self-check live in the skill body.
