@@ -39,12 +39,12 @@ If you're unsure, default to markdown.
 
 ## Output paths
 
-The repo's global ignore (`**/docs/.ai/`) keeps these directories out of git unless force-added.
+The global ignore (`**/docs/.ai/`) keeps these directories out of git on purpose — they are local-only scratch space. Never stage, force-add, or commit an artifact, and never suggest tracking one.
 
 | Intent | Path | Tracking |
 | --- | --- | --- |
-| Durable record | `docs/.ai/artifacts/<slug>.html` | Ignored. Tell user to `git add -f <path>` if they want it tracked. |
-| Throwaway tool | `docs/.ai/tools/<slug>.html` | Ignored. Export decisions back to markdown or a task list, then discard. |
+| Durable record | `docs/.ai/artifacts/<slug>.html` | Never tracked. "Durable" means it survives on disk, not in git. |
+| Throwaway tool | `docs/.ai/tools/<slug>.html` | Never tracked. Export decisions back to markdown or a task list, then discard. |
 
 Create the parent directory if missing:
 
@@ -80,7 +80,7 @@ For visual, spatial, or interactive artifacts, also run the checklist in `refere
 
 When — and only when — the user asked for voice or passed `--voice` to `/artifact`, invoke the **`speak` skill** with a ≤100-word summary. The `speak` skill routes through the registered `say` MCP server (`mcp-tts`) and falls back across `google → openai → elevenlabs → say`, so you get a good cloud voice instead of the local `say` default.
 
-Do **not** invoke `tts-notify.py` directly from here — that's the Stop/Notification hook path, not an agent primitive. Do **not** call any voice path unprompted; the Stop hook already speaks turn completion and double-speaking is annoying. If the user didn't ask for voice, hand the spoken-text blurb back as plain output and let them trigger TTS themselves.
+Do **not** call any voice path unprompted. If the user didn't ask for voice, hand the spoken-text blurb back as plain output and let them trigger TTS themselves.
 
 ## References
 
@@ -94,5 +94,5 @@ After writing the file, tell the user:
 
 1. The repo-relative path (`docs/.ai/artifacts/<slug>.html` or `docs/.ai/tools/<slug>.html`).
 2. How to open it (`open <path>` on macOS).
-3. Whether it's durable or throwaway, and the `git add -f <path>` instruction if durable.
+3. Whether it's durable or throwaway. Never suggest tracking it in git.
 4. Any voice summary you spoke, or — if voice wasn't requested — the spoken-text blurb so the user can trigger TTS themselves.

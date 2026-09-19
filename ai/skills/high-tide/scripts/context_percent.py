@@ -51,7 +51,8 @@ TOTAL_TOKEN_KEYS = (
     "context_window",
 )
 
-DEFAULT_TELEMETRY_RELATIVE = Path("statusline") / "context.json"
+TELEMETRY_SESSION_DIR = Path("statusline") / "by-session"
+SESSION_ID_ENV = "CLAUDE_CODE_SESSION_ID"
 
 
 @dataclass(frozen=True)
@@ -313,18 +314,33 @@ def extract_payload(text: str, mode: str) -> Result | None:
 
 
 def default_context_files(max_age_seconds: float) -> list[Path]:
-    candidates: list[Path] = []
+    """Find telemetry belonging to *this* session, or nothing at all.
+
+    Statusline telemetry is written per session under `statusline/by-session/`.
+    Every Claude pane on the host writes into the same handful of config dirs,
+    so a file that cannot be tied to the caller's own session is another
+    agent's usage. Reporting that as measured is worse than reporting nothing:
+    a worker at 5% would read a PM at 95% and stop. Fail closed instead.
+    """
     override = os.environ.get("HIGH_TIDE_CONTEXT_FILE")
+    session_id = ""
     if override:
-        candidates.append(Path(override).expanduser())
+        candidates = [Path(override).expanduser()]
+    else:
+        session_id = os.environ.get(SESSION_ID_ENV, "").strip()
+        if not session_id or "/" in session_id:
+            return []
 
-    claude_config = os.environ.get("CLAUDE_CONFIG_DIR")
-    if claude_config:
-        candidates.append(Path(claude_config).expanduser() / DEFAULT_TELEMETRY_RELATIVE)
-
-    home = Path.home()
-    for dirname in (".claude", ".claude-team", ".claude-ddb"):
-        candidates.append(home / dirname / DEFAULT_TELEMETRY_RELATIVE)
+        roots: list[Path] = []
+        claude_config = os.environ.get("CLAUDE_CONFIG_DIR")
+        if claude_config:
+            roots.append(Path(claude_config).expanduser())
+        home = Path.home()
+        # CLAUDE_CONFIG_DIR is not exported into tool environments, so the
+        # variant dirs still have to be searched; the session_id in the
+        # filename is what keeps the result honest.
+        roots.extend(home / name for name in (".claude", ".claude-team", ".claude-ddb"))
+        candidates = [root / TELEMETRY_SESSION_DIR / f"{session_id}.json" for root in roots]
 
     seen: set[Path] = set()
     fresh: list[Path] = []
@@ -340,9 +356,20 @@ def default_context_files(max_age_seconds: float) -> list[Path]:
             continue
         if max_age_seconds > 0 and now - stat.st_mtime > max_age_seconds:
             continue
+        if session_id and not file_matches_session(resolved, session_id):
+            continue
         fresh.append(resolved)
 
     return sorted(fresh, key=lambda path: path.stat().st_mtime, reverse=True)
+
+
+def file_matches_session(path: Path, session_id: str) -> bool:
+    """Confirm the payload names this session; the filename alone is not proof."""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return isinstance(payload, dict) and payload.get("session_id") == session_id
 
 
 def load_sources(args: argparse.Namespace) -> list[tuple[str, str]]:

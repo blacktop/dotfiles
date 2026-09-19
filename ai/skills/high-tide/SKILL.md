@@ -26,13 +26,13 @@ Use this skill to stop before context quality drops, capture the facts that matt
 
 At natural checkpoints and before large exploratory reads, check a measured context signal. Do not invent a percentage.
 
-Use `scripts/context_percent.py` when a measured payload or status snippet is available and a normalized used percentage is needed. The helper accepts Claude status-line JSON, rendered status-line text such as `ctx:87%`, Codex `/status` text, or an explicit value marked with `--mode used` or `--mode remaining`. When run without stdin, files, or literal input, it also checks fresh Claude statusline telemetry at `${CLAUDE_CONFIG_DIR:-~/.claude}/statusline/context.json` and the standard local Claude variants. It exits `0` only when it found a measured context percentage, `1` when no measured value was present, and `2` for invalid or conflicting input. Record the helper's reported `source` in the handoff.
+Use `scripts/context_percent.py` when a measured payload or status snippet is available and a normalized used percentage is needed. The helper accepts Claude status-line JSON, rendered status-line text such as `ctx:87%`, Codex `/status` text, or an explicit value marked with `--mode used` or `--mode remaining`. When run without stdin, files, or literal input, it checks fresh Claude statusline telemetry for **this session only**, at `<config-dir>/statusline/by-session/$CLAUDE_CODE_SESSION_ID.json` across the standard local Claude variants. Telemetry that cannot be tied to the caller's own session is another pane's usage, so the helper ignores it rather than reporting it: with several agents running, the newest file on disk is rarely yours. It exits `0` only when it found a measured context percentage, `1` when no measured value was present, and `2` for invalid or conflicting input. Record the helper's reported `source` in the handoff.
 
 Use these sources, in order:
 
 - Claude Code status-line JSON, when available to the agent, a wrapper, or a helper script: read `context_window.used_percentage`. This is the documented machine-readable field passed on stdin to configured status-line commands. In this dotfiles repo, `ai/claude/statusline.sh` demonstrates the exact extraction with `jq -r '.context_window.used_percentage // empty'`.
 - The status-line script source is not the live value. It proves which field to use; the measured value must come from the current status-line stdin payload, rendered status-line output such as `ctx:87%`, or a file/artifact written from that payload.
-- Persisted status-line telemetry, when configured by the project or user: read the file or artifact produced from the same status-line JSON and record its path and timestamp as the context source. This dotfiles setup writes a minimal Claude telemetry file to `${CLAUDE_CONFIG_DIR:-~/.claude}/statusline/context.json`; `scripts/context_percent.py` reads fresh copies of that file automatically. This is the preferred autonomous route when an agent cannot directly see the UI footer or status-line stdin.
+- Persisted status-line telemetry, when configured by the project or user: read the file or artifact produced from the same status-line JSON and record its path and timestamp as the context source. This dotfiles setup writes one minimal Claude telemetry file per session to `<config-dir>/statusline/by-session/<session-id>.json`; `scripts/context_percent.py` reads the caller's own fresh file automatically. This is the preferred autonomous route when an agent cannot directly see the UI footer or status-line stdin. An exit of `1` here means the meter is genuinely unavailable — treat it as unknown and follow the no-guessing rule below; it is not a signal that context is high.
 - Claude Code interactive state: ask for or use `/context` if the user/harness can provide its output. Use the displayed context usage percent or free-space percent from that output.
 - Codex CLI or Codex IDE/app: use `/status` for thread/context/rate-limit status. If the TUI footer is configured, use `/statusline` context items such as `context-remaining` or context percentage. When the visible Codex value is remaining context, convert it to used percentage with `scripts/context_percent.py --mode remaining` or feed the full `/status` text to the helper.
 - Harness-provided notices: use an explicit UI meter, system context-budget notice, or tool-provided remaining-context value only if it is surfaced as a concrete number.
@@ -160,7 +160,7 @@ Scope: [repo, crate, package, or subsystem path]
 [What to do first next time, or what not to retry.]
 ```
 
-If `docs/.ai/` is gitignored, still write the file when writes are allowed and mention in the final response that it may require `git add -f` if the user wants it tracked.
+`docs/.ai/` is gitignored on purpose — local-only scratch space. Write the file when writes are allowed and report the path. Never stage, force-add, or commit it, and never suggest tracking it.
 
 ## Build The Handoff
 

@@ -83,7 +83,7 @@ add_claude_marketplace() {
         return 0
     fi
 
-    if claude plugin marketplace add "$source" 2>/dev/null; then
+    if claude plugin marketplace add "$source"; then
         return 0
     fi
 
@@ -100,7 +100,7 @@ install_claude_plugin() {
     plugin="$2"
     note="$3"
 
-    if claude plugin install "$plugin" 2>/dev/null; then
+    if claude plugin install "$plugin" --scope user; then
         return 0
     fi
 
@@ -109,6 +109,7 @@ install_claude_plugin() {
     else
         warn "$variant: failed to install $plugin"
     fi
+    return 1
 }
 
 # Sync a user-mutable file. Skip if dest exists unless FORCE_SYNC=1.
@@ -139,11 +140,8 @@ install_npm_global_if_needed "@openai/codex" "codex"
 msg "Install codex GUI cask..."
 brew install --quiet codex-app
 
-msg "Install gemini-cli..."
-brew install --quiet gemini-cli
-
 # Create config directories (including unified ~/.agents for hooks and skills)
-mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.claude-ddb" "$HOME/.codex" "$HOME/.codex-team" "$HOME/.gemini" "$HOME/.agents/hooks" "$HOME/.agents/skills"
+mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.claude-ddb" "$HOME/.codex" "$HOME/.codex-team" "$HOME/.agents/hooks" "$HOME/.agents/skills"
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync shared AI hooks..."
 rsync -a --exclude='.DS_Store' --exclude='__pycache__' "$SCRIPT_DIR/hooks/" "$HOME/.agents/hooks/"
@@ -169,17 +167,10 @@ for variant in codex codex-team; do
 done
 rm -f "$codex_tmp"
 
-echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync gemini config..."
-rsync -a --exclude='.DS_Store' --exclude='skills' "$SCRIPT_DIR/gemini/" "$HOME/.gemini/"
-
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync skills..."
 "$SCRIPT_DIR/sync-skills.sh"
 
-# Install Gemini CLI extensions
-echo "$(gum style --bold --foreground "#BE05D0" "  -") Install gemini extensions..."
-"$SCRIPT_DIR/gemini/install-extensions.sh"
-
-# Install Claude Code plugin marketplaces and plugins
+# Install Claude Code plugin marketplaces and plugins.
 # `claude plugin` writes to $CLAUDE_CONFIG_DIR/plugins/, so each variant needs its own pass.
 if command -v claude >/dev/null 2>&1; then
     echo "$(gum style --bold --foreground "#BE05D0" "  -") Install claude plugins..."
@@ -195,10 +186,25 @@ if command -v claude >/dev/null 2>&1; then
             install_claude_plugin "$variant" "skill-creator@claude-plugins-official" ""
             install_claude_plugin "$variant" "pr-review-toolkit@claude-plugins-official" "/review-pr and /fix-issue depend on it"
             install_claude_plugin "$variant" "plugin-dev@claude-plugins-official" ""
+        else
+            # code-improver's skill reviewer comes from this marketplace.
+            exit 1
         fi
 
         if add_claude_marketplace "$variant" "openai-codex" "openai/codex-plugin-cc"; then
             install_claude_plugin "$variant" "codex@openai-codex" "/codex:review and /codex:rescue depend on it"
+        fi
+
+        # These skills require their parent workflows/agents. Install the full
+        # packages only in Claude; ~/.agents/skills is also loaded by Codex.
+        if add_claude_marketplace "$variant" "trailofbits" "trailofbits/skills"; then
+            install_claude_plugin "$variant" "code-improver@trailofbits" "skill-improver requires its workflow and plugin-dev reviewer"
+            install_claude_plugin "$variant" "c-review@trailofbits" "requires the C/C++ review workflow"
+            install_claude_plugin "$variant" "audit-context-building@trailofbits" "requires its workflow and function-analyzer"
+            install_claude_plugin "$variant" "dimensional-analysis@trailofbits" "requires its five specialist agents"
+            install_claude_plugin "$variant" "differential-review@trailofbits" "includes its adversarial-modeler agent"
+        else
+            exit 1
         fi
     done
     unset CLAUDE_CONFIG_DIR
