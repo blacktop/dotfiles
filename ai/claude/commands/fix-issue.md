@@ -87,14 +87,23 @@ the fallback tables below.
    - Test commands with feature flags (e.g.
      `cargo test --features foo,bar`)
    - Lint/format commands with non-default flags
+   - Release-profile, target, and feature-matrix jobs
+   - Miri, fuzzing, coverage, dependency-audit, and supply-chain
+     provenance jobs
    - Any step that runs a command then checks `git diff --exit-code`
      — these are **codegen sync checks** (schema generation,
      snapshot updates, help text, etc.). Record the command.
    - Docs/site build commands (e.g. `make site`, `mkdocs build`)
-2. **Read the Makefile** (if present). Cross-reference targets
-   used in CI — these are the ones that matter.
-3. **Read CLAUDE.md** (if present at repo root or `.claude/`).
-   It may define project-specific quality gates.
+2. **Read the Justfile/Makefile** (if present). Cross-reference
+   targets used in CI — these are the ones that matter.
+3. **Read CLAUDE.md and AGENTS.md** (when present at the repo
+   root or in provider-specific directories). They may define
+   project-specific quality gates.
+4. **For Rust, read build policy.** Inspect workspace manifests,
+   `rust-toolchain*`, `.cargo/config*`, `deny.toml`, and
+   `supply-chain/config.toml` when present. Record the MSRV,
+   supported targets, intended feature combinations, panic
+   strategy, and shipped artifact profile.
 
 Store the discovered commands. They override the fallback table
 for any overlapping step.
@@ -129,10 +138,30 @@ command if one was found; otherwise fall back to the default.
 |--------------|------------------------------------------------|
 | build        | `cargo build`                                  |
 | test         | `cargo test`                                   |
-| lint         | `cargo clippy --all-targets --all-features -- -D warnings` |
+| lint         | `cargo clippy --workspace --all-targets --all-features -- -D warnings` |
 | format       | `cargo fmt --check`                            |
 | supply chain | `cargo deny check` (if `deny.toml` exists)    |
+| provenance   | `cargo vet` (if `supply-chain/config.toml` exists) |
 | careful      | `cargo careful test` (if `cargo-careful` installed) |
+
+For Rust, add only the checks justified by the changed risk:
+
+- Run affected tests with `--release` for arithmetic-heavy,
+  optimization-sensitive, unsafe/FFI, `cfg(debug_assertions)`, or
+  release-profile behavior.
+- If panic-strategy behavior changed, exercise the built binary in
+  a subprocess; the Rust test harness does not honor
+  `panic = "abort"`.
+- Run targeted Miri tests for affected unsafe, aliasing, or
+  interior-mutability paths when supported.
+- Run existing property/fuzz targets for changed parsers,
+  protocols, serialization, or untrusted structured input.
+- For long-running services, test bounds, timeouts, overload,
+  dependency failure, background-task failure, and graceful
+  shutdown.
+- Do not introduce `panic = "abort"`, musl, Landlock, an
+  alternative allocator/linker, LTO, or `target-cpu=native`
+  without target-specific compatibility or performance evidence.
 
 **Python** (detected by `pyproject.toml` or `setup.py`):
 
