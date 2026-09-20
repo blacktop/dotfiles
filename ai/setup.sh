@@ -1,23 +1,17 @@
 #!/bin/sh
 set -o errexit -o nounset
 
-# ── Args / env ───────────────────────────────────────────────────────────────
-# Default: preserve existing user-mutable configs (settings.json, config.toml).
-# Use --force or AI_FORCE_SYNC=1 to overwrite them with the dotfile template.
-FORCE_SYNC="${AI_FORCE_SYNC:-0}"
+# ── Args ─────────────────────────────────────────────────────────────────────
 case "${1:-}" in
---force | -f) FORCE_SYNC=1 ;;
 --help | -h)
 	cat <<EOF
-Usage: $0 [--force|-f]
+Usage: $0
 
-Idempotent by default — re-running preserves your customised:
-  ~/.claude/settings.json
-  ~/.codex/config.toml
-
-Use --force (or AI_FORCE_SYNC=1) to overwrite those with the dotfile template.
-Static content (CLAUDE.md, agents/, commands/, prompts/, statusline.sh) and
-managed MCP blocks always sync.
+Safe to re-run. Installed settings are merged, not overwritten:
+  ~/.claude*/settings.json  repository keys win; profile-only keys survive
+  ~/.codex*/config.toml     rebuilt from the template plus the state Codex writes
+                            (model, trusted projects, plugins, marketplaces, desktop)
+Each changed file keeps its previous version beside it as <name>.bak.
 EOF
 	exit 0
 	;;
@@ -112,60 +106,45 @@ install_claude_plugin() {
 	return 1
 }
 
-# Sync a user-mutable file. Skip if dest exists unless FORCE_SYNC=1.
-# Args: description, src, dst
-sync_user_file() {
-	desc="$1" src="$2" dst="$3"
-	if [ -f "$dst" ] && [ "$FORCE_SYNC" != "1" ]; then
-		if cmp -s "$src" "$dst"; then
-			ok "$desc up to date"
-		else
-			warn "Skipped $desc (exists & differs — review with: diff '$src' '$dst')"
-			warn "    re-run with --force to overwrite"
-		fi
-		return 0
-	fi
-	mkdir -p "$(dirname "$dst")"
-	cp "$src" "$dst"
-	ok "Wrote $desc"
-}
-
 echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Setup AI CLI agents")"
-[ "$FORCE_SYNC" = "1" ] && warn "FORCE mode: user-mutable configs will be overwritten"
 
 # Install CLI agents
 install_npm_global_if_needed "@anthropic-ai/claude-code" "claude"
 
 install_npm_global_if_needed "@openai/codex" "codex"
-msg "Install codex GUI cask..."
-brew install --quiet codex-app
+# The standalone Codex app was discontinued; the ChatGPT app now hosts Codex.
+msg "Install ChatGPT app (hosts the Codex GUI)..."
+brew install --quiet --cask chatgpt
 
 # Create config directories (including unified ~/.agents for hooks and skills)
 mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.claude-ddb" "$HOME/.codex" "$HOME/.codex-team" "$HOME/.agents/hooks" "$HOME/.agents/skills"
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync shared AI hooks..."
 rsync -a --exclude='.DS_Store' --exclude='__pycache__' "$SCRIPT_DIR/hooks/" "$HOME/.agents/hooks/"
+# rsync never deletes, so drop what this repository installed and later retired.
+"$SCRIPT_DIR/prune-retired.sh" "$SCRIPT_DIR/hooks" "$HOME/.agents/hooks"
 
-# Sync claude + claude-team + claude-ddb from the same source tree (settings.json gated by FORCE_SYNC)
+# Sync claude + claude-team + claude-ddb from the same source tree.
 for variant in claude claude-team claude-ddb; do
 	msg "Sync $variant config..."
 	rsync -a --exclude='.DS_Store' --exclude='skills' --exclude='settings.json' --exclude='CLAUDE.md' \
 		"$SCRIPT_DIR/claude/" "$HOME/.$variant/"
-	sync_user_file "$variant settings.json" \
-		"$SCRIPT_DIR/claude/settings.json" "$HOME/.$variant/settings.json"
+	"$SCRIPT_DIR/prune-retired.sh" "$SCRIPT_DIR/claude" "$HOME/.$variant"
 done
+# settings.json is merged, not copied: repository keys win, profile-only keys survive.
+"$SCRIPT_DIR/sync-claude-settings.sh"
 
-# Sync codex + codex-team from the same source tree (config.toml gated by FORCE_SYNC).
-# Codex TOML doesn't expand env vars — render ${HOME} placeholders before installing.
-codex_tmp=$(mktemp -t codex-config.toml)
-sed "s|\${HOME}|$HOME|g" "$SCRIPT_DIR/codex/config.toml" >"$codex_tmp"
+# Sync codex + codex-team from the same source tree.
 for variant in codex codex-team; do
 	msg "Sync $variant config..."
 	rsync -a --exclude='.DS_Store' --exclude='skills' --exclude='config.toml' --exclude='AGENTS.md' \
 		"$SCRIPT_DIR/codex/" "$HOME/.$variant/"
-	sync_user_file "$variant config.toml" "$codex_tmp" "$HOME/.$variant/config.toml"
+	# This also drops the old per-profile check-git-push.py; the Codex hook now
+	# uses the shared copy in ~/.agents/hooks.
+	"$SCRIPT_DIR/prune-retired.sh" "$SCRIPT_DIR/codex" "$HOME/.$variant"
 done
-rm -f "$codex_tmp"
+# config.toml is rebuilt from the template plus the state Codex itself writes.
+"$SCRIPT_DIR/sync-codex-config.sh"
 
 # Compose public instructions with optional private instructions, once per sync.
 "$SCRIPT_DIR/sync-instructions.sh"
@@ -187,7 +166,7 @@ if command -v claude >/dev/null 2>&1; then
 			install_claude_plugin "$variant" "gopls-lsp@claude-plugins-official" ""
 			install_claude_plugin "$variant" "frontend-design@claude-plugins-official" ""
 			install_claude_plugin "$variant" "skill-creator@claude-plugins-official" ""
-			install_claude_plugin "$variant" "pr-review-toolkit@claude-plugins-official" "/review-pr and /fix-issue depend on it"
+			install_claude_plugin "$variant" "pr-review-toolkit@claude-plugins-official" ""
 			install_claude_plugin "$variant" "plugin-dev@claude-plugins-official" ""
 		else
 			# code-improver's skill reviewer comes from this marketplace.
@@ -215,5 +194,12 @@ else
 	gum style --faint "      ⚠ claude CLI not found, skipping plugin install"
 fi
 
-# Setup MCP servers (API keys → Keychain, register with Claude + Codex)
+# Setup MCP servers (API keys → Keychain, register with Claude)
 "$SCRIPT_DIR/mcp-setup.sh"
+
+# Per-host, opt-in: root-owned policy files that no profile or agent can override.
+"$SCRIPT_DIR/host-lockdown/install.sh"
+
+echo ""
+echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "AI agents ready")"
+gum style --faint "    Start new Claude and Codex sessions to load the changes."

@@ -1,0 +1,5 @@
+# Per-host Codex policy. Install as /etc/codex/requirements.toml (root-owned), where
+# neither an agent nor the desktop app can change it. See ai/README.md.
+
+[features]
+computer_use = false

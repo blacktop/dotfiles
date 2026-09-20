@@ -50,3 +50,127 @@ env PRIVATE_SKILLS_DIR=/path/to/private-skills sh ai/sync-instructions.sh
 ```
 
 Keep private instruction files and skill content out of this repository.
+
+# Agent hardening
+
+The sandbox is the boundary; permission rules, exec-policy rules and hooks are
+guardrails in front of it. A guardrail that parses command text can be bypassed
+by a program that builds its command at run time, so nothing below relies on one
+alone.
+
+## Shared build caches
+
+Both sandboxes allow writes to the host's Go build cache
+(`~/Library/Caches/go-build`), Go module cache (`~/go/pkg/mod`), cargo registry
+and the `kache` compiler cache (`~/Library/Caches/kache`), and both allow the same
+registry hosts. An agent that cannot write to a cache tends to point `GOCACHE` at
+a temp directory, which builds a private multi-gigabyte cache per session, so
+`ai/tests/test-codex-hardening.py` fails if either sandbox loses a cache path or
+the two host lists drift apart. `CLAUDE.md` and `AGENTS.md` tell agents to build
+with the defaults and to report a denied path instead of redirecting a cache.
+
+`storage.googleapis.com` is on both lists because `proxy.golang.org` redirects
+large module archives there. On the Claude side `enableWeakerNetworkIsolation`
+lets sandboxed commands reach the macOS trust service; without it the `go`
+command cannot verify any TLS certificate under Seatbelt and every uncached
+download fails. The alternative, excluding `go` from the sandbox, would run
+project code unsandboxed.
+
+## Retired files
+
+`rsync` never deletes, so `ai/prune-retired.sh` removes from each profile the
+files this repository used to install and has since deleted. A file goes only
+when its path is in Git's deletion history and its content matches a version the
+repository shipped. A file you or a CLI created is never touched, even at a
+retired path, and a path reached through a symlink, such as `skills/`, is skipped.
+A retired file installed from a version that was never committed is reported as
+`Kept` and left for you to remove.
+
+## Claude (`ai/claude/settings.json`)
+
+- `sandbox` runs Bash under Seatbelt: writes are limited to the workspace and the
+  listed toolchain caches, network to `allowedDomains`, and secret environment
+  variables are removed. Directories on `PATH` stay read-only.
+- `permissions.deny` covers the file tools and merges into the sandbox, so
+  credential stores and `.env` files are unreadable by either route.
+- `permissions.defaultMode` is `auto`, so the auto-mode classifier judges each
+  command, including a retry outside the sandbox. `autoMode.hard_deny` adds rules
+  it may never waive (pushing, reading credentials, weakening the sandbox or
+  hooks); `autoMode.soft_deny` adds rules an explicit request from you can clear.
+- `permissions.ask` still forces a prompt for commands that discard work or
+  publish a package, and for IDA tools that execute code.
+- `hooks.Notification` and `hooks.StopFailure` run `ai/hooks/notify-attention.sh`
+  when approval, an MCP dialog or a background agent is waiting, or a turn ends
+  with an API error. Every alert is both a Notification Center banner (OSC 777
+  that Claude emits to Ghostty, through tmux) and a spoken phrase. Approval and
+  failure use `voice-say` with a delivery style; a failure's phrase and style
+  follow its error type (busy, sign-in or billing, other). Input requests use
+  the system `say`, which is also the fallback when `voice-say` is missing or
+  fails. Both voices run on this Mac; `voice-say` downloads its model on first
+  use, so run it once by hand on a new machine. Text is fixed, such as "Claude
+  Team needs approval"; the payload's prompt, tool input and error text are
+  never read. Each session gets one alert per kind per 60 seconds. Speech is
+  detached, so it never delays the banner. `touch ~/.agents/notify-mute`
+  silences speech in every session and keeps the banners. Headless `-p` and SDK
+  runs show no banner, but their hooks still run, so a failed turn there is
+  still spoken.
+- `ai/sync-claude-settings.sh` merges this file into each profile. Repository
+  keys win; keys only a profile has (`model`, `effortLevel`) survive. Hooks
+  merge per event: the repository's groups come first, then the profile's
+  machine-local handlers. Installed handlers under `~/.agents/hooks/` belong to
+  the repository, so retired ones such as `tts-notify.py` are removed. The
+  previous file is kept as `settings.json.bak`.
+
+```fish
+sh ai/sync-claude-settings.sh
+```
+
+## Codex (`ai/codex/config.toml`, `ai/codex/rules/default.rules`)
+
+- `default_permissions = "dev"` selects the `[permissions.dev]` profile. Codex
+  ignores the profile if `sandbox_mode` or `[sandbox_workspace_write]` appears in
+  any loaded layer, and ignores `network.domains` unless
+  `features.network_proxy` is on. `ai/tests/test-codex-hardening.py` guards both.
+- Do not add glob denies such as `"**/.env"` under `:workspace_roots`. On macOS
+  they make Seatbelt refuse every directory rename in the workspace, which
+  breaks cargo and npm.
+- An exec-policy `allow` rule runs its command outside the sandbox without
+  approval. Only `xcodebuild` is allowed, because it cannot run inside Seatbelt.
+- `ai/sync-codex-config.sh` rebuilds each installed `config.toml` from the
+  template plus the state Codex and its desktop app write: the model keys,
+  trusted projects, plugins, marketplaces, extra MCP servers, plugin hook state
+  and desktop settings. Anything else in an installed file is replaced, so a
+  setting meant to last belongs in the template. Codex validates the rebuilt file
+  before it is installed, and the previous one is kept as `config.toml.bak`.
+
+```fish
+sh ai/sync-codex-config.sh
+```
+
+## Per-host lockdown (`ai/host-lockdown/`)
+
+Both agents read one root-owned policy file per machine. It outranks every
+profile, and neither an agent nor a desktop app can edit it without `sudo`, so it
+is where a rule belongs when it applies to one host and must not drift.
+
+- `claude-managed-settings.json` forbids `--dangerously-skip-permissions`. It
+  installs to `/Library/Application Support/ClaudeCode/managed-settings.json`.
+- `codex-requirements.toml` pins Computer Use off, including the desktop app's
+  install and enablement flows. It installs to `/etc/codex/requirements.toml`.
+
+`ai/setup.sh` ends by listing what it would install and asking with
+`gum confirm`, defaulting to No. It asks only from a terminal, and not again once
+the files match. Leave a less sensitive host unhardened by answering No. To run
+the prompt alone:
+
+```fish
+sh ai/host-lockdown/install.sh
+```
+
+Remove a file with `sudo rm` to undo it.
+
+Check the profile without starting a session:
+
+```fish
+codex sandbox --log-denials -- cargo build
+```

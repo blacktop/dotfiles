@@ -94,7 +94,8 @@ else
         msg "Configuring Claude Code MCP servers for $variant..."
 
         # Remove stale entries (idempotent)
-        for name in exa context7 ida mcp-tts; do
+        # Node REPL is project opt-in; never inherit a global user registration.
+        for name in exa context7 ida mcp-tts node_repl node-repl; do
             claude mcp remove --scope user "$name" 2>/dev/null || true
         done
 
@@ -107,13 +108,13 @@ else
         if [ -n "$KEY_context7" ]; then
             claude mcp add --scope user context7 \
                 -e CONTEXT7_API_KEY="$KEY_context7" \
-                -- npx -y @upstash/context7-mcp
+                -- npx -y @upstash/context7-mcp@4.1.1
             ok "$variant: context7 (stdio)"
         fi
 
         # IDA Pro — stdio local binary (no key needed)
-        if command -v ida-mcp >/dev/null 2>&1; then
-            claude mcp add --scope user ida -- ida-mcp
+        if [ -x /opt/homebrew/bin/ida-mcp ]; then
+            claude mcp add --scope user ida -- /opt/homebrew/bin/ida-mcp
             ok "$variant: ida (stdio)"
         else
             warn "ida-mcp not found — skipping (brew install blacktop/tap/ida-mcp)"
@@ -134,132 +135,6 @@ else
     unset CLAUDE_CONFIG_DIR
 fi
 
-sync_codex_mcp_config() {
-    local variant="$1"
-    local config="$2"
-    local template="$3"
-    local tmp
-
-    [ -f "$config" ] || return 0
-
-    tmp=$(mktemp)
-    if python3 - "$config" "$template" "$HOME" >"$tmp" <<'PY'
-import re
-import sys
-
-config_path, template_path, home = sys.argv[1:4]
-table_re = re.compile(r"^\s*\[{1,2}([^\]]+)\]{1,2}\s*(?:#.*)?$")
-
-
-def table_name(line):
-    match = table_re.match(line)
-    if not match:
-        return None
-    return match.group(1).strip()
-
-
-def is_mcp_table(name):
-    return name.startswith("mcp_servers.")
-
-
-with open(template_path, encoding="utf-8") as fh:
-    template_lines = [line.replace("${HOME}", home) for line in fh]
-
-managed_lines = []
-managed_tables = set()
-capturing = False
-
-for line in template_lines:
-    name = table_name(line)
-    if name is not None:
-        if is_mcp_table(name):
-            capturing = True
-            managed_tables.add(name)
-        elif capturing:
-            break
-
-    if capturing:
-        managed_lines.append(line)
-
-if not managed_tables:
-    raise SystemExit(f"no [mcp_servers.*] tables found in {template_path}")
-
-# Remove legacy local servers that should be opt-in rather than inherited by
-# every Codex session. node_repl is replaced by its disabled managed table.
-retired_tables = {
-    "mcp_servers.computer-use",
-    "mcp_servers.node_repl",
-}
-target_tables = managed_tables | retired_tables
-managed_prefixes = tuple(f"{name}." for name in target_tables)
-
-
-def is_managed_table(name):
-    return name in target_tables or name.startswith(managed_prefixes)
-
-
-with open(config_path, encoding="utf-8") as fh:
-    lines = fh.readlines()
-
-out = []
-in_legacy_block = False
-in_target_table = False
-insert_index = None
-
-for line in lines:
-    if line.startswith("# ── MCP-SETUP-BEGIN"):
-        if insert_index is None:
-            insert_index = len(out)
-        in_legacy_block = True
-        continue
-
-    if in_legacy_block:
-        if line.startswith("# ── MCP-SETUP-END"):
-            in_legacy_block = False
-        continue
-
-    name = table_name(line)
-    if name is not None:
-        if is_managed_table(name):
-            if insert_index is None:
-                insert_index = len(out)
-            in_target_table = True
-            continue
-        in_target_table = False
-
-    if in_target_table:
-        continue
-
-    out.append(line)
-
-if insert_index is None:
-    while out and not out[-1].strip():
-        out.pop()
-    out.extend(["\n"] if out else [])
-    out.extend(managed_lines)
-else:
-    out[insert_index:insert_index] = managed_lines
-
-sys.stdout.writelines(out)
-PY
-    then
-        mv "$tmp" "$config"
-        ok "Codex: synced MCP servers for $variant"
-    else
-        rm -f "$tmp"
-        warn "Codex: failed to sync MCP servers for $variant"
-    fi
-}
-
-# ── Codex MCP servers ────────────────────────────────────────────────────────
-# Keep deployed Codex configs current even when ai/setup.sh preserves an
-# existing user-edited config.toml instead of copying the template.
-
-for variant in codex codex-team; do
-    config="$HOME/.$variant/config.toml"
-    sync_codex_mcp_config "$variant" "$config" "$(dirname "$0")/codex/config.toml"
-done
-
 # ── Reminder ─────────────────────────────────────────────────────────────────
 
 LOCALS_LINES=""
@@ -273,7 +148,7 @@ LOCALS_LINES=""
     set -gx GEMINI_API_KEY (security find-generic-password -a gemini -s $KEYCHAIN_SERVICE -w 2>/dev/null)"
 
 echo ""
-echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Done!")"
+ok "MCP servers configured"
 
 if [ -n "$LOCALS_LINES" ]; then
     echo ""
