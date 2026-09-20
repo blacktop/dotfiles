@@ -5,14 +5,21 @@ set -euo pipefail
 # banner that Claude emits through its own terminal (OSC 777, Ghostty, passes
 # through tmux), plus a spoken phrase: voice-say with a delivery style for
 # approval and failure, the system voice for input requests. Banner and phrase
-# are fixed text chosen from the event type; the prompt, tool input and error
-# text in the payload are never read. Any failure exits quietly so the notifier
-# cannot disturb a turn.
+# are fixed text chosen from the event type; the prompt and tool input in the
+# payload are never read, and the error text is only matched, never shown or
+# spoken. Any failure exits quietly so the notifier cannot disturb a turn.
 cooldown_seconds=60
 mute_file="$HOME/.agents/notify-mute"
 
 input=$(cat)
 key=$(jq -r '"\(.hook_event_name // ""):\(.notification_type // .error // "")"' <<<"$input") || exit 0
+# Claude reports a spent usage allowance as the same rate_limit type as a busy
+# API. Only its error text tells them apart, and waiting does not fix this one.
+if [ "$key" = 'StopFailure:rate_limit' ] &&
+	jq -r '"\(.last_assistant_message // "") \(.error_details // "")"' <<<"$input" |
+	grep -qiE 'hit your|usage limit|limit reached|resets '; then
+	key='StopFailure:usage_limit'
+fi
 session=$(jq -r '.session_id // ""' <<<"$input" | tr -cd 'A-Za-z0-9_-') || exit 0
 
 # An empty style means the system voice.
@@ -29,6 +36,11 @@ Notification:elicitation_dialog | Notification:elicitation_url_dialog)
 Notification:agent_needs_input)
 	slot='agent-input' body='A background agent needs input'
 	spoken='has a background agent waiting for input'
+	;;
+StopFailure:usage_limit)
+	slot='failure' body='Turn stopped: usage limit reached'
+	spoken='stopped because the usage limit is reached'
+	style='calm and clear'
 	;;
 StopFailure:rate_limit | StopFailure:overloaded | StopFailure:server_error)
 	slot='failure' body='Turn stopped: the API is busy'

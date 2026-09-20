@@ -106,12 +106,14 @@ A retired file installed from a version that was never committed is reported as
   with an API error. Every alert is both a Notification Center banner (OSC 777
   that Claude emits to Ghostty, through tmux) and a spoken phrase. Approval and
   failure use `voice-say` with a delivery style; a failure's phrase and style
-  follow its error type (busy, sign-in or billing, other). Input requests use
+  follow its error type (usage limit reached, busy, sign-in or billing, other). Input requests use
   the system `say`, which is also the fallback when `voice-say` is missing or
   fails. Both voices run on this Mac; `voice-say` downloads its model on first
   use, so run it once by hand on a new machine. Text is fixed, such as "Claude
-  Team needs approval"; the payload's prompt, tool input and error text are
-  never read. Each session gets one alert per kind per 60 seconds. Speech is
+  Team needs approval"; the payload's prompt and tool input are
+  never read. A spent usage allowance arrives as the same `rate_limit` type as a
+  busy API, so the error text is matched to tell them apart; it is never shown
+  or spoken. Each session gets one alert per kind per 60 seconds. Speech is
   detached, so it never delays the banner. `touch ~/.agents/notify-mute`
   silences speech in every session and keeps the banners. Headless `-p` and SDK
   runs show no banner, but their hooks still run, so a failed turn there is

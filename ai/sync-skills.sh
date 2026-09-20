@@ -22,9 +22,18 @@ for agent_dir in "$HOME/.claude" "$HOME/.claude-team" "$HOME/.claude-ddb" "$HOME
 	fi
 done
 
-# Install community skills (installs directly to ~/.agents/skills)
-if [ -x "$SCRIPT_DIR/skills/install-community.sh" ]; then
+# Install community skills (installs directly to ~/.agents/skills). Fetching them
+# is the slow part of setup, so a terminal run may skip it once they have been
+# installed; a first install, or a run with no terminal to ask, always fetches.
+update_community=yes
+if [ -t 0 ] && [ -f "$HOME/.agents/.skill-lock.json" ] &&
+	! gum confirm --default=false "Update community skills? (slow; No just re-syncs local skills)"; then
+	update_community=no
+fi
+if [ "$update_community" = yes ]; then
 	"$SCRIPT_DIR/skills/install-community.sh"
+else
+	echo "$(gum style --bold --foreground "#FF9400" "  •") Skipped community skills"
 fi
 
 # Copy personal skills to ~/.agents/skills
