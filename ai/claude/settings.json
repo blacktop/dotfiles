@@ -34,9 +34,6 @@
   "permissions": {
     "defaultMode": "auto",
     "ask": [
-      "mcp__ida__run_script",
-      "mcp__ida__patch",
-      "mcp__ida__patch_asm",
       "Bash(git commit *--no-verify*)",
       "Bash(git clean *)",
       "Bash(git restore *)",

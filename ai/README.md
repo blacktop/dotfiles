@@ -100,7 +100,7 @@ A retired file installed from a version that was never committed is reported as
   it may never waive (pushing, reading credentials, weakening the sandbox or
   hooks); `autoMode.soft_deny` adds rules an explicit request from you can clear.
 - `permissions.ask` still forces a prompt for commands that discard work or
-  publish a package, and for IDA tools that execute code.
+  publish a package.
 - `hooks.Notification` and `hooks.StopFailure` run `ai/hooks/notify-attention.sh`
   when approval, an MCP dialog or a background agent is waiting, or a turn ends
   with an API error. Every alert is both a Notification Center banner (OSC 777
