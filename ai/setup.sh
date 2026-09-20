@@ -113,8 +113,13 @@ install_npm_global_if_needed "@anthropic-ai/claude-code" "claude"
 
 install_npm_global_if_needed "@openai/codex" "codex"
 # The standalone Codex app was discontinued; the ChatGPT app now hosts Codex.
-msg "Install ChatGPT app (hosts the Codex GUI)..."
-brew install --quiet --cask chatgpt
+# brew refuses to install over an app it did not put there, so skip when present.
+if [ -d /Applications/ChatGPT.app ] || brew list --cask chatgpt >/dev/null 2>&1; then
+	ok "ChatGPT app installed"
+else
+	msg "Install ChatGPT app (hosts the Codex GUI)..."
+	brew install --quiet --cask chatgpt
+fi
 
 # Create config directories (including unified ~/.agents for hooks and skills)
 mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.claude-ddb" "$HOME/.codex" "$HOME/.codex-team" "$HOME/.agents/hooks" "$HOME/.agents/skills"

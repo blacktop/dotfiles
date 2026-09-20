@@ -48,8 +48,16 @@ conflict() {
 	printf 'Private skill conflicts with installed skill: %s. Preserve or move that entry before retrying; if it is a stale symlink, remove only the symlink.\n' "$name" >&2
 	exit 1
 }
+# An installed directory with exactly the private skill's contents is an old copy
+# of it, from before the skill moved to the private checkout. Nothing in it needs
+# preserving, so the link can take its place.
+identical_copy() {
+	[ -d "$target" ] && [ ! -L "$target" ] &&
+		diff -rq -x .DS_Store -x __pycache__ "$source" "$target" >/dev/null 2>&1
+}
 
 # Validate ownership and all collisions before changing any skill links.
+conflicts=''
 for record in "$state"/*; do
 	[ -e "$record" ] || [ -L "$record" ] || continue
 	[ -f "$record" ] && [ ! -L "$record" ] || {
@@ -74,9 +82,18 @@ for source in "$private_root/skills"/*; do
 		continue
 	fi
 	if [ -e "$target" ] || [ -L "$target" ]; then
-		owned_link || conflict
+		owned_link || identical_copy || conflicts="$conflicts $name"
 	fi
 done
+# Report every conflict in one run; each retry re-fetches the community skills.
+if [ -n "$conflicts" ]; then
+	printf 'Private skills conflict with installed entries this sync does not own:%s\n' "$conflicts" >&2
+	printf 'Each differs from the private copy. Keep what you need from it, then move it aside:\n' >&2
+	for name in $conflicts; do
+		printf '  trash "%s/%s"\n' "$destination" "$name" >&2
+	done
+	exit 1
+fi
 
 for record in "$state"/*; do
 	[ -f "$record" ] || continue
@@ -98,6 +115,13 @@ for source in "$private_root/skills"/*; do
 	if [ -L "$target" ] && [ "$(readlink "$target")" != "$source" ]; then
 		owned_link || conflict
 		rm "$target"
+	elif [ -d "$target" ] && [ ! -L "$target" ]; then
+		identical_copy || conflict
+		if command -v trash >/dev/null 2>&1; then
+			trash "$target"
+		else
+			rm -rf "$target"
+		fi
 	fi
 	[ -L "$target" ] || ln -s "$source" "$target"
 	temporary=$(mktemp "$state/.record.XXXXXX")
