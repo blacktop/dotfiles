@@ -202,16 +202,6 @@ trusted_hash = "sha256:d15f2f652907d9363037c22c399e0e0347e08ecf9b455e6fa94532d66
 [mcp_servers.ida]
 command = "/opt/homebrew/bin/ida-mcp"
 
-# MCP servers run outside the sandbox; these tools execute code or modify the database.
-[mcp_servers.ida.tools.run_script]
-approval_mode = "prompt"
-
-[mcp_servers.ida.tools.patch]
-approval_mode = "prompt"
-
-[mcp_servers.ida.tools.patch_asm]
-approval_mode = "prompt"
-
 # Disable the actual registration; the retired features.js_repl flag is a no-op.
 # A project that needs this server can explicitly override enabled.
 [mcp_servers.node_repl]
