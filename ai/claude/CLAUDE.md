@@ -76,6 +76,22 @@ with `echo $APPLE_FIRMWARE_DIR`; it currently points at `~/Apple`). Do not scan
 the whole filesystem looking for IPSWs, extracted DSCs, or kernelcaches; search
 that directory first and ask before widening the search.
 
+### Shared build caches
+
+Every agent and session on this host shares one Go build cache, one Go module
+cache and one Rust compiler cache (`kache`, set as `rustc-wrapper` in
+`~/.cargo/config.toml`). They are tens of gigabytes; a private copy per session
+wastes the SSD and throws away every cache hit.
+
+- Build with the defaults. Never set `GOCACHE`, `GOMODCACHE`, `GOPATH`,
+  `GOFLAGS=-modcacherw`, `CARGO_HOME`, `RUSTC_WRAPPER` or `KACHE_CACHE_DIR`, and
+  never point `CARGO_TARGET_DIR` or `--target-dir` at a temp directory.
+- The sandbox already allows writes to these caches. If a build cannot write to
+  one, or cannot download a dependency, stop and report the denied path or host.
+  Do not work around it with a private cache.
+- Do not run `go clean -cache`, `go clean -modcache` or clear the `kache` cache.
+- A worktree gets its own `target/`; that is expected, and `kache` makes it cheap.
+
 ### Host Defaults
 
 - User-facing terminal examples should assume macOS with Homebrew and Fish unless the target is explicitly Linux, a container, or a remote host.
@@ -149,31 +165,51 @@ Colocated `*.test.ts` files. Supply chain: `pnpm audit --audit-level=moderate` b
 
 ### Rust
 
-- Follow modern (as of 2026) Rust best practices.
-- Do NOT use unwraps or anything that can panic in Rust code, handle errors. Obviously in tests unwraps and panics are fine!
+- Follow the repository's pinned toolchain, MSRV, target matrix, feature matrix,
+  CI commands, and local guidance before applying global defaults.
+- Do NOT use unwraps or anything that can panic in production Rust code; handle
+  errors. Tests may use panics when they make failures clearer.
 - In Rust code I prefer using `crate::` to `super::`; please don't use `super::`. If you see a lingering `super::` from someone else clean it up.
 - Avoid `pub use` on imports unless you are re-exposing a dependency so downstream consumers do not have to depend on it directly.
 - Skip global state via `lazy_static!`, `Once`, or similar; prefer passing explicit context structs for any shared state.
+- Treat indexing, integer arithmetic, recursion, lock poisoning, and task/thread
+  joins as panic or exhaustion surfaces. Use checked APIs and explicit bounds
+  when values are externally controlled.
+- Do not use `debug_assert!` to enforce input validation or an invariant needed
+  for correct release behavior.
 
 #### Rust Workflow Checklist
 
+1. Discover and run the repository's CI/`just` checks and intended feature/target
+   combinations. They override the fallbacks below.
 1. Run `cargo fmt`.
-1. Run `cargo clippy --all --benches --tests --examples --all-features` and address warnings.
-1. Execute the relevant `cargo test` or `just` targets to cover unit and end-to-end paths.
+1. Run `cargo clippy --workspace --all-targets --all-features -- -D warnings`
+   unless the project has mutually exclusive features or a narrower canonical
+   command.
+1. Execute the relevant `cargo test` or `just` targets for unit, integration,
+   doc, and end-to-end behavior.
+1. Add risk-based checks: release-mode tests for optimization-sensitive,
+   arithmetic-heavy, unsafe, FFI, or `cfg(debug_assertions)` code; targeted Miri
+   for unsafe code; fuzz/property tests for parsers and untrusted inputs. Test a
+   built binary in a subprocess when panic-strategy behavior matters because the
+   Rust test harness does not honor `panic = "abort"`.
 
-**Runtime:** Latest stable via `rustup`
+**Runtime:** Repository-pinned toolchain/MSRV; otherwise current stable via `rustup`
 
 | purpose | tool |
 |---------|------|
 | build & deps | `cargo` |
-| lint | `cargo clippy --all-targets --all-features -- -D warnings` |
+| lint | `cargo clippy --workspace --all-targets --all-features -- -D warnings` |
 | format | `cargo fmt` |
 | test | `cargo test` |
-| supply chain | `cargo deny check` (advisories, licenses, bans) |
+| release behavior | `cargo test --release` (for affected high-risk paths) |
+| supply chain | `cargo deny check`; `cargo vet` when the repo is configured for it |
 | safety check | `cargo careful test` (stdlib debug assertions + UB checks) |
+| unsafe/FFI | `cargo +nightly miri test` (targeted supported tests) |
 
 **Style:**
-- Prefer `for` loops with mutable accumulators over iterator chains
+- Use iterator chains for clear transformations and `for` loops when mutation,
+  side effects, early exits, or error handling are clearer
 - Shadow variables through transformations (no `raw_x`/`parsed_x` prefixes)
 - No wildcard matches; avoid `matches!` macro—explicit destructuring catches field changes
 - Use `let...else` for early returns; keep happy path unindented
@@ -188,8 +224,35 @@ Colocated `*.test.ts` files. Supply chain: `pnpm audit --audit-level=moderate` b
 - Write efficient code by default — correct algorithm, appropriate data structures, no unnecessary allocations
 - Profile before micro-optimizing; measure after
 
+**Failure model and production hardening:**
+- Decide `panic = "unwind"` versus `"abort"` at the final binary/deployment
+  boundary. Never impose either strategy on a reusable library.
+- Use `catch_unwind` only at an explicit isolation boundary with a defined
+  `UnwindSafe` contract. It is not general recovery and cannot catch aborting
+  failures.
+- Panic hooks run for panics under both unwind and abort strategies, but not for
+  arbitrary process termination. They are observability only: keep them bounded
+  and non-blocking, redact secrets and raw user data, and never rely on them for
+  correctness or cleanup.
+- Observe every spawned task/thread failure. Do not let a worker panic silently
+  leave a service partially degraded.
+- Bound external inputs, allocation sizes, recursion depth, concurrency, queues,
+  caches, connection pools, and retries. Put timeouts on external I/O.
+- Long-running services must define graceful shutdown, readiness versus
+  liveness, backpressure, and dependency-failure behavior.
+- Keep `unsafe` blocks small. Document each with a `// SAFETY:` argument covering
+  validity, aliasing, lifetimes, alignment, thread safety, and FFI ownership or
+  unwind contracts as applicable.
+- For deployment changes, prefer reproducible locked builds, least privilege,
+  and minimal runtime artifacts. musl, alternative allocators/linkers,
+  sandboxing, LTO, and `target-cpu=native` require target-specific evidence and
+  are not universal defaults.
+
 **Cargo.toml lints:**
 ```toml
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+
 [lints.clippy]
 pedantic = { level = "warn", priority = -1 }
 # Panic prevention
@@ -258,10 +321,6 @@ Pin actions to SHA hashes with version comments: `actions/checkout@<full-sha>  #
 Describe what the code does now — not discarded approaches, prior iterations, or alternatives. Only describe what's in the diff.
 
 Use plain, factual language. A bug fix is a bug fix, not a "critical stability improvement." Avoid: critical, crucial, essential, significant, comprehensive, robust, elegant.
-
-### HTML artifacts
-
-When a task warrants a self-contained HTML artifact (interactive UI, ≥3-axis comparison, status snapshot, throwaway editor), use the `html-artifacts` skill — invoke via `/artifact` in Claude or by name in Codex. Output paths: `docs/.ai/artifacts/<topic>.html` (durable; `git add -f` to track since `docs/.ai/` is globally ignored) or `docs/.ai/tools/<topic>.html` (throwaway). Voice summaries (opt-in) go through the `speak` skill, never `tts-notify.py` directly. Format rules and self-check live in the skill body.
 
 ## Final Handoff
 

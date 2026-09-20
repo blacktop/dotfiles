@@ -1,63 +1,175 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "cleanupPeriodDays": 365,
-  "alwaysThinkingEnabled": true,
-  "effortLevel": "xhigh",
   "enableAllProjectMcpServers": false,
   "tui": "fullscreen",
   "skipAutoPermissionPrompt": true,
+  "autoMode": {
+    "hard_deny": [
+      "$defaults",
+      "Never run git push, or any alias or wrapper that pushes; the user pushes manually.",
+      "Never read, print, copy or transmit credential stores, keychains, SSH or GPG keys, API tokens or .env files.",
+      "Never disable, weaken or edit the sandbox, permission rules, hooks or agent settings."
+    ],
+    "soft_deny": [
+      "$defaults",
+      "Never retry a command outside the sandbox only to reach a network host or path the sandbox blocked, unless the task plainly requires it.",
+      "Never delete or overwrite files outside the current repository."
+    ]
+  },
   "env": {
     "DISABLE_TELEMETRY": "1",
     "DISABLE_ERROR_REPORTING": "1",
     "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1",
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
-  "includeCoAuthoredBy": false,
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
   "permissions": {
+    "defaultMode": "auto",
+    "ask": [
+      "mcp__ida__run_script",
+      "mcp__ida__patch",
+      "mcp__ida__patch_asm",
+      "Bash(git commit *--no-verify*)",
+      "Bash(git clean *)",
+      "Bash(git restore *)",
+      "Bash(git checkout -- *)",
+      "Bash(git branch -D *)",
+      "Bash(git stash drop*)",
+      "Bash(git stash clear*)",
+      "Bash(git worktree remove *)",
+      "Bash(gh release delete*)",
+      "Bash(cargo publish*)",
+      "Bash(npm publish*)",
+      "Bash(pnpm publish*)",
+      "Bash(uv publish*)"
+    ],
     "deny": [
       "Bash(rm -rf *)",
       "Bash(rm -fr *)",
       "Bash(sudo *)",
       "Bash(mkfs *)",
       "Bash(dd *)",
+      "Bash(diskutil erase*)",
+      "Bash(diskutil partitionDisk*)",
       "Bash(wget *|bash*)",
       "Bash(wget *| bash*)",
       "Bash(curl *|bash*)",
       "Bash(curl *| bash*)",
       "Bash(env)",
-      "Bash(env *)",
       "Bash(printenv*)",
-      "Bash(set | *)",
-      "Bash(*| env *)",
-      "Bash(git push --force*)",
-      "Bash(git push *--force*)",
+      "Bash(export -p*)",
+      "Bash(git push*)",
+      "Bash(/usr/bin/git push*)",
+      "Bash(/opt/homebrew/bin/git push*)",
+      "Bash(git please*)",
       "Bash(git reset --hard*)",
       "Bash(git add --force*)",
       "Bash(git add * --force*)",
       "Bash(git add -f*)",
       "Bash(git add * -f*)",
-
+      "Bash(gh repo delete*)",
       "Edit(~/.bashrc)",
       "Edit(~/.zshrc)",
+      "Edit(~/.zprofile)",
       "Edit(~/.config/fish/config.fish)",
       "Edit(~/.config/fish/locals.fish)",
+      "Edit(~/.gitconfig)",
       "Edit(~/.ssh/**)",
-
       "Read(~/.ssh/**)",
       "Read(~/.gnupg/**)",
       "Read(~/.aws/**)",
       "Read(~/.azure/**)",
+      "Read(~/.config/gcloud/**)",
       "Read(~/.config/gh/**)",
+      "Read(~/.config/op/**)",
       "Read(~/.git-credentials)",
+      "Read(~/.netrc)",
       "Read(~/.docker/config.json)",
       "Read(~/.kube/**)",
       "Read(~/.npmrc)",
       "Read(~/.npm/**)",
       "Read(~/.pypirc)",
       "Read(~/.gem/credentials)",
+      "Read(~/.cargo/credentials.toml)",
+      "Read(~/.codex/auth.json)",
+      "Read(~/.codex-team/auth.json)",
       "Read(~/.config/fish/locals.fish)",
-      "Read(~/Library/Keychains/**)"
+      "Read(~/Library/Keychains/**)",
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/.env.*.local)"
     ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "allowUnsandboxedCommands": true,
+    "enableWeakerNetworkIsolation": true,
+    "excludedCommands": [
+      "docker *",
+      "gh *",
+      "xcodebuild *"
+    ],
+    "filesystem": {
+      "allowWrite": [
+        "~/Library/Caches/go-build",
+        "~/go/pkg/mod",
+        "~/go/pkg/sumdb",
+        "~/.cargo/registry",
+        "~/.cargo/git",
+        "~/.cargo/.package-cache",
+        "~/.cargo/.package-cache-mutate",
+        "~/.cargo/.global-cache",
+        "~/.cargo/.global-cache-journal",
+        "~/Library/Caches/kache",
+        "~/.cache/uv",
+        "~/Library/pnpm",
+        "~/Library/Caches/org.swift.swiftpm"
+      ],
+      "denyWrite": [
+        "~/.config/fish",
+        "~/.cargo/bin",
+        "~/go/bin",
+        "~/.local/bin"
+      ]
+    },
+    "credentials": {
+      "envVars": [
+        { "name": "GITHUB_TOKEN", "mode": "deny" },
+        { "name": "GH_TOKEN", "mode": "deny" },
+        { "name": "NPM_TOKEN", "mode": "deny" },
+        { "name": "CARGO_REGISTRY_TOKEN", "mode": "deny" },
+        { "name": "OPENAI_API_KEY", "mode": "deny" },
+        { "name": "ANTHROPIC_API_KEY", "mode": "deny" },
+        { "name": "ELEVENLABS_API_KEY", "mode": "deny" },
+        { "name": "GEMINI_API_KEY", "mode": "deny" },
+        { "name": "CONTEXT7_API_KEY", "mode": "deny" },
+        { "name": "EXA_API_KEY", "mode": "deny" }
+      ]
+    },
+    "network": {
+      "allowedDomains": [
+        "github.com",
+        "api.github.com",
+        "codeload.github.com",
+        "objects.githubusercontent.com",
+        "raw.githubusercontent.com",
+        "proxy.golang.org",
+        "sum.golang.org",
+        "storage.googleapis.com",
+        "index.crates.io",
+        "static.crates.io",
+        "static.rust-lang.org",
+        "pypi.org",
+        "files.pythonhosted.org",
+        "registry.npmjs.org"
+      ]
+    }
   },
   "hooks": {
     "PreToolUse": [
@@ -78,22 +190,23 @@
           },
           {
             "type": "command",
-            "command": "CMD=$(jq -r '.tool_input.command'); if echo \"$CMD\" | grep -qE 'git[[:space:]]+push.*(main|master)'; then echo 'BLOCKED: Use feature branches, not direct push to main' >&2; exit 2; fi"
+            "command": "bash \"$HOME/.agents/hooks/block-git-push.sh\""
           },
           {
             "type": "command",
             "command": "bash \"$HOME/.agents/hooks/block-git-force-add.sh\""
           }
         ]
-      },
+      }
+    ],
+    "Notification": [
       {
-        "matcher": "AskUserQuestion|ExitPlanMode",
+        "matcher": "permission_prompt|elicitation_dialog|elicitation_url_dialog|agent_needs_input",
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$HOME/.agents/hooks/tts-notify.py\" claude-hook --background",
-            "async": true,
-            "timeout": 10
+            "command": "bash \"$HOME/.agents/hooks/notify-attention.sh\"",
+            "timeout": 5
           }
         ]
       }
@@ -103,22 +216,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$HOME/.agents/hooks/tts-notify.py\" claude-hook --background",
-            "async": true,
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "matcher": "permission_prompt|elicitation_dialog",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$HOME/.agents/hooks/tts-notify.py\" claude-hook --background",
-            "async": true,
-            "timeout": 10
+            "command": "bash \"$HOME/.agents/hooks/notify-attention.sh\"",
+            "timeout": 5
           }
         ]
       }
@@ -136,6 +235,11 @@
     "frontend-design@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
     "pr-review-toolkit@claude-plugins-official": true,
-    "plugin-dev@claude-plugins-official": true
+    "plugin-dev@claude-plugins-official": true,
+    "code-improver@trailofbits": true,
+    "c-review@trailofbits": true,
+    "audit-context-building@trailofbits": true,
+    "dimensional-analysis@trailofbits": true,
+    "differential-review@trailofbits": true
   }
 }
