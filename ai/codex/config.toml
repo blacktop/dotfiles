@@ -1,9 +1,8 @@
 #:schema https://developers.openai.com/codex/config-schema.json
 
 # ── Model ────────────────────────────────────────────────────────────────────
-model = "gpt-5.6-sol"
-review_model = "gpt-5.6-sol"
-model_reasoning_effort = "high"
+# model and model_reasoning_effort are chosen per profile inside the CLI, which
+# writes them to the installed file; they are deliberately absent here.
 model_reasoning_summary = "none"
 model_verbosity = "low"
 # model_context_window = 1000000
@@ -22,30 +21,92 @@ project_doc_fallback_filenames = ["CLAUDE.md", "CONTRIBUTING.md", "CONTINUITY.md
 project_root_markers = [".git", ".jj", ".sl"]
 
 # ── Sandbox & approvals ─────────────────────────────────────────────────────
-sandbox_mode = "workspace-write"
+# Permission profiles replace sandbox_mode/[sandbox_workspace_write]; if either
+# legacy key appears in any loaded layer, Codex ignores the profile entirely.
+default_permissions = "dev"
+approval_policy = "on-request"
 approvals_reviewer = "auto_review"
 allow_login_shell = false
 
-[sandbox_workspace_write]
-network_access = true
-writable_roots = [
-  "${HOME}/Library/Caches/go-build",
-  "${HOME}/go/pkg/mod",
-  "${HOME}/go/pkg/sumdb",
-  "${HOME}/go/bin",
-  "${HOME}/.cargo",
-  "${HOME}/.rustup",
-  "${HOME}/Library/pnpm",
-  "${HOME}/Library/Caches/node-gyp",
-  "${HOME}/Library/Caches/pnpm",
-  "${HOME}/Library/Caches/corepack",
-]
+[auto_review]
+policy = """
+Deny: git push in any form; reading credential stores, keychains, SSH/GPG keys, \
+.env files or shell secrets; network access to hosts outside the configured \
+allowlist; deleting or overwriting files outside the workspace; disabling hooks, \
+rules or the sandbox; installing software with sudo. When unsure, deny and let the \
+user decide.
+"""
+
+[permissions.dev]
+description = "Workspace write, toolchain caches, allowlisted network, secrets unreadable"
+extends = ":workspace"
+
+# Caches are writable; bin directories on PATH are not, so an install needs approval.
+[permissions.dev.filesystem]
+"~/Library/Caches/go-build" = "write"
+"~/go/pkg/mod" = "write"
+"~/go/pkg/sumdb" = "write"
+"~/.cargo/registry" = "write"
+"~/.cargo/git" = "write"
+"~/.cargo/.package-cache" = "write"
+"~/.cargo/.package-cache-mutate" = "write"
+"~/.cargo/.global-cache" = "write"
+"~/.cargo/.global-cache-journal" = "write"
+"~/Library/Caches/kache" = "write"
+"~/.rustup" = "write"
+"~/.cache/uv" = "write"
+"~/Library/pnpm" = "write"
+"~/Library/Caches/node-gyp" = "write"
+"~/Library/Caches/corepack" = "write"
+"~/Library/Caches/org.swift.swiftpm" = "write"
+"~/.ssh" = "deny"
+"~/.gnupg" = "deny"
+"~/.aws" = "deny"
+"~/.azure" = "deny"
+"~/.config/gcloud" = "deny"
+"~/.config/gh" = "deny"
+"~/.config/op" = "deny"
+"~/.kube" = "deny"
+"~/.docker" = "deny"
+"~/.netrc" = "deny"
+"~/.npmrc" = "deny"
+"~/.pypirc" = "deny"
+"~/.git-credentials" = "deny"
+"~/.cargo/credentials.toml" = "deny"
+"~/.codex/auth.json" = "deny"
+"~/.codex-team/auth.json" = "deny"
+"~/.config/fish/locals.fish" = "deny"
+"~/Library/Keychains" = "deny"
+
+# No glob denies (such as "**/.env") under :workspace_roots: on macOS Seatbelt they
+# block every directory rename in the workspace, which breaks cargo and npm.
+
+# Domain rules are enforced only while features.network_proxy is on.
+[permissions.dev.network]
+enabled = true
+
+[permissions.dev.network.domains]
+"github.com" = "allow"
+"api.github.com" = "allow"
+"codeload.github.com" = "allow"
+"objects.githubusercontent.com" = "allow"
+"raw.githubusercontent.com" = "allow"
+"proxy.golang.org" = "allow"
+"sum.golang.org" = "allow"
+"storage.googleapis.com" = "allow"
+"index.crates.io" = "allow"
+"static.crates.io" = "allow"
+"static.rust-lang.org" = "allow"
+"pypi.org" = "allow"
+"files.pythonhosted.org" = "allow"
+"registry.npmjs.org" = "allow"
 
 # ── Shell environment ────────────────────────────────────────────────────────
 [shell_environment_policy]
 inherit = "core"
 ignore_default_excludes = false
-exclude = ["*KEY*", "*SECRET*", "*TOKEN*", "AWS_*", "AZURE_*", "GCP_*"]
+# Names containing KEY, SECRET or TOKEN are already dropped by the default excludes.
+exclude = ["AWS_*", "AZURE_*", "GCP_*", "GOOGLE_*", "OP_*", "*PASSWORD*", "*CREDENTIAL*"]
 
 [shell_environment_policy.set]
 CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY = "1"
@@ -72,36 +133,24 @@ metrics_exporter = "none"
 log_user_prompt = false
 
 # ── Feature flags ────────────────────────────────────────────────────────────
-# Removed/no-op flags (always on): sqlite, steer, collaboration_modes
-# Deprecated flags (use top-level): web_search_request → web_search
+# Only non-default values; `codex features list` shows every flag and its stage.
 [features]
-apps = true                    # Connected ChatGPT Apps
-ghost_commit = false           # Git snapshots per turn (key: "undo")
-guardian_approval = true       # Sub-agent reviews approvals for safety
-hooks = true                   # Lifecycle hooks
-js_repl = true                 # Node.js JavaScript REPL
+apps = false                   # No connected ChatGPT Apps
+computer_use = false           # Never launch the Computer Use.app helper (macOS TCC prompts)
 memories = true                # Persistent agent memories
-multi_agent = true             # Spawn parallel sub-agents
+multi_agent = false            # Opt in per project; child hosts multiply session cost
+network_proxy = true           # Enforces permissions.*.network.domains (experimental)
 prevent_idle_sleep = true      # Keep Mac awake during turns
-shell_snapshot = true          # Shell state snapshotting
-skills = true                  # Skill system
-unified_exec = true            # Single PTY-backed exec tool
-view_image_tool = true         # Image viewing capability
-voice_transcription = true     # Voice dictation (Ctrl+M)
-terminal_resize_reflow = true
-goals = true
 
 # ── Multi-agent ──────────────────────────────────────────────────────────────
 # Agent roles are auto-discovered from $CODEX_HOME/agents/*.toml — define each role
 # as a standalone file with a `name` field; do not duplicate them here.
 [agents]
-max_threads = 12
+max_concurrent_threads_per_session = 12
 max_depth = 2
-job_max_runtime_seconds = 3600
 
 # ── TUI ──────────────────────────────────────────────────────────────────────
 [tui]
-network_access = true
 notifications = ["agent-turn-complete", "approval-requested"]
 notification_method = "bel"
 notification_condition = "unfocused"
@@ -130,30 +179,51 @@ command = 'bash "${HOME}/.codex/hooks/enforce-package-manager.sh"'
 timeout = 30
 statusMessage = "Checking package manager"
 
-[[hooks.PermissionRequest]]
+# Trust only these reviewed definitions. Codex marks a changed command,
+# matcher, timeout, or status message as modified until its hash is refreshed.
+[hooks.state."${HOME}/.codex/config.toml:pre_tool_use:0:0"]
+enabled = true
+trusted_hash = "sha256:438c5a4b4adbe50960ee7f8d911956f7a4f59db1d19e7975a4def6eb1436ca02"
 
-[[hooks.PermissionRequest.hooks]]
-type = "command"
-command = 'python3 "${HOME}/.agents/hooks/tts-notify.py" codex-hook --background'
-timeout = 15
-statusMessage = "Speaking approval request"
+[hooks.state."${HOME}/.codex/config.toml:pre_tool_use:1:0"]
+enabled = true
+trusted_hash = "sha256:d15f2f652907d9363037c22c399e0e0347e08ecf9b455e6fa94532d66bafeec2"
 
-# ── Trust ────────────────────────────────────────────────────────────────────
-[projects."${HOME}/Developer/Mine/blacktop"]
-trust_level = "trusted"
+[hooks.state."${HOME}/.codex-team/config.toml:pre_tool_use:0:0"]
+enabled = true
+trusted_hash = "sha256:438c5a4b4adbe50960ee7f8d911956f7a4f59db1d19e7975a4def6eb1436ca02"
+
+[hooks.state."${HOME}/.codex-team/config.toml:pre_tool_use:1:0"]
+enabled = true
+trusted_hash = "sha256:d15f2f652907d9363037c22c399e0e0347e08ecf9b455e6fa94532d66bafeec2"
 
 # ── MCP servers ──────────────────────────────────────────────────────────────
-# ida-pro is always available (no key needed)
-[mcp_servers.ida-pro]
+[mcp_servers.ida]
 command = "/opt/homebrew/bin/ida-mcp"
+
+# MCP servers run outside the sandbox; these tools execute code or modify the database.
+[mcp_servers.ida.tools.run_script]
+approval_mode = "prompt"
+
+[mcp_servers.ida.tools.patch]
+approval_mode = "prompt"
+
+[mcp_servers.ida.tools.patch_asm]
+approval_mode = "prompt"
+
+# Disable the actual registration; the retired features.js_repl flag is a no-op.
+# A project that needs this server can explicitly override enabled.
+[mcp_servers.node_repl]
+command = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl"
+enabled = false
 
 [mcp_servers.context7]
 command = "npx"
-args = ["-y", "@upstash/context7-mcp"]
+args = ["-y", "@upstash/context7-mcp@4.1.1"]
 env_vars = ["CONTEXT7_API_KEY"]
 
 [mcp_servers.mcp_tts]
-command = "mcp-tts"
+command = "/opt/homebrew/bin/mcp-tts"
 args = ["--verbose"]
 env_vars = ["ELEVENLABS_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"]
 
@@ -169,3 +239,8 @@ enabled = true
 
 [plugins."build-ios-apps@openai-curated"]
 enabled = true
+
+# The desktop app can re-enable this and add a top-level `notify` command that
+# launches its helper after every turn. ai/host-lockdown pins it off for a host.
+[plugins."unified-computer-use@openai-bundled"]
+enabled = false

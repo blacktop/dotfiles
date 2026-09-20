@@ -87,9 +87,13 @@ prefix_rule(
     match = ["git push origin main", "git push origin master"],
 )
 
+prefix_rule(
+    pattern = [["git", "/usr/bin/git", "/opt/homebrew/bin/git"], "please"],
+    decision = "forbidden",
+    justification = "`git please` is an alias for `git push --force-with-lease`; the user pushes manually.",
+    match = ["git please", "/opt/homebrew/bin/git please origin feature"],
+)
+
+# An allow rule runs its command outside the sandbox with no approval, so only
+# xcodebuild is listed: it cannot run inside Seatbelt. cargo builds stay sandboxed.
 prefix_rule(pattern = ["xcodebuild"], decision = "allow")
-prefix_rule(pattern = ["cargo", "clippy"], decision = "allow")
-prefix_rule(pattern = ["cargo", "test"], decision = "allow")
-prefix_rule(pattern = ["cargo", "build"], decision = "allow")
-prefix_rule(pattern = ["cargo", "run"], decision = "allow")
-prefix_rule(pattern = ["cargo", "xtask"], decision = "allow")

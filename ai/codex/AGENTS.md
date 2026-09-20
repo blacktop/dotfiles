@@ -65,6 +65,22 @@ Before finishing a task:
 1. Summarize changes with file and line references.
 1. Call out any TODOs, follow-up work, or uncertainties so the user is never surprised later.
 
+## Shared Build Caches
+
+Every agent and session on this host shares one Go build cache, one Go module
+cache and one Rust compiler cache (`kache`, set as `rustc-wrapper` in
+`~/.cargo/config.toml`). They are tens of gigabytes; a private copy per session
+wastes the SSD and throws away every cache hit.
+
+- Build with the defaults. Never set `GOCACHE`, `GOMODCACHE`, `GOPATH`,
+  `GOFLAGS=-modcacherw`, `CARGO_HOME`, `RUSTC_WRAPPER` or `KACHE_CACHE_DIR`, and
+  never point `CARGO_TARGET_DIR` or `--target-dir` at a temp directory.
+- The sandbox already allows writes to these caches. If a build cannot write to
+  one, or cannot download a dependency, stop and report the denied path or host.
+  Do not work around it with a private cache.
+- Do not run `go clean -cache`, `go clean -modcache` or clear the `kache` cache.
+- A worktree gets its own `target/`; that is expected, and `kache` makes it cheap.
+
 ## Host Defaults
 
 - User-facing terminal examples should assume macOS with Homebrew and Fish unless the target is explicitly Linux, a container, or a remote host.

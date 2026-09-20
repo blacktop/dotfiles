@@ -49,8 +49,16 @@ if printf '%s\n' "$cmd" | grep -qiE "$git_add_force_re"; then
 	block "Do not force-add ignored files from Codex. Use plain git add, or have the user force-add intentionally."
 fi
 
+# The parser is shared with Claude and installed once, in the shared hooks directory.
+# A copy beside this script is used only when that one is missing, so an old
+# per-profile copy can never shadow the current parser.
 script_dir=$(CDPATH='' cd -- "$(dirname "$0")" && pwd)
-python3 "$script_dir/check-git-push.py" "$cmd" || block "Git push policy check rejected this command."
+push_parser="$HOME/.agents/hooks/check-git-push.py"
+[ -f "$push_parser" ] || push_parser="$script_dir/check-git-push.py"
+# Aliases are resolved in the directory the command will run in.
+working_directory=$(printf '%s' "$input" | jq -r '.cwd // empty')
+python3 "$push_parser" "$cmd" "$working_directory" ||
+	block "Git push policy check rejected this command."
 
 if printf '%s\n' "$cmd" | grep -qiE "$push_force_re"; then
 	block "Do not force-push unless the user explicitly requested it."
