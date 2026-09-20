@@ -21,7 +21,10 @@
     "DISABLE_TELEMETRY": "1",
     "DISABLE_ERROR_REPORTING": "1",
     "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1",
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "GIT_CONFIG_COUNT": "1",
+    "GIT_CONFIG_KEY_0": "core.fsmonitor",
+    "GIT_CONFIG_VALUE_0": "false"
   },
   "attribution": {
     "commit": "",
@@ -128,6 +131,7 @@
         "~/.cargo/.global-cache-journal",
         "~/Library/Caches/kache",
         "~/.cache/uv",
+        "~/.local/share/uv",
         "~/Library/pnpm",
         "~/Library/Caches/org.swift.swiftpm"
       ],

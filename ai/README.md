@@ -91,6 +91,8 @@ A retired file installed from a version that was never committed is reported as
 - `sandbox` runs Bash under Seatbelt: writes are limited to the workspace and the
   listed toolchain caches, network to `allowedDomains`, and secret environment
   variables are removed. Directories on `PATH` stay read-only.
+- `env` turns `core.fsmonitor` off for git run by the agent. The sandbox blocks
+  the fsmonitor socket, and git would otherwise print an IPC error on every call.
 - `permissions.deny` covers the file tools and merges into the sandbox, so
   credential stores and `.env` files are unreadable by either route.
 - `permissions.defaultMode` is `auto`, so the auto-mode classifier judges each
