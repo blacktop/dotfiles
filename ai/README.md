@@ -91,6 +91,11 @@ A retired file installed from a version that was never committed is reported as
 - `sandbox` runs Bash under Seatbelt: writes are limited to the workspace and the
   listed toolchain caches, network to `allowedDomains`, and secret environment
   variables are removed. Directories on `PATH` stay read-only.
+- `sandbox.excludedCommands` runs the git commands that create commits or tags
+  (`commit`, `merge`, `rebase`, `cherry-pick`, `revert`, `tag`) outside the
+  sandbox. `commit.gpgsign` signs through a program under `~/.ssh`, which the
+  sandbox cannot read, so a sandboxed commit always failed. They still pass
+  through the deny rules, the push guard and the auto-mode classifier.
 - `env` turns `core.fsmonitor` off for git run by the agent. The sandbox blocks
   the fsmonitor socket, and git would otherwise print an IPC error on every call.
 - `permissions.deny` covers the file tools and merges into the sandbox, so

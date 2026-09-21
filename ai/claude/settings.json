@@ -113,7 +113,13 @@
     "excludedCommands": [
       "docker *",
       "gh *",
-      "xcodebuild *"
+      "xcodebuild *",
+      "git commit *",
+      "git merge *",
+      "git rebase *",
+      "git cherry-pick *",
+      "git revert *",
+      "git tag *"
     ],
     "filesystem": {
       "allowWrite": [
