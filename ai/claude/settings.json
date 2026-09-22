@@ -160,6 +160,7 @@
       ]
     },
     "network": {
+      "allowUnixSockets": ["/private/tmp/tmux-501/default"],
       "allowedDomains": [
         "github.com",
         "api.github.com",

@@ -86,6 +86,10 @@ extends = ":workspace"
 [permissions.dev.network]
 enabled = true
 
+# tmux-pm workers talk to the PM pane over the tmux server socket.
+[permissions.dev.network.unix_sockets]
+"/private/tmp/tmux-501/default" = "allow"
+
 [permissions.dev.network.domains]
 "github.com" = "allow"
 "api.github.com" = "allow"

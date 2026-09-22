@@ -76,6 +76,14 @@ command cannot verify any TLS certificate under Seatbelt and every uncached
 download fails. The alternative, excluding `go` from the sandbox, would run
 project code unsandboxed.
 
+## tmux
+
+Both sandboxes block Unix sockets, and `tmux` reaches its server through one, so
+a sandboxed worker could not report to a tmux-pm PM pane. Each sandbox allows
+that one socket, `/private/tmp/tmux-501/default` (the path holds this user's
+uid; change it on a host where `id -u` differs). No other socket is allowed:
+the Docker socket, for example, would hand a command the host.
+
 ## Retired files
 
 `rsync` never deletes, so `ai/prune-retired.sh` removes from each profile the
