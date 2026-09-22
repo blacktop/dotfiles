@@ -50,14 +50,10 @@ prefix_rule(
     match = ["git push", "git push origin feature", "git push -u origin feature", "/usr/bin/git push", "/opt/homebrew/bin/git push"],
 )
 
-# Prefix rules cannot skip arbitrary values of -C/-c/--git-dir. The hook parses
-# those forms; outside the sandbox, unmatched Git forms also require review.
-prefix_rule(
-    pattern = [["git", "/usr/bin/git", "/opt/homebrew/bin/git"]],
-    decision = "prompt",
-    justification = "Review Git invocations with global options; git push is prohibited and must be performed manually by the user.",
-    match = ["git -C /tmp/repo push", "git -c core.pager=cat status", "/usr/bin/git --git-dir=/tmp/repo/.git push"],
-)
+# Prefix rules cannot skip arbitrary values of -C/-c/--git-dir; the hook parses
+# those forms and blocks a push behind them. No catch-all Git rule: a prompt
+# rule becomes a rejection under approval_policy "never", which broke plain
+# `git status` for unattended workers.
 
 prefix_rule(
     pattern = ["git", "push", "--force"],
