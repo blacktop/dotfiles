@@ -77,13 +77,6 @@ prefix_rule(
 )
 
 prefix_rule(
-    pattern = ["git", "push", "origin", ["main", "master"]],
-    decision = "forbidden",
-    justification = "Use feature branches and PRs; do not push directly to main/master.",
-    match = ["git push origin main", "git push origin master"],
-)
-
-prefix_rule(
     pattern = [["git", "/usr/bin/git", "/opt/homebrew/bin/git"], "please"],
     decision = "forbidden",
     justification = "`git please` is an alias for `git push --force-with-lease`; the user pushes manually.",

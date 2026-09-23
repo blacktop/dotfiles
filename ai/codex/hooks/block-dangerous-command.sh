@@ -15,8 +15,6 @@ git_add_force_re="${command_prefix}git[[:space:]]+add([^;&|]*)--force"
 git_add_force_re+='|'"${command_prefix}"'git[[:space:]]+add([^;&|]*)[[:space:]]-f([[:space:]]|$)'
 push_force_re='git[[:space:]]+push([^;&|]*)--force'
 push_force_re+='|git[[:space:]]+push([^;&|]*)[[:space:]]-f([[:space:]]|$)'
-direct_main_re='git[[:space:]]+push([^;&|]*[[:space:]])?'
-direct_main_re+='(origin[[:space:]]+)?(main|master)([[:space:]]|$)'
 
 block() {
 	printf 'BLOCKED: %s\n' "$1" >&2
@@ -72,10 +70,6 @@ fi
 
 if printf '%s\n' "$cmd" | grep -qiE 'git[[:space:]]+reset[[:space:]]+--hard'; then
 	block "Do not run git reset --hard unless the user explicitly requested it."
-fi
-
-if printf '%s\n' "$cmd" | grep -qiE "$direct_main_re"; then
-	block "Use feature branches and PRs; do not push directly to main/master."
 fi
 
 exit 0

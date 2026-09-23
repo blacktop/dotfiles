@@ -310,14 +310,14 @@ Pin actions to SHA hashes with version comments: `actions/checkout@<full-sha>  #
 **Commits:**
 - Imperative mood, ≤72 char subject line, one logical change per commit
 - Never amend/rebase commits already pushed to shared branches
-- Never push directly to main — use feature branches and PRs
+- Work on the current branch, `main` included. Do not create a branch, worktree or PR unless asked, even when a default says to branch first. Commit only when asked; never push — the user pushes
 - Never commit secrets, API keys, or credentials — use `.env` files (gitignored) and environment variables
 
 **Hooks and worktrees:**
 - Install prek in every repo (`prek install`). Run `prek run` before committing. Configure auto-updates: `prek auto-update --cooldown-days 7`
-- Parallel subagents require worktrees. Each subagent MUST work in its own worktree (`wt switch <branch>`), not the main repo. Never share working directories.
+- Parallel subagents that edit files require worktrees. Each one MUST work in its own worktree (`wt switch <branch>`), not the main repo; read-only subagents need none.
 
-**Pull requests:**
+**Pull requests** (only when asked for one):
 Describe what the code does now — not discarded approaches, prior iterations, or alternatives. Only describe what's in the diff.
 
 Use plain, factual language. A bug fix is a bug fix, not a "critical stability improvement." Avoid: critical, crucial, essential, significant, comprehensive, robust, elegant.
