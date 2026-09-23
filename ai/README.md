@@ -87,6 +87,12 @@ OrbStack. Both sandboxes resolve the symlink to OrbStack's socket. The Docker
 socket hands a command the host: a container can mount the home directory,
 credentials included, and reach any network host, with no approval.
 
+Loopback TCP is open in both sandboxes (`allow_local_binding` in Codex,
+`allowLocalBinding` in Claude), so tests can connect to a container's published
+port on `localhost` and run their own local servers. A database driver connects
+directly rather than through the network proxy, so a `localhost` domain rule
+alone does not reach it. Any service listening on localhost is reachable.
+
 ## Retired files
 
 `rsync` never deletes, so `ai/prune-retired.sh` removes from each profile the

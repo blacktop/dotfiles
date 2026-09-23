@@ -85,9 +85,12 @@ extends = ":workspace"
 # No glob denies (such as "**/.env") under :workspace_roots: on macOS Seatbelt they
 # block every directory rename in the workspace, which breaks cargo and npm.
 
-# Domain rules are enforced only while features.network_proxy is on.
+# Domain rules are enforced only while features.network_proxy is on. Loopback TCP
+# is open so tests reach services such as a PostgreSQL container on localhost;
+# a database driver connects directly, which a localhost allow rule cannot cover.
 [permissions.dev.network]
 enabled = true
+allow_local_binding = true
 
 # tmux-pm workers talk to the PM pane over the tmux server socket. Tests start
 # containers (PostgreSQL) through the Docker socket, a symlink to OrbStack's.

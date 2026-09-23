@@ -163,6 +163,7 @@
     },
     "network": {
       "allowUnixSockets": ["/private/tmp/tmux-501/default", "/var/run/docker.sock"],
+      "allowLocalBinding": true,
       "allowedDomains": [
         "github.com",
         "api.github.com",
