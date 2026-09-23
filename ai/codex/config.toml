@@ -189,6 +189,12 @@ status_line = ["model-with-reasoning", "context-remaining", "current-dir", "git-
 terminal_title = ["spinner", "project", "git-branch"]
 theme = "catppuccin-mocha"
 
+# tmux owns Shift-Left/Right for switching windows (tmux/tmux.conf), so moving
+# between the composer and pending questions uses only Codex's Alt-Up/Down keys.
+[tui.keymap.chat]
+edit_queued_message = "alt-up"
+prompt_stack_back = "alt-down"
+
 # ── Hooks ────────────────────────────────────────────────────────────────────
 [[hooks.PreToolUse]]
 matcher = "^Bash$"
