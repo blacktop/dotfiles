@@ -90,6 +90,26 @@ prefix_rule(
     match = ["git please", "/opt/homebrew/bin/git please origin feature"],
 )
 
-# An allow rule runs its command outside the sandbox with no approval, so only
-# xcodebuild is listed: it cannot run inside Seatbelt. cargo builds stay sandboxed.
+# An allow rule runs its command outside the sandbox with no approval, so the
+# list is short. xcodebuild cannot run inside Seatbelt. gcloud needs the gcloud
+# and SSH credential stores, which stay unreadable inside the sandbox; the user
+# accepted that an unattended worker may then run any gcloud command, including
+# gcloud compute ssh with a remote command, with no gate. cargo stays sandboxed.
 prefix_rule(pattern = ["xcodebuild"], decision = "allow")
+prefix_rule(pattern = ["gcloud"], decision = "allow")
+
+# Inside the sandbox .git is read-only, so every Git write needed an escalation,
+# which unattended workers cannot get. These write subcommands run outside the
+# sandbox. The list is named, not `git` alone: global options (`-c alias.x=!cmd`,
+# `-c core.pager=cmd`) and `rebase -x`, `fetch`/`pull --upload-pack` run
+# arbitrary commands, so those forms stay sandboxed. Forbidden rules above win.
+prefix_rule(
+    pattern = [
+        ["git", "/usr/bin/git", "/opt/homebrew/bin/git"],
+        ["add", "commit", "branch", "checkout", "switch", "restore", "rm", "mv",
+         "worktree", "stash", "merge", "cherry-pick", "revert", "tag"],
+    ],
+    decision = "allow",
+    match = ["git add -A", "git commit -m x", "git worktree add -b topic ../wt main"],
+    not_match = ["git status", "git -c alias.x=!sh x", "git rebase -x sh main"],
+)

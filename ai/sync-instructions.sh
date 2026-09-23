@@ -10,7 +10,7 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-for profile in claude claude-team claude-ddb codex codex-team; do
+for profile in claude claude-team claude-ddb codex codex-team codex-api; do
 	case "$profile" in
 	claude*)
 		family=claude

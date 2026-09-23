@@ -34,6 +34,7 @@
   "permissions": {
     "defaultMode": "auto",
     "ask": [
+      "Bash(dangerouslyDisableSandbox:true)",
       "Bash(git commit *--no-verify*)",
       "Bash(git clean *)",
       "Bash(git restore *)",
@@ -98,6 +99,7 @@
       "Read(~/.cargo/credentials.toml)",
       "Read(~/.codex/auth.json)",
       "Read(~/.codex-team/auth.json)",
+      "Read(~/.codex-api/auth.json)",
       "Read(~/.config/fish/locals.fish)",
       "Read(~/Library/Keychains/**)",
       "Read(**/.env)",
@@ -113,6 +115,7 @@
     "excludedCommands": [
       "docker *",
       "gh *",
+      "gcloud *",
       "xcodebuild *",
       "git commit *",
       "git merge *",

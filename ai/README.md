@@ -112,8 +112,12 @@ A retired file installed from a version that was never committed is reported as
   command, including a retry outside the sandbox. `autoMode.hard_deny` adds rules
   it may never waive (pushing, reading credentials, weakening the sandbox or
   hooks); `autoMode.soft_deny` adds rules an explicit request from you can clear.
-- `permissions.ask` still forces a prompt for commands that discard work or
-  publish a package.
+- `permissions.ask` forces a prompt, even in auto mode, for every retry outside
+  the sandbox (`Bash(dangerouslyDisableSandbox:true)`), and for commands that
+  discard work or publish a package. A script that needs `~/.ssh` or another
+  denied path, such as a `gcloud compute ssh` launcher, fails in the sandbox
+  and then asks you before it runs outside it. `sudo` inside a quoted
+  `gcloud compute ssh --command` is a remote command and matches no deny rule.
 - `hooks.Notification` and `hooks.StopFailure` run `ai/hooks/notify-attention.sh`
   when approval, an MCP dialog or a background agent is waiting, or a turn ends
   with an API error. Every alert is both a Notification Center banner (OSC 777
@@ -144,6 +148,12 @@ sh ai/sync-claude-settings.sh
 
 ## Codex (`ai/codex/config.toml`, `ai/codex/rules/default.rules`)
 
+Three profiles share this template: `~/.codex` (ChatGPT sign-in), `~/.codex-team`
+(team account, `codex-team`) and `~/.codex-api` (API-key billing, `codex-api`).
+Setup creates the directory and installs the config; sign the API profile in once
+with `codex-api login --with-api-key`, which reads the key from stdin and stores
+it in the Keychain.
+
 - `default_permissions = "dev"` selects the `[permissions.dev]` profile. Codex
   ignores the profile if `sandbox_mode` or `[sandbox_workspace_write]` appears in
   any loaded layer, and ignores `network.domains` unless
@@ -152,7 +162,18 @@ sh ai/sync-claude-settings.sh
   they make Seatbelt refuse every directory rename in the workspace, which
   breaks cargo and npm.
 - An exec-policy `allow` rule runs its command outside the sandbox without
-  approval. Only `xcodebuild` is allowed, because it cannot run inside Seatbelt.
+  approval. Three exist: `xcodebuild`, `gcloud`, and the Git write subcommands.
+  `ai/codex/rules/default.rules` gives the reason for each next to the rule; an
+  unattended worker has no gate on any of them. `rebase`, `fetch`, `pull` and any
+  `git -C`/`-c` form stay sandboxed and still need approval.
+- A `deny` in the `dev` profile cannot be escalated or approved, even with
+  `approvals_reviewer = "user"`. The opt-in `gcloud` profile reopens only what
+  `gcloud compute ssh` needs: `~/.config/gcloud`, gcloud's own key pair
+  (`~/.ssh/google_compute_engine`, read-only), its `google_compute_known_hosts`
+  file, and Google API and IAP tunnel hosts. The rest of `~/.ssh`, including every
+  other key and `~/.ssh/config`, stays denied. Start a
+  session that runs VM maintenance with `codex -c 'default_permissions="gcloud"'`;
+  every other session keeps those paths denied.
 - `ai/sync-codex-config.sh` rebuilds each installed `config.toml` from the
   template plus the state Codex and its desktop app write: the model keys,
   trusted projects, plugins, marketplaces, extra MCP servers, plugin hook state

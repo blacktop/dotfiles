@@ -10,20 +10,22 @@ template="$script_dir/codex/config.toml"
 kept_keys='^(model|review_model|model_reasoning_effort|service_tier)[[:space:]]*='
 # Tables Codex writes; a header the template also defines is never kept.
 kept_tables='^\[+(projects\.|plugins\.|marketplaces\.|mcp_servers\.|notice[].]|desktop[].]|hooks\.state\.")'
-# MCP servers the template renamed or now forbids; dropped with their subtables.
-retired_servers='^\[+mcp_servers\."?(computer-use|ida-pro)"?[].]'
+# Tables the template owns or retired, dropped even though Codex wrote them: MCP
+# servers it renamed or forbids (with subtables), and hook trust for any profile's
+# config.toml, which the template now renders for the current profile only.
+retired_tables='^\[+(mcp_servers\."?(computer-use|ida-pro)"?[].]|hooks\.state\."[^"]*/\.codex[^/"]*/config\.toml:)'
 work=''
 trap '[ -z "$work" ] || rm -rf "$work"' EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-for profile in codex codex-team; do
+for profile in codex codex-team codex-api; do
 	directory="$destination_root/.$profile"
 	[ -d "$directory" ] || continue
 	installed="$directory/config.toml"
 	work=$(mktemp -d "$directory/.config.XXXXXX")
-	sed "s|\${HOME}|$HOME|g" "$template" >"$work/template"
+	sed -e "s|\${HOME}|$HOME|g" -e "s|\${CODEX_HOME}|$directory|g" "$template" >"$work/template"
 	[ -f "$installed" ] || : >"$work/installed"
 	[ ! -f "$installed" ] || cp "$installed" "$work/installed"
 	{
@@ -32,7 +34,7 @@ for profile in codex codex-team; do
 		printf '\n'
 		awk 'found || /^\[/ { found = 1; print }' "$work/template"
 		printf '\n# ── Kept from the installed file ─────────────────────────────────────────────\n'
-		KEPT_TABLES="$kept_tables" RETIRED_SERVERS="$retired_servers" awk '
+		KEPT_TABLES="$kept_tables" RETIRED_TABLES="$retired_tables" awk '
 			# First file: remember every template header and managed MCP server.
 			NR == FNR {
 				if ($0 ~ /^\[/) {
@@ -45,7 +47,7 @@ for profile in codex codex-team; do
 			}
 			/^\[/ {
 				keep = ($0 ~ ENVIRON["KEPT_TABLES"]) && !($0 in header)
-				keep = keep && !($0 ~ ENVIRON["RETIRED_SERVERS"])
+				keep = keep && !($0 ~ ENVIRON["RETIRED_TABLES"])
 				if (keep && match($0, /^\[+mcp_servers\.[^].]+/)) {
 					keep = !(substr($0, RSTART, RLENGTH) in server)
 				}

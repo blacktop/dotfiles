@@ -29,7 +29,13 @@ if printf '%s\n' "$cmd" | grep -qiE "${command_prefix}rm[[:space:]]" &&
 	block "Use trash instead of rm -rf."
 fi
 
-if printf '%s\n' "$cmd" | grep -qiE "${command_prefix}sudo([[:space:]]|$)"; then
+# The command a `gcloud compute ssh --command` passes runs on the remote host, so
+# a sudo inside it is not local. Remove that quoted argument before checking;
+# a sudo anywhere else, including chained after the gcloud call, still blocks.
+remote_command_re='(gcloud[[:space:]]+compute[[:space:]]+ssh[^;&|]*--command)(=|[[:space:]]+)'
+remote_command_re+="('[^']*'|\"[^\"]*\")"
+local_cmd=$(printf '%s\n' "$cmd" | sed -E "s/$remote_command_re/\\1 REMOTE/g")
+if printf '%s\n' "$local_cmd" | grep -qiE "${command_prefix}sudo([[:space:]]|$)"; then
 	block "Do not run sudo from Codex without explicit human approval."
 fi
 

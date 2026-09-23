@@ -33,8 +33,10 @@ policy = """
 Deny: git push in any form; reading credential stores, keychains, SSH/GPG keys, \
 .env files or shell secrets; network access to hosts outside the configured \
 allowlist; deleting or overwriting files outside the workspace; disabling hooks, \
-rules or the sandbox; installing software with sudo. When unsure, deny and let the \
-user decide.
+rules or the sandbox; installing software with sudo; any git command that can run \
+another program (-c or --config-env options, --upload-pack, --receive-pack, \
+rebase -x/--exec). Allow: other git writes inside the workspace, such as rebase \
+and fetch. When unsure, deny and let the user decide.
 """
 
 [permissions.dev]
@@ -76,6 +78,7 @@ extends = ":workspace"
 "~/.cargo/credentials.toml" = "deny"
 "~/.codex/auth.json" = "deny"
 "~/.codex-team/auth.json" = "deny"
+"~/.codex-api/auth.json" = "deny"
 "~/.config/fish/locals.fish" = "deny"
 "~/Library/Keychains" = "deny"
 
@@ -105,6 +108,27 @@ enabled = true
 "pypi.org" = "allow"
 "files.pythonhosted.org" = "allow"
 "registry.npmjs.org" = "allow"
+
+# Opt-in profile for a session that operates Google Cloud VMs. A deny in dev can
+# be neither escalated nor approved, so this reopens exactly what gcloud compute
+# ssh needs: the gcloud credentials, gcloud's own key pair (read-only) and its
+# known-hosts file. The rest of ~/.ssh, including every other key, stays denied.
+# Start that session with: codex -c 'default_permissions="gcloud"'
+[permissions.gcloud]
+description = "dev plus gcloud credentials, the gcloud SSH key and Google APIs"
+extends = "dev"
+
+[permissions.gcloud.filesystem]
+"~/.config/gcloud" = "write"
+"~/.ssh/google_compute_engine" = "read"
+"~/.ssh/google_compute_engine.pub" = "read"
+"~/.ssh/google_compute_known_hosts" = "write"
+
+# Added to dev's allowlist, not replacing it.
+[permissions.gcloud.network.domains]
+"**.googleapis.com" = "allow"
+"accounts.google.com" = "allow"
+"**.tunnel.cloudproxy.app" = "allow"
 
 # ── Shell environment ────────────────────────────────────────────────────────
 [shell_environment_policy]
@@ -186,19 +210,12 @@ statusMessage = "Checking package manager"
 
 # Trust only these reviewed definitions. Codex marks a changed command,
 # matcher, timeout, or status message as modified until its hash is refreshed.
-[hooks.state."${HOME}/.codex/config.toml:pre_tool_use:0:0"]
+# ai/sync-codex-config.sh renders the CODEX_HOME placeholder per profile.
+[hooks.state."${CODEX_HOME}/config.toml:pre_tool_use:0:0"]
 enabled = true
 trusted_hash = "sha256:438c5a4b4adbe50960ee7f8d911956f7a4f59db1d19e7975a4def6eb1436ca02"
 
-[hooks.state."${HOME}/.codex/config.toml:pre_tool_use:1:0"]
-enabled = true
-trusted_hash = "sha256:d15f2f652907d9363037c22c399e0e0347e08ecf9b455e6fa94532d66bafeec2"
-
-[hooks.state."${HOME}/.codex-team/config.toml:pre_tool_use:0:0"]
-enabled = true
-trusted_hash = "sha256:438c5a4b4adbe50960ee7f8d911956f7a4f59db1d19e7975a4def6eb1436ca02"
-
-[hooks.state."${HOME}/.codex-team/config.toml:pre_tool_use:1:0"]
+[hooks.state."${CODEX_HOME}/config.toml:pre_tool_use:1:0"]
 enabled = true
 trusted_hash = "sha256:d15f2f652907d9363037c22c399e0e0347e08ecf9b455e6fa94532d66bafeec2"
 

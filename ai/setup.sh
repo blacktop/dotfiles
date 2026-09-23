@@ -122,7 +122,7 @@ else
 fi
 
 # Create config directories (including unified ~/.agents for hooks and skills)
-mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.claude-ddb" "$HOME/.codex" "$HOME/.codex-team" "$HOME/.agents/hooks" "$HOME/.agents/skills"
+mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.claude-ddb" "$HOME/.codex" "$HOME/.codex-team" "$HOME/.codex-api" "$HOME/.agents/hooks" "$HOME/.agents/skills"
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync shared AI hooks..."
 rsync -a --exclude='.DS_Store' --exclude='__pycache__' "$SCRIPT_DIR/hooks/" "$HOME/.agents/hooks/"
@@ -139,8 +139,8 @@ done
 # settings.json is merged, not copied: repository keys win, profile-only keys survive.
 "$SCRIPT_DIR/sync-claude-settings.sh"
 
-# Sync codex + codex-team from the same source tree.
-for variant in codex codex-team; do
+# Sync the three Codex profiles from the same source tree.
+for variant in codex codex-team codex-api; do
 	msg "Sync $variant config..."
 	rsync -a --exclude='.DS_Store' --exclude='skills' --exclude='config.toml' --exclude='AGENTS.md' \
 		"$SCRIPT_DIR/codex/" "$HOME/.$variant/"

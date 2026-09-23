@@ -79,7 +79,7 @@ TEST_PROFILE_ROOT="$scratch/profiles"
 export TEST_PROFILE_ROOT
 mkdir -p "$TEST_PROFILE_ROOT/.claude" "$TEST_PROFILE_ROOT/.claude-team" \
 	"$TEST_PROFILE_ROOT/.claude-ddb" \
-	"$TEST_PROFILE_ROOT/.codex" "$TEST_PROFILE_ROOT/.codex-team"
+	"$TEST_PROFILE_ROOT/.codex" "$TEST_PROFILE_ROOT/.codex-team" "$TEST_PROFILE_ROOT/.codex-api"
 cat >"$scratch/profile-loop.sh" <<'SH'
 #!/bin/sh
 set -eu
@@ -98,7 +98,7 @@ awk '/^# Install Claude Code plugin marketplaces/,/^# Setup MCP servers/ {print}
 : >"$CALL_LOG"
 sh "$scratch/profile-loop.sh" >"$scratch/profile.out" 2>"$scratch/profile.err"
 [ "$(grep -c '^install ' "$CALL_LOG")" = 36 ]
-if grep -Eq '^install (codex|codex-team) ' "$CALL_LOG"; then
+if grep -Eq '^install (codex|codex-team|codex-api) ' "$CALL_LOG"; then
 	echo 'plugin installed into an excluded host' >&2
 	exit 1
 fi
