@@ -80,9 +80,12 @@ project code unsandboxed.
 
 Both sandboxes block Unix sockets, and `tmux` reaches its server through one, so
 a sandboxed worker could not report to a tmux-pm PM pane. Each sandbox allows
-that one socket, `/private/tmp/tmux-501/default` (the path holds this user's
-uid; change it on a host where `id -u` differs). No other socket is allowed:
-the Docker socket, for example, would hand a command the host.
+that socket, `/private/tmp/tmux-501/default` (the path holds this user's uid;
+change it on a host where `id -u` differs), and the Docker socket
+`/var/run/docker.sock`, so tests can start containers such as PostgreSQL through
+OrbStack. Both sandboxes resolve the symlink to OrbStack's socket. The Docker
+socket hands a command the host: a container can mount the home directory,
+credentials included, and reach any network host, with no approval.
 
 ## Retired files
 

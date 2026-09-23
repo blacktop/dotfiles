@@ -89,9 +89,11 @@ extends = ":workspace"
 [permissions.dev.network]
 enabled = true
 
-# tmux-pm workers talk to the PM pane over the tmux server socket.
+# tmux-pm workers talk to the PM pane over the tmux server socket. Tests start
+# containers (PostgreSQL) through the Docker socket, a symlink to OrbStack's.
 [permissions.dev.network.unix_sockets]
 "/private/tmp/tmux-501/default" = "allow"
+"/var/run/docker.sock" = "allow"
 
 [permissions.dev.network.domains]
 "github.com" = "allow"

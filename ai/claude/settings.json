@@ -162,7 +162,7 @@
       ]
     },
     "network": {
-      "allowUnixSockets": ["/private/tmp/tmux-501/default"],
+      "allowUnixSockets": ["/private/tmp/tmux-501/default", "/var/run/docker.sock"],
       "allowedDomains": [
         "github.com",
         "api.github.com",
