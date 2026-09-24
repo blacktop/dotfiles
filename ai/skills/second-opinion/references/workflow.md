@@ -5,8 +5,6 @@ Source snapshot: refreshed 2026-03-12 from official and current tool sources
 - OpenAI Codex CLI docs and changelog
 - OpenAI Codex prompting and non-interactive guidance
 - OpenAI AGENTS.md guidance
-- Gemini CLI local help and installed extension metadata
-- Gemini prompting guidance
 
 ## Scope detection
 

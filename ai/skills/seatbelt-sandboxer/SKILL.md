@@ -266,6 +266,7 @@ sandbox-exec -f profile.sb -D WORKING_DIR=/tmp -D HOME=$HOME \
 
 1. **Deprecated but functional**: Apple deprecated sandbox-exec but it works through macOS 14+
 2. **Temp directory access often required**: Many applications need `/tmp` and `/var/folders`
+3. **No nesting**: a process already running under Seatbelt, such as the sandboxed shell of Claude Code or Codex, cannot apply another profile; `sandbox-exec` fails with `sandbox_apply: Operation not permitted` (exit 71). Run profile tests outside the agent sandbox, with the user's approval.
 
 ## Example: Generic CLI Application
 

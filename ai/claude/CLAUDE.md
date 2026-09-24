@@ -20,7 +20,7 @@ Global instructions for all projects. Project-specific CLAUDE.md files override 
 - **Replace, don't deprecate** - When a new implementation replaces an old one, remove the old one entirely. No backward-compatible shims, dual config formats, or migration paths. Proactively flag dead code — it adds maintenance burden and misleads both developers and LLMs.
 - **Verify at every level** - Set up automated guardrails (linters, type checkers, pre-commit hooks, tests) as the first step, not an afterthought. Prefer structure-aware tools (ast-grep, LSPs, compilers) over text pattern matching. Review your own output critically. Every layer catches what the others miss.
 - **Bias toward action** - Decide and move for anything easily reversed; state your assumption so the reasoning is visible. Ask before committing to interfaces, data models, architecture, or destructive/write operations on external services.
-- **Finish the job** - Don't stop at the minimum that technically satisfies the request. Handle the edge cases you can see. Clean up what you touched. If something is broken adjacent to your change, flag it. But don't invent new scope — there's a difference between thoroughness and gold-plating.
+- **Finish the job** - Handle the edge cases you can see and clean up what you touched. If something adjacent to your change is broken, flag it rather than widening the change.
 - **Agent-native by default** - Design so agents can achieve any outcome users can. Tools are atomic primitives; features are outcomes described in prompts. Prefer file-based state for transparency and portability. When adding UI capability, ask: can an agent achieve this outcome too?
 
 ## Code Quality
@@ -107,7 +107,7 @@ wastes the SSD and throws away every cache hit.
 | `fd` | find | `fd "*.py"` - fast file finder |
 | `ast-grep` | - | `ast-grep --pattern '$FUNC($$$)' --lang py` - AST-based code search |
 | `shellcheck` | - | `shellcheck script.sh` - shell script linter |
-| `shfmt` | - | `shfmt -i 2 -w script.sh` - shell formatter |
+| `shfmt` | - | `shfmt -w script.sh` - shell formatter; honors `.editorconfig` |
 | `actionlint` | - | `actionlint .github/workflows/` - GitHub Actions linter |
 | `zizmor` | - | `zizmor .github/workflows/` - Actions security audit |
 | `prek` | pre-commit | `prek run` - fast git hooks (Rust, no Python) |
@@ -122,7 +122,7 @@ Prefer `ast-grep` over ripgrep when searching for code structure (function calls
 
 - **Python repos standard**. We use `uv` and `pyproject.toml` in all Python repos. Prefer `uv sync` for env and dependency resolution. Do not introduce `pip` venvs, Poetry, or `requirements.txt` unless asked.
 
-**Runtime:** 3.13 with `uv venv`
+**Runtime:** Repository-pinned Python; otherwise current stable, in a `uv venv`
 
 | purpose | tool |
 |---------|------|
@@ -137,9 +137,9 @@ Tests in `tests/` directory mirroring package structure. Supply chain: `pip-audi
 
 ### TypeScript
 
-- In TypeScript codebases NEVER, EVER use `any` we are better than that. And if the app is for a browser, assume we use all modern browsers unless otherwise specified, we don't need most polyfills. Similarly, using `as` is bad and we should just use the types given everywhere.
+- In TypeScript, do not use `any` or `as` type assertions; use the types the code already provides. For a browser app, assume current evergreen browsers unless the project says otherwise, so most polyfills are unnecessary.
 
-**Runtime:** Node 22 LTS, ESM only (`"type": "module"`)
+**Runtime:** Repository-pinned Node; otherwise the current Active LTS. ESM only (`"type": "module"`)
 
 | purpose | tool |
 |---------|------|
@@ -167,8 +167,8 @@ Colocated `*.test.ts` files. Supply chain: `pnpm audit --audit-level=moderate` b
 
 - Follow the repository's pinned toolchain, MSRV, target matrix, feature matrix,
   CI commands, and local guidance before applying global defaults.
-- Do NOT use unwraps or anything that can panic in production Rust code; handle
-  errors. Tests may use panics when they make failures clearer.
+- Do not use `unwrap` or anything else that can panic in production Rust code;
+  handle the error. Tests may panic when that makes a failure clearer.
 - In Rust code I prefer using `crate::` to `super::`; please don't use `super::`. If you see a lingering `super::` from someone else clean it up.
 - Avoid `pub use` on imports unless you are re-exposing a dependency so downstream consumers do not have to depend on it directly.
 - Skip global state via `lazy_static!`, `Once`, or similar; prefer passing explicit context structs for any shared state.
@@ -280,7 +280,7 @@ similar_names = "allow"
 
 ### Bash
 
-All scripts must start with `set -euo pipefail`. Lint: `shellcheck script.sh && shfmt -d script.sh`
+Bash scripts start with `set -euo pipefail`; POSIX `sh` scripts start with `set -eu`. Lint: `shellcheck script.sh && shfmt -d script.sh`
 
 ### Shell Examples
 
@@ -310,12 +310,12 @@ Pin actions to SHA hashes with version comments: `actions/checkout@<full-sha>  #
 **Commits:**
 - Imperative mood, ≤72 char subject line, one logical change per commit
 - Never amend/rebase commits already pushed to shared branches
-- Work on the current branch, `main` included. Do not create a branch, worktree or PR unless asked, even when a default says to branch first. Commit only when asked; never push — the user pushes
+- Work on the current branch, `main` included. Do not create a branch, worktree or PR unless asked, even when a default says to branch first; the only exception is the subagent worktrees below. Commit only when asked; never push — the user pushes
 - Never commit secrets, API keys, or credentials — use `.env` files (gitignored) and environment variables
 
 **Hooks and worktrees:**
 - Install prek in every repo (`prek install`). Run `prek run` before committing. Configure auto-updates: `prek auto-update --cooldown-days 7`
-- Parallel subagents that edit files require worktrees. Each one MUST work in its own worktree (`wt switch <branch>`), not the main repo; read-only subagents need none.
+- Parallel subagents that edit files each work in their own worktree (`wt switch <branch>`), not the main repo; read-only subagents need none.
 
 **Pull requests** (only when asked for one):
 Describe what the code does now — not discarded approaches, prior iterations, or alternatives. Only describe what's in the diff.

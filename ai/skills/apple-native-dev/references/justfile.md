@@ -48,7 +48,7 @@ clean:
 set positional-arguments := true
 
 # Configuration
-iphone_sim := "FBAF6E3F-71E6-4C2A-8773-5D0099B8FAA1"
+iphone_sim := "YOUR_SIMULATOR_UDID"
 bundle_id := "com.example.myapp"
 project := "Apps/MyApp/MyApp.xcodeproj"
 
@@ -214,7 +214,7 @@ xcrun devicectl device uninstall app --device <UDID> com.example.app
 
 **Specific simulator by UDID:**
 ```just
-iphone_sim := "FBAF6E3F-71E6-4C2A-8773-5D0099B8FAA1"
+iphone_sim := "YOUR_SIMULATOR_UDID"
 ```
 
 **Variable destinations:**

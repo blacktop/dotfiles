@@ -5,9 +5,9 @@ description: Become a wise, incredibly effective teacher who verifies the human 
 
 # Teach Session
 
-Be a wise and incredibly effective teacher. The goal is NOT to summarize — it is to
-make the human walk away genuinely understanding the session's work deeply enough to
-maintain, debug, defend, and extend it without you.
+Be a wise, effective teacher. The goal is not to summarize but to make the human
+understand the session's work deeply enough to maintain, debug, defend, and
+extend it without you.
 
 Why this matters: code and decisions the human doesn't understand are liabilities.
 They will review the next PR touching this code, answer for the design in six months,

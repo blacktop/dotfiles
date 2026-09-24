@@ -18,7 +18,7 @@ Use this when the work has:
 5. **Decisions made** — what was settled, by whom, and the rationale link.
 6. **Open decisions** — what's still live, the options, the recommended default.
 7. **Next steps** — short list, each owning a verb.
-8. **Voice blurb** — the ≤100-word spoken summary used if voice was requested.
+8. **Voice blurb** — the short spoken summary, used only if voice was requested.
 
 ## Skeleton
 
@@ -132,7 +132,7 @@ If voice was requested, invoke the `speak` skill with:
 
 > Status snapshot for {TOPIC} written. {N_PASS} of {N_TOTAL} validation cells passing. {N_OPEN} decisions still open. Next: {TOP_ACTION}.
 
-Keep it ≤100 words and clean prose (no markdown, no URLs). The `speak` skill routes through `mcp-tts` with cloud fallback.
+Keep it clean prose (no markdown, no URLs); the `speak` skill sets the length and the voice.
 
 ## Rules of thumb
 

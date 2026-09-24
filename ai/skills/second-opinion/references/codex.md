@@ -1,11 +1,6 @@
 # Codex CLI
 
-Current local verification snapshot:
-
-- CLI: `codex-cli 0.114.0`
-- Built-in non-interactive review commands exist:
-  - `codex review`
-  - `codex exec review`
+The CLI has built-in non-interactive review commands: `codex review` and `codex exec review`.
 
 Relevant official sources:
 
@@ -62,19 +57,11 @@ Notes:
 - do not use manual diff pasting unless the built-in review command cannot support the requested workflow
 - let Codex read `AGENTS.md` automatically; do not paste its contents into the prompt
 
-Current local behavior on `codex-cli 0.114.0`:
-
-- `codex exec review` with scope flags works
-- `codex exec review --uncommitted [PROMPT]` is rejected even though help still shows `[PROMPT]`
-
-Because of that, do not rely on `exec review` for a custom focus prompt when also using `--uncommitted`, `--base`, or `--commit`.
+Some CLI versions reject a custom `[PROMPT]` together with `--uncommitted`, `--base`, or `--commit`, even though help lists `[PROMPT]`. For a custom focus, use the focused review path below unless you have confirmed the installed CLI accepts that combination.
 
 ## Model selection
 
-Best practice:
-
-- prefer the local CLI default model unless the user explicitly asks for a specific one
-- if you must pin a current Codex-tuned model, `gpt-5.3-codex` is the current tested pin from OpenAI's prompting guide
+Use the local CLI default model unless the user names a specific one.
 
 ## Focused review path
 

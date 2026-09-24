@@ -6,7 +6,7 @@ description: |
   (2) User says "save session", "remember this session", or "save your session ID"
   (3) Before ending a long coding/debugging session
   (4) When user wants to be able to resume this conversation later
-  Supports Claude, Codex, Gemini, Copilot, Cursor, and other AI agents.
+  Supports Claude, Codex, Copilot, Cursor, and other AI agents.
 ---
 
 # Save Session
@@ -40,7 +40,7 @@ python3 ~/.agents/skills/save-session/scripts/save_session.py \
 **Session storage:** `~/.claude/projects/<project-hash>/<SESSION_ID>.jsonl`
 
 **How to find:**
-- Extract UUID from file paths in context (e.g., tool output paths contain the session ID)
+- Run `echo "$CLAUDE_CODE_SESSION_ID"`; Claude Code exports the current session ID to its Bash tool environment
 - Use `/status` command to see session info
 - List sessions: `claude --resume` (interactive picker)
 
@@ -61,20 +61,6 @@ python3 ~/.agents/skills/save-session/scripts/save_session.py \
 **Note:** Session ID is not currently exposed to the model itself (see GitHub issue #5912)
 
 **Resume:** `codex resume SESSION_ID`
-
-### Google Gemini CLI
-
-**Session storage:** `~/.gemini/tmp/<project_hash>/chats/`
-
-**How to find:**
-- Use `gemini --list-sessions` to see all sessions with UUIDs
-- Sessions are project-specific
-
-**Resume options:**
-- `gemini --resume` (latest session)
-- `gemini --resume <UUID>` (specific session)
-- `gemini --resume <index>` (by index number)
-- `/resume` command within interactive mode
 
 ### GitHub Copilot CLI
 
@@ -126,7 +112,6 @@ python3 ~/.agents/skills/save-session/scripts/save_session.py \
 |-------|----------------|
 | Claude Code | `claude --resume SESSION_ID` |
 | Codex | `codex resume SESSION_ID` |
-| Gemini CLI | `gemini --resume SESSION_ID` |
 | Copilot CLI | `/resume SESSION_ID` |
 | Cursor | Restore from workspaceStorage backup |
 | Aider | Reference `.aider.chat.history.md` |

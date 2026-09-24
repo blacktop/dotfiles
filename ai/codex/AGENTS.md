@@ -4,8 +4,8 @@
 
 - Follow the repository's pinned toolchain, MSRV, target matrix, feature matrix,
   CI commands, and local guidance before applying global defaults.
-- Do NOT use unwraps or anything that can panic in production Rust code; handle
-  errors. Tests may use panics when they make failures clearer.
+- Do not use `unwrap` or anything else that can panic in production Rust code;
+  handle the error. Tests may panic when that makes a failure clearer.
 - In Rust code I prefer using `crate::` to `super::`; please don't use `super::`. If you see a lingering `super::` from someone else clean it up.
 - Avoid `pub use` on imports unless you are re-exposing a dependency so downstream consumers do not have to depend on it directly.
 - Skip global state via `lazy_static!`, `Once`, or similar; prefer passing explicit context structs for any shared state.
@@ -100,7 +100,7 @@ The user's interactive shell is Fish. When giving commands for the user to copy/
 
 ### TypeScript
 
-- In TypeScript codebases NEVER, EVER use `any` we are better than that. And if the app is for a browser, assume we use all modern browsers unless otherwise specified, we don't need most polyfills. Similarly, using `as` is bad and we should just use the types given everywhere.
+- In TypeScript, do not use `any` or `as` type assertions; use the types the code already provides. For a browser app, assume current evergreen browsers unless the project says otherwise, so most polyfills are unnecessary.
 
 ### Python
 

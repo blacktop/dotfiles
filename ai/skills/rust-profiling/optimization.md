@@ -13,7 +13,6 @@ Once samply identifies hotspots, this is the toolkit for fixing them. Order of o
 opt-level = 3
 lto = "fat"          # cross-crate inlining + interprocedural opt — most impactful
 codegen-units = 1    # serial LLVM pipeline → better codegen, slower compiles
-panic = "abort"      # smaller binary, no unwind tables
 strip = true         # strip symbols from final binary
 
 [profile.profiling]
@@ -22,7 +21,7 @@ debug = true         # keep symbols for samply / perf
 strip = false
 ```
 
-`lto = "fat"` is the single highest-leverage knob. `codegen-units = 1` matters for tight inner loops.
+Treat `lto = "fat"` and `codegen-units = 1` as experiments that slow builds; keep them when a benchmark shows the win. Add `panic = "abort"` only to a final binary whose failure model you have decided, never to a reusable library.
 
 ---
 

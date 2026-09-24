@@ -46,9 +46,9 @@ Start with measurement, not rewriting.
 - For contention or scheduler issues, use trace, block, and mutex tooling instead of only CPU profiles.
 - For intermittent production latency, consider the Go 1.25+ flight recorder before building custom tracing machinery.
 
-## Go 1.26-specific posture
+## Current-Go posture
 
-- Re-measure old workarounds on Go 1.26; runtime and compiler changes may have made older allocation, cgo, and GC workarounds obsolete.
+- Re-measure old workarounds on the Go version the repo builds with; runtime and compiler changes since Go 1.26 may have made older allocation, cgo, and GC workarounds obsolete.
 - On Linux containers, remember that Go 1.25+ made `GOMAXPROCS` container-aware by default. Do not cargo-cult `automaxprocs` into modern Go services without a measured reason.
 - Use `testing.T.ArtifactDir` plus `go test -artifacts -outputdir ...` when a benchmark or perf regression test needs to retain profiles, traces, or other debugging output.
 

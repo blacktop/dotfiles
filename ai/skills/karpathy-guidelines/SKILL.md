@@ -9,7 +9,7 @@ Four behavioral rules for non-trivial coding tasks. Trivial one-liners don't nee
 
 ## 1. Surface Assumptions
 
-Before implementing, state assumptions explicitly. When multiple interpretations exist, present them — don't pick silently. If confused, name what's unclear and ask.
+Before implementing, state your assumptions explicitly. When several interpretations exist, name the one you chose and why rather than picking silently; stop and ask only when the choice is hard to reverse or fixes an interface, data model or architecture. If something is unclear, name it.
 
 **Test:** Can you trace every design choice to something the user said? If not, you assumed.
 
@@ -44,4 +44,4 @@ For multi-step work, state a plan with verification at each step:
 
 ## Working Indicators
 
-These rules are working when: diffs contain only requested changes, code is simple on the first attempt, questions come before implementation, and PRs have no drive-by refactoring.
+These rules are working when: diffs contain only requested changes, code is simple on the first attempt, assumptions are stated before implementation, and PRs have no drive-by refactoring.

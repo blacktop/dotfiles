@@ -78,7 +78,7 @@ For visual, spatial, or interactive artifacts, also run the checklist in `refere
 
 ## Voice handoff (opt-in)
 
-When — and only when — the user asked for voice or passed `--voice` to `/artifact`, invoke the **`speak` skill** with a ≤100-word summary. The `speak` skill routes through the registered `say` MCP server (`mcp-tts`) and falls back across `google → openai → elevenlabs → say`, so you get a good cloud voice instead of the local `say` default.
+When — and only when — the user asked for voice or passed `--voice` to `/html-artifacts`, invoke the **`speak` skill** with a short spoken summary; the `speak` skill chooses the voice and the length.
 
 Do **not** call any voice path unprompted. If the user didn't ask for voice, hand the spoken-text blurb back as plain output and let them trigger TTS themselves.
 

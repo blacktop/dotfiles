@@ -58,8 +58,6 @@ target/
 skills-lock.json
 .claude/
 CLAUDE*.md
-.gemini/
-GEMINI.md
 AGENTS.md
 **/docs/.ai/
 .kiro/

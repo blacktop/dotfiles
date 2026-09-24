@@ -31,7 +31,7 @@ description: |
 
 ## Version Notes (0.30.x)
 
-Current stable: **0.30.1** (2026-06-05, MSRV 1.88, edition 2024).
+Targets **0.30.x** (MSRV 1.88, edition 2024); run `cargo info ratatui` for the current patch release.
 
 - **Modular workspace**: apps keep depending on `ratatui`; widget *libraries*
   should depend on `ratatui-core` for API stability and fewer dependencies.
@@ -89,8 +89,8 @@ serde = { version = "1", features = ["derive"] }
 config = "0.15"
 dirs = "6"
 
-# Optional: image support
-ratatui-image = { version = "5", features = ["chafa-static"] }
+# Optional: image support (default features include chafa-dyn, which overrides chafa-static)
+ratatui-image = { version = "11", default-features = false, features = ["crossterm", "image-defaults", "chafa-static"] }
 
 # Optional: shimmer text animation
 tui-shimmer = "0.1"
@@ -266,37 +266,33 @@ See: [references/async-patterns.md](references/async-patterns.md)
 
 ## Image Integration
 
-```rust
-use ratatui_image::{picker::Picker, StatefulImage, Resize};
-use std::thread;
+Targets `ratatui-image` 11.x; its API changes between majors, so check docs.rs
+before reusing older snippets.
 
-// Query terminal protocol support once at startup; keep it on the app
+```rust
+use ratatui::layout::Size;
+use ratatui_image::{picker::Picker, protocol::Protocol, Image, Resize};
+
+// Query protocol and font size once at startup; keep the picker on the app
 let picker = Picker::from_query_stdio()?;
 
-// Load and resize in a background thread (`area` is the target Rect
-// from your layout; clone the picker so the original stays reusable)
-let (tx, rx) = std::sync::mpsc::channel();
-let mut worker = picker.clone();
-thread::spawn(move || {
-    let dyn_img = image::open("photo.png").unwrap();
-    let protocol = worker.new_protocol(dyn_img, area.into(), Resize::Fit(None));
-    tx.send(protocol).unwrap();
-});
+// Encode once, fitted inside a box of cells; do this outside `draw`
+// (on a worker thread for large images)
+let dyn_img = image::open("photo.png")?;
+let protocol: Protocol = picker.new_protocol(dyn_img, Size::new(40, 20), Resize::Fit(None))?;
 
-// In render, use StatefulImage for efficient redraw
-if let Ok(protocol) = rx.try_recv() {
-    image_state = Some(protocol);
-}
-if let Some(ref mut img) = image_state {
-    frame.render_stateful_widget(StatefulImage::default(), area, img);
-}
+// In render, drawing a pre-encoded Protocol is cheap
+frame.render_widget(Image::new(&protocol), area);
 ```
 
 **Key points:**
-- Use `chafa-static` feature for portable binaries
-- Query protocol once, not per-frame
-- Offload resize/encode to background thread
-- Use `StatefulImage` to avoid re-encoding on redraws
+- For portable binaries use `chafa-static` with `default-features = false`;
+  the default `chafa-dyn` takes precedence when both are enabled
+- Query the protocol once, not per frame
+- `Image` is stateless and fixed-size; all encoding happens in `new_protocol`
+- `StatefulImage` refits to its render area and encodes at render time, which
+  blocks; drive it through `ratatui_image::thread::ThreadProtocol` (see the
+  crate's `examples/thread.rs` and `examples/tokio.rs`)
 
 See: [references/image-integration.md](references/image-integration.md)
 
@@ -456,12 +452,12 @@ template for Claude Code's `Workflow` tool. It fans out one reviewer per
 TUI dimension — TEA architecture, terminal safety, styling, event handling,
 render performance — then adversarially verifies each finding before
 reporting, so only confirmed issues survive. In agents without the
-`Workflow` tool (Codex, Gemini), skip the script and apply those five
+`Workflow` tool (Codex), skip the script and apply those five
 dimensions as a manual review checklist instead.
 
 Treat it as a **template, not a script to run verbatim**: adjust the target
-path, dimensions, and severity threshold to the codebase. Run it after
-substantial TUI changes or before a release:
+path, dimensions, and severity threshold to the codebase. It fans out several
+agents, so run it when the user asks for a TUI review or a pre-release check:
 
 ```
 Workflow({

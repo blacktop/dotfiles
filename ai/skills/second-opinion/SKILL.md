@@ -1,6 +1,6 @@
 ---
 name: second-opinion
-description: Run an external LLM code review with Codex CLI, Gemini CLI, or both. Use when the user asks for a second opinion, external review, Codex review, Gemini review, or wants a model-vs-model review of current changes, a branch diff, a specific commit, or a GitHub pull request.
+description: Run an external LLM code review with the Codex CLI. Use when the user asks for a second opinion, external review, Codex review, or wants a model-vs-model review of current changes, a branch diff, a specific commit, or a GitHub pull request.
 ---
 
 # Second Opinion
@@ -28,7 +28,6 @@ If repository guidance or user instructions forbid sending code to third-party t
 
 Infer as much as possible from the user's message:
 
-- tool: `codex`, `gemini`, or `both`
 - scope: `uncommitted`, `branch diff`, `commit`, or `PR`
 - focus: `general`, `security`, `performance`, `error handling`, `architecture`, or a custom concern
 
@@ -37,8 +36,7 @@ Ask one concise follow-up only if a missing detail blocks the run.
 ## Read only what you need
 
 - Read [references/workflow.md](references/workflow.md) for scope detection, diff sizing, review-brief construction, and synthesis rules.
-- Read [references/codex.md](references/codex.md) only if running Codex.
-- Read [references/gemini.md](references/gemini.md) only if running Gemini.
+- Read [references/codex.md](references/codex.md) for the Codex CLI commands and flags.
 
 ## Core workflow
 
@@ -51,8 +49,8 @@ Ask one concise follow-up only if a missing detail blocks the run.
    - how to inspect the diff locally
    - that the review is read-only
    - what output format to return
-5. Run the selected tool or tools in parallel if independent.
-6. Present findings first, then agreement and disagreement across tools.
+5. Run the Codex review.
+6. Present Codex's findings first, then where you agree and disagree with them.
 7. Never auto-apply suggested fixes unless the user explicitly asks.
 
 ## Safety defaults
@@ -68,11 +66,11 @@ Ask one concise follow-up only if a missing detail blocks the run.
 
 Present results in this order:
 
-1. Findings by tool, highest severity first.
-2. Explicit `No findings` if a tool returns nothing substantive.
+1. Codex's findings, highest severity first.
+2. Explicit `No findings` if Codex returns nothing substantive.
 3. A short synthesis:
-   - where the tools agree
-   - where they disagree
+   - where you agree with Codex
+   - where you disagree, and why
    - what looks worth acting on first
 
 Keep the synthesis separate from the raw reviewer output so the user can distinguish the outside opinion from your judgment.

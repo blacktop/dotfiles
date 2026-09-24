@@ -2,7 +2,7 @@
 """
 Save AI agent session information for later resumption.
 
-Supports Claude, Codex, Gemini, and other AI agents.
+Supports Claude, Codex, and other AI agents.
 Stores session metadata in docs/.ai/sessions.json within the repository.
 """
 
@@ -12,7 +12,6 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 
 def load_sessions(sessions_file: Path) -> dict:
@@ -36,7 +35,7 @@ def add_session(
     session_id: str,
     agent: str,
     summary: str,
-    tags: Optional[list[str]] = None,
+    tags: list[str] | None = None,
 ) -> None:
     """Add a new session to the sessions file."""
     data = load_sessions(sessions_file)
@@ -66,6 +65,7 @@ def add_session(
     data["sessions"].append(new_session)
     save_sessions(sessions_file, data)
     print(f"Saved session: {session_id}")
+
 
 def resolve_session_id(session_id: str, agent: str) -> str:
     """Resolve auto session IDs for supported agents."""
@@ -106,8 +106,8 @@ def main():
     parser.add_argument(
         "--agent",
         required=True,
-        choices=["claude", "codex", "gemini", "copilot", "cursor", "aider", "chatgpt", "other"],
-        help="AI agent type (claude, codex, gemini, copilot, cursor, aider, chatgpt, other)",
+        choices=["claude", "codex", "copilot", "cursor", "aider", "chatgpt", "other"],
+        help="AI agent type (claude, codex, copilot, cursor, aider, chatgpt, other)",
     )
     parser.add_argument(
         "--summary",

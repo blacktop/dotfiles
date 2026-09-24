@@ -113,7 +113,6 @@
     "enableWeakerNetworkIsolation": true,
     "excludedCommands": [
       "docker *",
-      "gh *",
       "gcloud *",
       "xcodebuild *",
       "git commit *",
@@ -150,7 +149,7 @@
     "credentials": {
       "envVars": [
         { "name": "GITHUB_TOKEN", "mode": "deny" },
-        { "name": "GH_TOKEN", "mode": "deny" },
+        { "name": "GH_TOKEN", "mode": "mask", "injectHosts": ["api.github.com"] },
         { "name": "NPM_TOKEN", "mode": "deny" },
         { "name": "CARGO_REGISTRY_TOKEN", "mode": "deny" },
         { "name": "OPENAI_API_KEY", "mode": "deny" },
@@ -164,6 +163,7 @@
     "network": {
       "allowUnixSockets": ["/private/tmp/tmux-501/default", "/var/run/docker.sock"],
       "allowLocalBinding": true,
+      "tlsTerminate": {},
       "allowedDomains": [
         "github.com",
         "api.github.com",
