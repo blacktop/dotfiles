@@ -1,3 +1,8 @@
+set -x LANG en_US.UTF-8
+set -x PROJECTS ~/Developer
+set -x HOMEBREW_NO_AUTO_UPDATE 1
+set -x HOMEBREW_NO_ENV_HINTS 1
+
 fish_add_path --global -a $HOME/Library/Python/3.13/bin
 fish_add_path --global -a $HOME/Library/Python/3.14/bin
 fish_add_path --global -a $HOME/go/bin
@@ -41,9 +46,9 @@ set -gx SSH_SK_PROVIDER /usr/lib/ssh-keychain.dylib
 if command -q zed
     set -gx EDITOR "zed --wait"
     set -gx VISUAL "zed --wait"
-else if command -q code
-    set -gx EDITOR "code -w"
-    set -gx VISUAL "code -w"
+else if command -q nvim
+    set -gx EDITOR "nvim"
+    set -gx VISUAL "nvim"
 end
 
 # STYLE #########################################

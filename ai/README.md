@@ -107,7 +107,8 @@ A retired file installed from a version that was never committed is reported as
 
 - `sandbox` runs Bash under Seatbelt: writes are limited to the workspace and the
   listed toolchain caches, network to `allowedDomains`, and secret environment
-  variables are removed. Directories on `PATH` stay read-only.
+  variables are removed, except `GH_TOKEN`, which is masked (see GitHub CLI
+  below). Directories on `PATH` stay read-only.
 - `sandbox.excludedCommands` runs the git commands that create commits or tags
   (`commit`, `merge`, `rebase`, `cherry-pick`, `revert`, `tag`) outside the
   sandbox. `commit.gpgsign` signs through a program under `~/.ssh`, which the
@@ -121,6 +122,12 @@ A retired file installed from a version that was never committed is reported as
   command, including a retry outside the sandbox. `autoMode.hard_deny` adds rules
   it may never waive (pushing, reading credentials, weakening the sandbox or
   hooks); `autoMode.soft_deny` adds rules an explicit request from you can clear.
+- `fish/functions/claude.fish` sets `CLAUDE_CODE_AUTO_MODE_SERVER=0` for every
+  profile except `claude-team`, so the classifier runs locally (Sonnet by default,
+  counted as usage) as it did with telemetry off before Claude Code 2.1.282.
+  `claude-team` keeps the server-side check, which runs inside its Mythos requests
+  at no charge; the local classifier's Sonnet requests would break that account's
+  Mythos-only rule. The variable only reaches sessions started from fish.
 - `permissions.ask` forces a prompt, even in auto mode, for commands that
   discard work or publish a package. A retry outside the sandbox, such as a
   `gcloud compute ssh` launcher that needs `~/.ssh`, has no ask rule: the
@@ -154,6 +161,42 @@ A retired file installed from a version that was never committed is reported as
 ```fish
 sh ai/sync-claude-settings.sh
 ```
+
+### GitHub CLI
+
+`gh` runs inside the sandbox with a token of its own, never your `gh auth login`
+token. `sandbox.credentials` masks `GH_TOKEN`: sandboxed commands see a
+per-session placeholder, and the sandbox proxy swaps in the real token only on
+requests to `api.github.com`. `fish/functions/claude.fish` reads the token from
+the Keychain into the `claude` process and points `GH_CONFIG_DIR` at
+`~/.config/gh-claude`, which need not exist; gh stops when it cannot read
+`~/.config/gh`, which stays denied.
+
+- The swap needs `network.tlsTerminate`, so the proxy terminates every HTTPS
+  connection a sandboxed command opens and points `SSL_CERT_FILE` and the other
+  CA variables at its own CA plus the public roots. Go reads `SSL_CERT_FILE` on
+  macOS from Go 1.27. A Go program built with an older release, such as
+  `terraform`, fails TLS inside the sandbox, and so does a tool that trusts only
+  the Keychain.
+- Commands outside the sandbox, hooks and MCP servers inherit the real token, so
+  scope it narrowly.
+
+Create a fine-grained token at
+<https://github.com/settings/personal-access-tokens/new> for your account, with a
+90-day expiry, the repositories Claude should reach, read-only Contents, Actions,
+Checks and Commit statuses, and read-write Issues and Pull requests. Leave
+Administration, Workflows, Secrets, Variables and Gists off. Read-only Contents
+means Claude cannot push, merge or publish a release. One token covers one
+owner. Store it in the Keychain; `-w` last prompts for the value, which keeps it
+out of shell history:
+
+```fish
+security add-generic-password -U -a $USER -s claude-gh-token -w
+ln -sf (pwd)/fish/functions/claude.fish ~/.config/fish/functions/
+```
+
+In a new session `gh api user --jq .login` prints your login, and
+`gh auth token` prints the placeholder.
 
 ## Codex (`ai/codex/config.toml`, `ai/codex/rules/default.rules`)
 
