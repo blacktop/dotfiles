@@ -12,9 +12,11 @@ source_file="$script_dir/claude/settings.json"
 retired_paths='[["alwaysThinkingEnabled"], ["includeCoAuthoredBy"],
 	["skipDangerousModePermissionPrompt"]]'
 # Installed handlers the repository owns and so replaces or removes: anything in
-# the shared hooks directory (retired scripts such as tts-notify.py included)
-# and inline commands the repository has since dropped.
+# the shared hooks directory (retired scripts such as tts-notify.py included),
+# inline commands the repository has since dropped, and the session hooks of the
+# tmux-assistant-resurrect plugin, which tmux/setup.sh retires.
 managed_commands='/\.agents/hooks/|Use feature branches, not direct push to main'
+managed_commands="$managed_commands"'|/\.tmux/plugins/tmux-assistant-resurrect/'
 # shellcheck disable=SC2016 # jq program, not shell: $names are jq variables.
 merge_program='
 	def managed($repo_handlers):
