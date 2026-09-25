@@ -91,9 +91,9 @@ prefix_rule(
 prefix_rule(pattern = ["xcodebuild"], decision = "allow")
 prefix_rule(pattern = ["gcloud"], decision = "allow")
 
-# Inside the sandbox .git is read-only, so every Git write needed an escalation,
-# which unattended workers cannot get. These write subcommands run outside the
-# sandbox. The list is named, not `git` alone: global options (`-c alias.x=!cmd`,
+# Local Git metadata is writable. Retain these named escalation allowances for
+# platform integrations that still need them. The list is not `git` alone:
+# global options (`-c alias.x=!cmd`,
 # `-c core.pager=cmd`) and `rebase -x`, `fetch`/`pull --upload-pack` run
 # arbitrary commands, so those forms stay sandboxed. Forbidden rules above win.
 prefix_rule(
@@ -127,4 +127,16 @@ prefix_rule(
     decision = "forbidden",
     justification = "Disabling fsmonitor must not permit force-adding ignored files.",
     match = ["git -c core.fsmonitor=false add -f ignored", "git -c core.fsmonitor=false add --force ignored"],
+)
+
+# The shared hook handles global options, aliases and reordered flags as well.
+prefix_rule(
+    pattern = [["git", "/usr/bin/git", "/opt/homebrew/bin/git"], "branch", ["-D", "-f", "--force"]],
+    decision = "forbidden",
+    justification = "Forced branch deletion or replacement is user-run; use safe branch operations.",
+)
+prefix_rule(
+    pattern = [["git", "/usr/bin/git", "/opt/homebrew/bin/git"], "worktree", "remove", ["--force", "-f", "-ff"]],
+    decision = "forbidden",
+    justification = "Do not force-remove a worktree; preserve its work and let the PM remove it when clean.",
 )

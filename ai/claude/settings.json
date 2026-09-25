@@ -9,7 +9,11 @@
       "$defaults",
       "Never run git push, or any alias or wrapper that pushes; the user pushes manually.",
       "Never read, print, copy or transmit credential stores, keychains, SSH or GPG keys, API tokens or .env files.",
-      "Never disable, weaken or edit the sandbox, permission rules, hooks or agent settings."
+      "Never bypass safeguards to complete an unrelated task. Changes to sandbox settings, permission rules and hooks require an explicit user request to change that configuration."
+    ],
+    "allow": [
+      "$defaults",
+      "Routine local development in the assigned checkout: edits, builds, tests, dependency downloads from approved hosts, Git staging and commits, local branches, and PM-owned merges and removal of clean integrated worktrees without force. Writes to the repository shared Git metadata and configured shared caches are part of this work. This does not permit pushes, destructive operations, secret access or edits to another worker source checkout."
     ],
     "soft_deny": [
       "$defaults",
@@ -41,7 +45,7 @@
       "Bash(git branch -D *)",
       "Bash(git stash drop*)",
       "Bash(git stash clear*)",
-      "Bash(git worktree remove *)",
+      "Bash(git worktree remove *--force*)",
       "Bash(gh release delete*)",
       "Bash(cargo publish*)",
       "Bash(npm publish*)",
@@ -136,6 +140,7 @@
         "~/.cargo/.global-cache-journal",
         "~/Library/Caches/kache",
         "~/.cache/uv",
+        "~/.cache/zig",
         "~/.local/share/uv",
         "~/Library/pnpm",
         "~/Library/Caches/org.swift.swiftpm"

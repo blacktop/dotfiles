@@ -62,7 +62,7 @@ push_parser="$HOME/.agents/hooks/check-git-push.py"
 # Aliases are resolved in the directory the command will run in.
 working_directory=$(printf '%s' "$input" | jq -r '.cwd // empty')
 python3 "$push_parser" "$cmd" "$working_directory" ||
-	block "Git push policy check rejected this command."
+	block "Git safety check rejected this command."
 
 if printf '%s\n' "$cmd" | grep -qiE "$push_force_re"; then
 	block "Do not force-push unless the user explicitly requested it."

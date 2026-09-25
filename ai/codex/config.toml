@@ -30,18 +30,23 @@ allow_login_shell = false
 
 [auto_review]
 policy = """
-Deny: git push in any form; reading credential stores, keychains, SSH/GPG keys, \
-.env files or shell secrets; network access to hosts outside the configured \
-allowlist; deleting or overwriting files outside the workspace except Git metadata \
-needed for an authorized worktree checkpoint or PM integration; disabling hooks, \
-rules or the sandbox; installing software with sudo; any git command that can run \
-another program (-c or --config-env options, --upload-pack, --receive-pack, \
-rebase -x/--exec). The exact option -c core.fsmonitor=false is permitted. Allow: \
-authorized Git writes for the assigned worktree and branch, including its index, \
-objects, branch ref and reflogs in the Git common directory. Workers checkpoint \
-their assigned branches; the project PM owns integration and worktree lifecycle. \
-This does not authorize edits to other worker files or branches, Git configuration, \
-hooks, credential stores, force-adds, or pushes. When unsure, deny and let the user decide.
+Allow routine authorized local development: source edits, builds, tests, dependency \
+fetches from allowed hosts, reusable build caches, and Git staging, commits, local \
+branches and merges. Git may update the assigned checkout's Git directory and its \
+resolved common metadata directory. The PM may create worktrees, integrate reviewed \
+work, and remove clean integrated worktrees without force; workers checkpoint their \
+assigned branches. Do not require approval for each internal Git metadata file. \
+Deny remote pushes, destructive resets or cleaning, forced worktree removal, forced \
+branch replacement/deletion, credential probing, edits to another worker's source \
+files, and force-adding ignored files. Do not bypass hooks or sandbox restrictions \
+merely to complete a task. User-requested configuration changes are authorized; \
+unrelated tasks do not authorize weakening safeguards. Keep secret-store and \
+network restrictions in force as defined by the selected permission profile. \
+When the gcloud permission profile is selected, allow authorized gcloud and \
+Terraform workflows, including authentication through the tools, downloads, \
+provider subprocesses, local sockets, plans, applies, and cloud administration. \
+Do not require a new permission for each cloud endpoint or provider socket. \
+Permission to use these tools does not override a task's deployment or review hold.
 """
 
 [permissions.dev]
@@ -63,6 +68,7 @@ extends = ":workspace"
 "~/Library/Caches/kache" = "write"
 "~/.rustup" = "write"
 "~/.cache/uv" = "write"
+"~/.cache/zig" = "write"
 "~/.local/share/uv" = "write"
 "~/Library/pnpm" = "write"
 "~/Library/Caches/node-gyp" = "write"
@@ -90,6 +96,15 @@ extends = ":workspace"
 
 # No glob denies (such as "**/.env") under :workspace_roots: on macOS Seatbelt they
 # block every directory rename in the workspace, which breaks cargo and npm.
+
+# Local Git metadata must be writable for ordinary Git operations. In a linked
+# worktree .git is a pointer FILE: never add .git/<child> rules here. Launchers
+# add the resolved common Git directory as a writable root for linked worktrees.
+# Destructive Git operations and pushes are guarded by command rules/hooks.
+[permissions.dev.filesystem.":workspace_roots"]
+".git" = "write"
+".codex" = "read"
+".agents" = "read"
 
 # Domain rules are enforced only while features.network_proxy is on. Loopback TCP
 # is open so tests reach services such as a PostgreSQL container on localhost;
@@ -120,28 +135,33 @@ allow_local_binding = true
 "files.pythonhosted.org" = "allow"
 "registry.npmjs.org" = "allow"
 
-# Opt-in profile for a session that operates Google Cloud VMs. A deny in dev can
-# be neither escalated nor approved, so this reopens exactly what gcloud compute
-# ssh needs: the gcloud credentials, gcloud's own key pair (read-only) and its
-# known-hosts file. The rest of ~/.ssh, including every other key, stays denied.
+# Opt-in cloud administration profile. Network destinations and local sockets
+# are unrestricted here so SDKs, providers, emulators and tunnels work normally.
+# Other SSH keys and unrelated secret stores remain denied by dev.
 # Start that session with: codex -c 'default_permissions="gcloud"'
 [permissions.gcloud]
-description = "dev plus gcloud credentials, the gcloud SSH key, Google APIs and Terraform downloads"
+description = "Cloud administration: gcloud/Terraform state, all network hosts and Unix sockets"
 extends = "dev"
 
 [permissions.gcloud.filesystem]
 "~/.config/gcloud" = "write"
-"~/.ssh/google_compute_engine" = "read"
-"~/.ssh/google_compute_engine.pub" = "read"
+"~/.ssh/google_compute_engine" = "write"
+"~/.ssh/google_compute_engine.pub" = "write"
 "~/.ssh/google_compute_known_hosts" = "write"
+"~/.terraform.d" = "write"
+"~/.terraformrc" = "write"
+"~/Library/Application Support/io.terraform" = "write"
 
-# Added to dev's allowlist, not replacing it.
+[permissions.gcloud.network]
+enabled = true
+allow_local_binding = true
+# Terraform/go-plugin binds random plugin* sockets in the native temp directory.
+# TCP binding permission alone does not allow AF_UNIX bind/connect on macOS.
+dangerously_allow_all_unix_sockets = true
+
+# Providers, private registries, cloud APIs and redirects may use arbitrary hosts.
 [permissions.gcloud.network.domains]
-"**.googleapis.com" = "allow"
-"accounts.google.com" = "allow"
-"**.tunnel.cloudproxy.app" = "allow"
-"releases.hashicorp.com" = "allow"
-"registry.terraform.io" = "allow"
+"*" = "allow"
 
 # ── Shell environment ────────────────────────────────────────────────────────
 [shell_environment_policy]

@@ -62,7 +62,8 @@ alone.
 
 Both sandboxes allow writes to the host's Go build cache
 (`~/Library/Caches/go-build`), Go module cache (`~/go/pkg/mod`), cargo registry
-and the `kache` compiler cache (`~/Library/Caches/kache`), and both allow the same
+the `kache` compiler cache (`~/Library/Caches/kache`), and Zig's shared cache
+(`~/.cache/zig`), and both allow the same
 registry hosts. An agent that cannot write to a cache tends to point `GOCACHE` at
 a temp directory, which builds a private multi-gigabyte cache per session, so
 `ai/tests/test-codex-hardening.py` fails if either sandbox loses a cache path or
@@ -213,6 +214,29 @@ it in the Keychain.
   `features.network_proxy` is on. `ai/tests/test-codex-hardening.py` guards both.
 - The `dev` profile allows writes to `~/.Trash` so `trash` can move workspace
   files there for recoverable deletion.
+- Local `.git` metadata is writable so staging, committing, ref packing and
+  merge bookkeeping work normally. Destructive Git operations and pushes are
+  guarded at the command level; this is not branch-level OS isolation.
+  `.codex` and `.agents` remain read-only. Never add `.git/<child>` filesystem
+  rules under `:workspace_roots`: linked worktrees use a `.git` pointer file,
+  and those child paths prevent Seatbelt from starting. Linked-worktree
+  launchers must pass `--add-dir` with `git rev-parse --path-format=absolute
+  --git-common-dir` and, when different, `git rev-parse --absolute-git-dir`
+  so Git can update shared metadata and the current worktree's own index/HEAD.
+- The shared Git guard blocks pushes (including aliases, `send-pack` and
+  `http-push`), hard resets, non-dry-run cleaning, forced branch/worktree
+  operations, worktree pruning, stash destruction and worktree-content restores.
+  Ordinary commits, ref packing, local merges, new branches, dry runs, unstaging,
+  safe branch deletion and non-forced removal of clean worktrees remain allowed.
+  The PM owns integration and retirement. These shell guards cover recognized
+  commands; they do not interpret arbitrary programs that construct Git calls.
+- This local policy follows the productive workspace boundary described in
+  [OpenAI's approval guidance](https://learn.chatgpt.com/docs/agent-approvals-security),
+  with targeted restrictions for the operations we want to reserve for the user.
+  [Claude's auto-mode guidance](https://code.claude.com/docs/en/auto-mode-config)
+  recommends explicit ask/deny boundaries and allow exceptions for routine work;
+  [its worktree documentation](https://code.claude.com/docs/en/worktrees) explicitly
+  allows writes to the shared Git metadata so sandboxed commits can work.
 - Do not add glob denies such as `"**/.env"` under `:workspace_roots`. On macOS
   they make Seatbelt refuse every directory rename in the workspace, which
   breaks cargo and npm.
@@ -230,15 +254,27 @@ it in the Keychain.
   These are workflow boundaries: the broad Git write rules do not enforce branch
   isolation. Test actual worker staging and committing before expensive work;
   matching an exec-policy rule alone does not prove OS access.
-- A `deny` in the `dev` profile cannot be escalated or approved, even with
-  `approvals_reviewer = "user"`. The opt-in `gcloud` profile reopens only what
-  `gcloud compute ssh` needs: `~/.config/gcloud`, gcloud's own key pair
-  (`~/.ssh/google_compute_engine`, read-only), its `google_compute_known_hosts`
-  file, Google API and IAP tunnel hosts, and Terraform's `releases.hashicorp.com`
-  and `registry.terraform.io`. The rest of `~/.ssh`, including every
-  other key and `~/.ssh/config`, stays denied. Start a
-  session that runs VM maintenance with `codex -c 'default_permissions="gcloud"'`;
-  every other session keeps those paths denied.
+- The opt-in `gcloud` permission profile allows every network host and arbitrary
+  Unix sockets, including Terraform's random `plugin*` sockets in the native
+  macOS temporary directory. `allow_local_binding` alone does not allow those
+  sockets. No `PLUGIN_UNIX_SOCKET_DIR` override is needed. These are the documented
+  [`domains."*"` and `dangerously_allow_all_unix_sockets` settings](https://learn.chatgpt.com/docs/permissions).
+  These network grants apply to every process in a `gcloud` session, not just
+  executables named `gcloud` or `terraform`.
+- `gcloud` also permits writes to `~/.config/gcloud`, its own SSH key pair and
+  `google_compute_known_hosts`, `~/.terraform.d`, `~/.terraformrc`, and
+  `~/Library/Application Support/io.terraform`. Terraform's standard user paths
+  follow [HashiCorp's CLI configuration documentation](https://developer.hashicorp.com/terraform/cli/config/config-file).
+  Other SSH keys and unrelated secret stores remain denied. Workspace writes,
+  shared build caches, and the Git push/destructive-operation guards stay in place.
+  Cloud task authorization and explicit deployment/review holds still apply.
+- Select this permission profile with `codex -c 'default_permissions="gcloud"'`.
+  To resume, use `codex -c 'default_permissions="gcloud"' resume SESSION_ID`.
+  `-p gcloud` selects a separate configuration file and is not the same option.
+  Restart/resume the agent after syncing changes; an escalation in an old session
+  does not prove it loaded the new policy. DarwinDB's mock checks can then run as
+  `bash scripts/check-terraform.sh root application` with its pinned Terraform
+  on PATH, without relocating sockets or caches.
 - `ai/sync-codex-config.sh` rebuilds each installed `config.toml` from the
   template plus the state Codex and its desktop app write: the model keys,
   trusted projects, plugins, marketplaces, extra MCP servers, plugin hook state

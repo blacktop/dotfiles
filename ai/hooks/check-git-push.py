@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Recognize ordinary shell Git push invocations without executing command text.
+"""Recognize pushes and destructive Git commands without executing command text.
 
 This is a command guardrail, not an interpreter: commands built at run time by
 another program (Python, make, a script file) still require sandboxing and
@@ -132,7 +132,7 @@ def expand_path(path: str) -> str:
     return os.path.expanduser(os.path.expandvars(path))
 
 
-def alias_pushes(name: str, context: GitContext) -> bool:
+def alias_pushes(name: str, context: GitContext, arguments: list[str]) -> bool:
     """Follow an alias, and the aliases it names, until a push or a dead end."""
     if name in context.seen or len(context.seen) >= MAX_ALIAS_DEPTH:
         return False
@@ -142,7 +142,7 @@ def alias_pushes(name: str, context: GitContext) -> bool:
     if body.startswith("!"):
         return contains_push(body[1:], context.cwd)
     deeper = dataclasses.replace(context, seen=context.seen | {name})
-    return git_push(shlex.split(body), deeper)
+    return git_push([*shlex.split(body), *arguments], deeper)
 
 
 def split_option(arguments: list[str], index: int) -> tuple[str, str, int] | None:
@@ -175,7 +175,42 @@ def git_push(arguments: list[str], context: GitContext) -> bool:
     if index >= len(arguments):
         return False
     subcommand = arguments[index]
-    return subcommand == "push" or alias_pushes(subcommand, context)
+    rest = arguments[index + 1:]
+    return destructive_git(subcommand, rest) or alias_pushes(subcommand, context, rest)
+
+
+def destructive_git(subcommand: str, arguments: list[str]) -> bool:
+    """Block data-loss operations; permit normal commits and clean worktree removal."""
+    options = arguments[:arguments.index("--")] if "--" in arguments else arguments
+    def has_short(letters: str) -> bool:
+        return any(word.startswith("-") and not word.startswith("--")
+                   and any(letter in word[1:] for letter in letters) for word in options)
+    force = "--force" in options or has_short("f")
+    dry_run = "--dry-run" in options or has_short("n")
+    if subcommand in {"push", "send-pack", "http-push"}:
+        return True
+    if subcommand == "reset":
+        return "--hard" in options
+    if subcommand == "clean":
+        return not dry_run
+    if subcommand == "branch":
+        return has_short("D") or force
+    if subcommand == "worktree" and arguments:
+        if arguments[0] == "remove":
+            return force
+        if arguments[0] == "prune":
+            return not dry_run
+        if arguments[0] == "add":
+            return force or "-B" in options
+    if subcommand == "stash" and arguments:
+        return arguments[0] in {"drop", "clear"}
+    if subcommand in {"checkout", "switch"}:
+        return force or "--discard-changes" in options or "-B" in options or "-C" in options or (
+            subcommand == "checkout" and "--" in arguments
+        )
+    if subcommand == "restore":
+        return "--worktree" in options or has_short("W") or not ("--staged" in options or has_short("S"))
+    return False
 
 
 def skip_env_options(words: list[str], index: int) -> int:
@@ -359,7 +394,7 @@ if __name__ == "__main__":
         sys.exit(2)
     if blocked:
         print(
-            "BLOCKED: Do not run git push from the agent; the user pushes manually.",
+            "BLOCKED: Remote pushes and destructive Git operations are user-run; use a non-destructive local operation.",
             file=sys.stderr,
         )
         sys.exit(2)
