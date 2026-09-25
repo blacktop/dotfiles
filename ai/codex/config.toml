@@ -45,6 +45,7 @@ extends = ":workspace"
 
 # Caches are writable; bin directories on PATH are not, so an install needs approval.
 [permissions.dev.filesystem]
+"~/.Trash" = "write"
 "~/Library/Caches/go-build" = "write"
 "~/go/pkg/mod" = "write"
 "~/go/pkg/sumdb" = "write"

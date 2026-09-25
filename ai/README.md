@@ -105,8 +105,9 @@ A retired file installed from a version that was never committed is reported as
 
 ## Claude (`ai/claude/settings.json`)
 
-- `sandbox` runs Bash under Seatbelt: writes are limited to the workspace and the
-  listed toolchain caches, network to `allowedDomains`, and secret environment
+- `sandbox` runs Bash under Seatbelt: writes are limited to the workspace,
+  `~/.Trash` (for recoverable deletion), and the listed toolchain caches;
+  network is limited to `allowedDomains`, and secret environment
   variables are removed, except `GH_TOKEN`, which is masked (see GitHub CLI
   below). Directories on `PATH` stay read-only.
 - `sandbox.excludedCommands` runs the git commands that create commits or tags
@@ -210,6 +211,8 @@ it in the Keychain.
   ignores the profile if `sandbox_mode` or `[sandbox_workspace_write]` appears in
   any loaded layer, and ignores `network.domains` unless
   `features.network_proxy` is on. `ai/tests/test-codex-hardening.py` guards both.
+- The `dev` profile allows writes to `~/.Trash` so `trash` can move workspace
+  files there for recoverable deletion.
 - Do not add glob denies such as `"**/.env"` under `:workspace_roots`. On macOS
   they make Seatbelt refuse every directory rename in the workspace, which
   breaks cargo and npm.
