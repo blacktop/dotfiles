@@ -106,3 +106,25 @@ prefix_rule(
     match = ["git add -A", "git commit -m x", "git worktree add -b topic ../wt main"],
     not_match = ["git status", "git -c alias.x=!sh x", "git rebase -x sh main"],
 )
+
+# This fixed value disables the fsmonitor subprocess. Do not generalize the
+# configuration key/value or allow another global option before the subcommand.
+prefix_rule(
+    pattern = [
+        ["git", "/usr/bin/git", "/opt/homebrew/bin/git"],
+        "-c", "core.fsmonitor=false", ["add", "commit"],
+    ],
+    decision = "allow",
+    match = ["git -c core.fsmonitor=false add -- file.go", "git -c core.fsmonitor=false commit --no-gpg-sign -m checkpoint"],
+    not_match = ["git -c core.fsmonitor=sh add file.go", "git -c core.fsmonitor=false -c alias.x=!sh x", "git -c core.fsmonitor=false push"],
+)
+
+prefix_rule(
+    pattern = [
+        ["git", "/usr/bin/git", "/opt/homebrew/bin/git"],
+        "-c", "core.fsmonitor=false", "add", ["-f", "--force"],
+    ],
+    decision = "forbidden",
+    justification = "Disabling fsmonitor must not permit force-adding ignored files.",
+    match = ["git -c core.fsmonitor=false add -f ignored", "git -c core.fsmonitor=false add --force ignored"],
+)

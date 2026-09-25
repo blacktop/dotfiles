@@ -217,15 +217,25 @@ it in the Keychain.
   they make Seatbelt refuse every directory rename in the workspace, which
   breaks cargo and npm.
 - An exec-policy `allow` rule runs its command outside the sandbox without
-  approval. Three exist: `xcodebuild`, `gcloud`, and the Git write subcommands.
+  approval. Four exist: `xcodebuild`, `gcloud`, the Git write subcommands, and
+  staging/committing with exactly `git -c core.fsmonitor=false`.
   `ai/codex/rules/default.rules` gives the reason for each next to the rule; an
-  unattended worker has no gate on any of them. `rebase`, `fetch`, `pull` and any
-  `git -C`/`-c` form stay sandboxed and still need approval.
+  unattended worker has no gate on any of them. `rebase`, `fetch`, `pull`,
+  `git -C`, and other `-c` forms stay sandboxed and still need approval.
+- Workers stage explicit owned paths with `git add -- <paths>`. Approved unsigned
+  checkpoints use `git commit --no-gpg-sign`; signed checkpoints use `git commit
+  -S`. The automatic-review policy allows the necessary index/object/ref/reflog
+  writes in the worktree's Git common directory, even outside its source root.
+  Workers own their checkpoint branch; the PM owns integration and retirement.
+  These are workflow boundaries: the broad Git write rules do not enforce branch
+  isolation. Test actual worker staging and committing before expensive work;
+  matching an exec-policy rule alone does not prove OS access.
 - A `deny` in the `dev` profile cannot be escalated or approved, even with
   `approvals_reviewer = "user"`. The opt-in `gcloud` profile reopens only what
   `gcloud compute ssh` needs: `~/.config/gcloud`, gcloud's own key pair
   (`~/.ssh/google_compute_engine`, read-only), its `google_compute_known_hosts`
-  file, and Google API and IAP tunnel hosts. The rest of `~/.ssh`, including every
+  file, Google API and IAP tunnel hosts, and Terraform's `releases.hashicorp.com`
+  and `registry.terraform.io`. The rest of `~/.ssh`, including every
   other key and `~/.ssh/config`, stays denied. Start a
   session that runs VM maintenance with `codex -c 'default_permissions="gcloud"'`;
   every other session keeps those paths denied.

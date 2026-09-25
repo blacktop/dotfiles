@@ -32,11 +32,16 @@ allow_login_shell = false
 policy = """
 Deny: git push in any form; reading credential stores, keychains, SSH/GPG keys, \
 .env files or shell secrets; network access to hosts outside the configured \
-allowlist; deleting or overwriting files outside the workspace; disabling hooks, \
+allowlist; deleting or overwriting files outside the workspace except Git metadata \
+needed for an authorized worktree checkpoint or PM integration; disabling hooks, \
 rules or the sandbox; installing software with sudo; any git command that can run \
 another program (-c or --config-env options, --upload-pack, --receive-pack, \
-rebase -x/--exec). Allow: other git writes inside the workspace, such as rebase \
-and fetch. When unsure, deny and let the user decide.
+rebase -x/--exec). The exact option -c core.fsmonitor=false is permitted. Allow: \
+authorized Git writes for the assigned worktree and branch, including its index, \
+objects, branch ref and reflogs in the Git common directory. Workers checkpoint \
+their assigned branches; the project PM owns integration and worktree lifecycle. \
+This does not authorize edits to other worker files or branches, Git configuration, \
+hooks, credential stores, force-adds, or pushes. When unsure, deny and let the user decide.
 """
 
 [permissions.dev]
@@ -121,7 +126,7 @@ allow_local_binding = true
 # known-hosts file. The rest of ~/.ssh, including every other key, stays denied.
 # Start that session with: codex -c 'default_permissions="gcloud"'
 [permissions.gcloud]
-description = "dev plus gcloud credentials, the gcloud SSH key and Google APIs"
+description = "dev plus gcloud credentials, the gcloud SSH key, Google APIs and Terraform downloads"
 extends = "dev"
 
 [permissions.gcloud.filesystem]
@@ -135,6 +140,8 @@ extends = "dev"
 "**.googleapis.com" = "allow"
 "accounts.google.com" = "allow"
 "**.tunnel.cloudproxy.app" = "allow"
+"releases.hashicorp.com" = "allow"
+"registry.terraform.io" = "allow"
 
 # ── Shell environment ────────────────────────────────────────────────────────
 [shell_environment_policy]

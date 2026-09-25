@@ -14,7 +14,7 @@
     "soft_deny": [
       "$defaults",
       "Never retry a command outside the sandbox only to reach a network host or path the sandbox blocked, unless the task plainly requires it.",
-      "Never delete or overwrite files outside the current repository."
+      "Never delete or overwrite files outside the current repository, except Git metadata required for an authorized checkpoint of the assigned worktree branch or PM-owned integration and worktree lifecycle. This exception does not permit edits to another worker's files or branch, Git configuration, hooks, credential stores, force-adds, or pushes."
     ]
   },
   "env": {
