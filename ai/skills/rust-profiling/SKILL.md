@@ -1,6 +1,6 @@
 ---
 name: rust-profiling
-description: Profile Rust code using samply and related evidence to identify CPU bottlenecks, allocation hot paths, and allocator-fragmentation symptoms. Use when performance is slow, RSS grows unexpectedly, before optimizing, or when the user asks to profile.
+description: Profile Rust code using samply and related evidence to identify CPU bottlenecks, allocation hot paths, allocator-fragmentation symptoms, and per-entry memory overhead in long-lived data such as caches. Use when performance is slow, RSS grows unexpectedly or scales with cache size, before optimizing, or when the user asks to profile or shrink memory footprint.
 ---
 
 # Rust Profiling with Samply
@@ -26,9 +26,9 @@ python3 ~/.agents/skills/rust-profiling/scripts/analyze_profile.py profile.json
 
 | File | Purpose |
 |------|---------|
-| `reference.md` | Cargo.toml setup, samply options, troubleshooting |
+| `reference.md` | Cargo.toml setup, samply options, troubleshooting, measuring per-entry memory footprint |
 | `examples.md` | Common profiling scenarios and analysis patterns |
-| `optimization.md` | Post-profiling fixes: source patterns, release-profile tuning, PGO, BOLT, what doesn't work |
+| `optimization.md` | Post-profiling fixes: source patterns, shrinking long-lived data layouts, release-profile tuning, PGO, BOLT, what doesn't work |
 | `scripts/analyze_profile.py` | CLI tool to analyze saved profile.json files |
 
 ## When to Use
@@ -38,6 +38,7 @@ python3 ~/.agents/skills/rust-profiling/scripts/analyze_profile.py profile.json
 - Before optimizing (measure first!)
 - After optimization (verify improvement)
 - Investigating CPU-bound operations or allocation-heavy hot paths
+- Shrinking the per-entry memory of a large cache, index, or table
 
 ## When NOT to Use
 
@@ -53,4 +54,5 @@ python3 ~/.agents/skills/rust-profiling/scripts/analyze_profile.py profile.json
 | High total-time | Called often or slow callees | Check call frequency |
 | `malloc`/`alloc` in hot path | Allocation overhead | Preallocate, reuse, pool, or use bounded/shared buffers |
 | RSS grows then plateaus while profiles show allocation churn | Possible allocator fragmentation, not necessarily a leak | Compare allocators, then reduce high-rate small allocations |
+| RSS scales with entry count of a cache/index, profile looks cold | Per-entry layout overhead (capacity fields, enum padding, boxed variants) | Measure bytes/entry with a counting allocator, then shrink the layout (`optimization.md`) |
 | `pthread_mutex`/`parking_lot` | Lock contention | Reduce lock scope or use lock-free |

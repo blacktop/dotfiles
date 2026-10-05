@@ -56,6 +56,47 @@ Use this order:
 
 Do not blindly move everything to the stack. Stack allocation is cheap, but large inline buffers can inflate structs, increase copies, blow stack budgets, and hurt cache behavior. Pick the representation that matches the measured hot path and API constraints.
 
+### Shrinking long-lived data (caches, indexes, tables)
+
+A different memory problem from churn: millions of values that stay resident. RSS is roughly `bytes per entry × entries`, so each byte removed per entry scales with the entry count. samply won't show this. Measure per-entry footprint directly (see "Measuring per-entry footprint" in `reference.md`). (Reference: [Cloudflare 1.1.1.1 DNS cache](https://blog.cloudflare.com/dns-cache-memory-optimization-1111/). The layout changes below cut per-entry bytes 953→420, raised insert throughput 43%, and cut lookup latency 19%, because fewer allocations and better locality also make the cache faster.)
+
+Apply in roughly this order, measuring after each:
+
+| Change | When | Saves |
+|---|---|---|
+| **`Vec<T>` → `Box<[T]>`, `String` → `Box<str>`** | data is never modified after insertion | 8-byte capacity field per collection, plus unused spare capacity on the heap |
+| **Merge sibling lists into one + small offsets** | several `Box<[T]>` fields always read together (e.g. answer/authority/additional sections) | each removed list's 16-byte ptr+len becomes a `u16`/`u32` offset |
+| **Pack `bool` fields into a bitflags integer; reorder fields** | struct has several flags or small fields | the fields themselves plus the alignment padding around them, so the saving can exceed the fields' own size |
+| **Drop fields derivable from context** | a value usually equals something the reader already holds (record owner == lookup key) | store `Option<Box<T>>` (`None` = "same as key") and rebuild the value at read time. That is 8 bytes for sized `T`, and 16 for `Box<str>`/`Box<[T]>`. The common case also skips a heap allocation |
+| **Box large, rare enum variants** | enum is sized by its largest variant but most values are small variants (`A`/`AAAA` vs `NAPTR`) | common small variants stop paying for the largest one (144→24 bytes in the case study) |
+| **Store variable records as one packed `Box<[u8]>`** | records are read sequentially and often copied straight to output | removes per-record enum and heap overhead. Contiguous bytes improve locality, and the output path can `memcpy` instead of re-serializing |
+
+Costs to weigh:
+
+- **Boxing adds an allocation per value.** The allocator rounds each request up to a size class (jemalloc: a 40-byte request uses a 48-byte bin), and every pointer to a separate allocation is a possible cache miss. Box only variants that are both large and rare.
+- **Packed bytes give up random access.** Operations such as index-based rotation must walk the buffer. This is fine when per-entry counts are small.
+- **Shrinking a `Vec` is not free.** `into_boxed_slice()` may reallocate, and the allocator may not reclaim the trimmed tail. For build-then-freeze data, serialize into a reusable scratch buffer, then allocate one exact-size `Box<[u8]>` and copy into it (`Box::from(&scratch[..])`). In the case study this raised insert throughput 13%.
+
+Guard the win in code so a later field addition cannot silently undo it:
+
+```rust
+const _: () = assert!(std::mem::size_of::<CacheEntry>() <= 64);
+const _: () = assert!(std::mem::size_of::<RecordData>() <= 24);
+```
+
+To see where the bytes go, print per-field sizes, padding, and variant sizes for one target. The output covers every type, so filter it:
+
+```bash
+cargo +nightly rustc --release --lib -- -Zprint-type-sizes 2>/dev/null \
+    | rg -A12 'type: `(CacheEntry|RecordData)`'
+```
+
+Clippy's `large_enum_variant` lint only fires when variants differ by more than 200 bytes by default, so it misses a 144-byte enum like the case study's. Lower the threshold in `clippy.toml` to catch it:
+
+```toml
+enum-variant-size-threshold = 64
+```
+
 ---
 
 ## 3. PGO (Profile-Guided Optimization)
@@ -115,7 +156,7 @@ llvm-bolt ./binary -o binary.bolt \
 |---|---|
 | `RUSTFLAGS="-C target-cpu=native"` | ~0% on scalar integer/pointer code; can **regress 5-8%** on already-optimized code due to AVX-512/AVX2 register pressure. Breaks portability — distribution wheels must use generic `x86_64`/`aarch64`. |
 | Switching to nightly for `-Zthreads=N` | Compile-time only; runtime unchanged. |
-| Replacing `Vec` with `Box<[T]>` | Marginal. The grow path is what `with_capacity` already fixes. |
+| Replacing `Vec` with `Box<[T]>` for speed | Marginal for CPU. The grow path is what `with_capacity` already fixes. It does pay off for *memory* when there are millions of long-lived, immutable values (see "Shrinking long-lived data"). |
 | Custom global allocators (mimalloc, jemalloc) | Useful experiment for allocator fragmentation/RSS under churn, but high variance. Measure per-workload and still reduce hot allocation sites. |
 
 ---
@@ -123,22 +164,27 @@ llvm-bolt ./binary -o binary.bolt \
 ## 6. Decision tree
 
 ```
-samply shows hot function
+symptom
    │
-   ├─ >5% of self time in alloc/dealloc?
-   │     → Pre-allocate, SmallVec, or pool
+   ├─ RSS dominated by many long-lived values (cache/index), CPU profile cold?
+   │     → Measure bytes/entry, then shrink layout (Box<[T]>, box rare variants, pack)
    │
-   ├─ Tight inner loop, small function called often?
-   │     → #[inline(always)] (re-profile to verify)
-   │
-   ├─ Many warm functions, no single dominant hotspot?
-   │     → Try PGO with realistic workload
-   │
-   ├─ Large binary, cold-path-heavy (parsers, CLIs with many subcommands)?
-   │     → BOLT after PGO (Linux only)
-   │
-   └─ Already optimized, profile is "flat"?
-         → Stop. Further wins need algorithmic changes, not micro-opt.
+   └─ samply shows hot function
+         │
+         ├─ >5% of self time in alloc/dealloc?
+         │     → Pre-allocate, SmallVec, or pool
+         │
+         ├─ Tight inner loop, small function called often?
+         │     → #[inline(always)] (re-profile to verify)
+         │
+         ├─ Many warm functions, no single dominant hotspot?
+         │     → Try PGO with realistic workload
+         │
+         ├─ Large binary, cold-path-heavy (parsers, CLIs with many subcommands)?
+         │     → BOLT after PGO (Linux only)
+         │
+         └─ Already optimized, profile is "flat"?
+               → Stop. Further wins need algorithmic changes, not micro-opt.
 ```
 
 ---

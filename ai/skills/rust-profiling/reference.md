@@ -18,11 +18,13 @@ Add to your `Cargo.toml`:
 [profile.profiling]
 inherits = "release"
 debug = true
+strip = false
 ```
 
 This gives:
 - Release-level optimizations (accurate performance)
 - Debug symbols (readable function names in profiler)
+- Symbols kept even when `[profile.release]` sets `strip = true`
 
 ## Samply Commands
 
@@ -116,6 +118,55 @@ Triage steps:
 5. For embedded or `no_std`-friendly code, prefer bounded buffers and caller-provided storage where the API can support it. Heap fragmentation can be fatal on small heaps even when server builds tolerate it.
 
 Report allocator experiments with the exact allocator, target OS, workload, duration, RSS metric, and any throughput or latency tradeoff.
+
+### Measuring per-entry footprint
+
+When RSS comes from many values that stay resident (caches, indexes, interned tables) and not from churn, a sampling profiler cannot see the cost. Count heap bytes per entry with a wrapper around `System`, and use it only in a benchmark or test binary:
+
+```rust
+use std::alloc::{GlobalAlloc, Layout, System};
+use std::sync::atomic::{AtomicIsize, Ordering::Relaxed};
+
+static LIVE_ALLOCS: AtomicIsize = AtomicIsize::new(0);
+static LIVE_BYTES: AtomicIsize = AtomicIsize::new(0);
+
+struct Counting;
+
+// SAFETY: forwards every call to `System` unchanged. The counters are atomics
+// and do not allocate. `realloc` uses the default impl, which calls these
+// methods, so the counts stay balanced.
+unsafe impl GlobalAlloc for Counting {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        // SAFETY: caller upholds `GlobalAlloc::alloc`'s contract; forwarded as-is.
+        let ptr = unsafe { System.alloc(layout) };
+        if !ptr.is_null() {
+            LIVE_ALLOCS.fetch_add(1, Relaxed);
+            LIVE_BYTES.fetch_add(layout.size().cast_signed(), Relaxed);
+        }
+        ptr
+    }
+
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        // SAFETY: `ptr` came from `alloc` above with this `layout`.
+        unsafe { System.dealloc(ptr, layout) };
+        LIVE_ALLOCS.fetch_sub(1, Relaxed);
+        LIVE_BYTES.fetch_sub(layout.size().cast_signed(), Relaxed);
+    }
+}
+
+#[global_allocator]
+static GLOBAL: Counting = Counting;
+```
+
+Create the container with `with_capacity(N)` first, then snapshot `LIVE_BYTES`, insert N entries, and snapshot again. Because the slots were allocated before the first snapshot, `(after - before) / N` is only the out-of-line heap each entry owns (boxed slices, strings, nested `Vec`s). Add the inline slot once: `std::mem::size_of::<(K, V)>()` for a `HashMap`, or `size_of::<Entry>()` for a `Vec<Entry>`. A `HashMap` also spends one control byte per bucket and keeps buckets at a power of two no more than 7/8 full, so report that slack separately rather than folding it into the per-entry figure. Without pre-sizing, the delta mixes the inline slot, the out-of-line heap, and the container's spare capacity, which jumps at each resize, so bytes per entry would change with N. The counts are *requested* bytes. Allocator size-class rounding (for example jemalloc bins) makes the real footprint larger, so also compare `LIVE_ALLOCS` per entry, because each extra allocation adds rounding and a pointer to chase.
+
+Rules for the benchmark:
+
+1. **Match the production value mix.** Record types, lengths, and items per entry should follow observed distributions (the Cloudflare case study used 56% `A`, 25% `AAAA`, 19% variable-length). Uniform or tiny synthetic values hide enum-padding and size-class effects.
+2. **Measure speed alongside memory.** Track insert throughput and lookup latency in the same harness, so a layout change that saves bytes but adds pointer chasing shows up.
+3. **Confirm in production with steady-state RSS.** Restarted processes start with empty caches, so read the plateau after the cache refills, not the dip right after a deploy. Expect a smaller percentage win than the per-entry benchmark, because RSS also includes everything outside the cache.
+
+Layout fixes are in `optimization.md` under "Shrinking long-lived data".
 
 ## Understanding the Output
 
