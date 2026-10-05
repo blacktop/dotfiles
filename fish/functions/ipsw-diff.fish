@@ -26,7 +26,7 @@ function ipsw-diff --description 'Diff two IPSWs with comprehensive analysis'
                 printf '  --kdk <old> <new>  KDK kernel paths for symbolication (must provide both)\n'
                 printf '  --device <value>   Device product type or board (e.g. Mac18,5)\n'
                 printf '  -h, --help         Show this help\n\n'
-                printf 'Output directory: %s\n' ~/Developer/Mine/blacktop/ipsw-diffs
+                printf 'Output directory: %s/{iOS,macOS} (detected from IPSW metadata)\n' ~/Developer/Mine/blacktop/ipsw-diffs
                 return 0
             case --block
                 set block 1
@@ -94,6 +94,10 @@ function ipsw-diff --description 'Diff two IPSWs with comprehensive analysis'
         printf 'Error: ipsw command not found on PATH\n' >&2
         return 127
     end
+    if not command -sq jq
+        printf 'Error: jq command not found on PATH (required to read IPSW metadata)\n' >&2
+        return 127
+    end
 
     set -l inputs $ipsw_old $ipsw_new
     if test -n "$kdk_old"
@@ -122,9 +126,25 @@ function ipsw-diff --description 'Diff two IPSWs with comprehensive analysis'
         end
     end
 
+    # Detect the platform from device products, including iMac and VirtualMac.
+    set -l info_json (ipsw info --json "$ipsw_old")
+    if test $status -ne 0
+        printf 'Error: failed to read IPSW metadata: %s\n' "$ipsw_old" >&2
+        return 65
+    end
+    set -l products (printf '%s\n' "$info_json" | command jq -er '.devices[].product | select(type == "string" and length > 0)')
+    if test $status -ne 0
+        printf 'Error: failed to determine IPSW device products: %s\n' "$ipsw_old" >&2
+        return 65
+    end
+    set -l output ~/Developer/Mine/blacktop/ipsw-diffs/iOS
+    if string match -q '*Mac*' -- $products
+        set output ~/Developer/Mine/blacktop/ipsw-diffs/macOS
+    end
+
     # Build command
     set -l cmd ipsw diff \
-        --output ~/Developer/Mine/blacktop/ipsw-diffs \
+        --output "$output" \
         --markdown \
         --ent \
         --fw \
