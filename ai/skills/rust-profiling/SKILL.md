@@ -28,7 +28,7 @@ python3 ~/.agents/skills/rust-profiling/scripts/analyze_profile.py profile.json
 |------|---------|
 | `reference.md` | Cargo.toml setup, samply options, troubleshooting, measuring per-entry memory footprint |
 | `examples.md` | Common profiling scenarios and analysis patterns |
-| `optimization.md` | Post-profiling fixes: source patterns, shrinking long-lived data layouts, release-profile tuning, PGO, BOLT, what doesn't work |
+| `optimization.md` | Post-profiling fixes: source patterns, shrinking long-lived data layouts, release-profile tuning, PGO, BOLT, what doesn't work, benchmark integrity (baseline, correctness oracle, anti-gaming rules) |
 | `scripts/analyze_profile.py` | CLI tool to analyze saved profile.json files |
 
 ## When to Use
@@ -56,3 +56,4 @@ python3 ~/.agents/skills/rust-profiling/scripts/analyze_profile.py profile.json
 | RSS grows then plateaus while profiles show allocation churn | Possible allocator fragmentation, not necessarily a leak | Compare allocators, then reduce high-rate small allocations |
 | RSS scales with entry count of a cache/index, profile looks cold | Per-entry layout overhead (capacity fields, enum padding, boxed variants) | Measure bytes/entry with a counting allocator, then shrink the layout (`optimization.md`) |
 | `pthread_mutex`/`parking_lot` | Lock contention | Reduce lock scope or use lock-free |
+| Speedup far larger than the change explains, or timings flat across input sizes | Work was skipped, not sped up | Run the correctness oracle and diff `benches/` (`optimization.md` section 7) |

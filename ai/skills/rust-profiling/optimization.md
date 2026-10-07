@@ -39,6 +39,7 @@ These are the changes flamegraph analysis typically points to:
 | **`#[cold]`** | error/slow paths so the optimizer pushes them out of the icache footprint | `#[cold] fn open_new_bin(...)` |
 | **Early termination in propagation loops** | tree/graph updates where ancestors don't need touching once a value stabilises | `if self.tree[idx] == new_val { break; }` |
 | **Avoid `clone()` in hot loops** | flamegraph shows `Drop` / `__rust_dealloc` near a loop body | reuse via `&mut`, swap with `mem::replace`, or use indices |
+| **Size-dependent strategy** | parallel or batched code whose inputs vary widely in size | below a measured threshold take the serial path; rayon spawn and join overhead erases the gain on small inputs |
 
 Apply one at a time, re-profile to confirm the win — don't shotgun.
 
@@ -187,21 +188,41 @@ symptom
                → Stop. Further wins need algorithmic changes, not micro-opt.
 ```
 
+Every branch ends the same way: compare against the saved baseline, run the correctness oracle, and diff the benchmark sources (section 7).
+
 ---
 
-## 7. Benchmarking discipline
+## 7. Benchmark integrity
 
-Don't trust a single run. Variance from background processes, CPU throttling, and ASLR can swamp small wins.
+Profiling says where the time goes. Benchmarks say whether a change helped, and only if the measurement is honest. Optimization loops fail in predictable ways: the benchmark gets edited instead of the library, a cache makes later iterations free, two benchmark runs compete for cores, or a "speedup" comes from skipping work. (Reference: [agentic iteration write-up](https://minimaxir.com/2026/09/agentic-iteration/). One pass there reported a 34,500x faster physics step because the physics engine had been switched off; another claimed a win by lowering a training epoch count. Both looked like success until someone read the diff.)
 
-```bash
-# Statistical rigor
-cargo install cargo-criterion
-cargo criterion
+### Before changing anything
 
-# Or for end-to-end timing across input sizes
-hyperfine --warmup 3 --runs 20 \
-    './target/release/binary small.input' \
-    './target/release/binary large.input'
-```
+1. **Save the baseline from an untouched tree.** Criterion's default comparison is against the previous run only, so ten passes that each lose 1% never show a regression. A named baseline keeps every report relative to the starting point.
 
-For PGO/BOLT comparisons, always benchmark *the same workload* the optimizer was trained on AND a held-out workload — divergence reveals overfitting.
+   ```bash
+   cargo bench -- --save-baseline before   # untouched tree, run once
+   # ... make one change ...
+   cargo bench -- --baseline before        # compare without overwriting `before`
+   ```
+
+2. **Name a pass/fail target.** "As fast as possible" has no stopping condition, so a loop ends with parameter tweaks and a declaration of victory. A floor such as 1.2x over baseline on every benchmark is checkable. Keep it modest: an unreachable target invites risky rewrites or gaming to hit it. Keep going past the floor while gains continue.
+
+3. **Pick the correctness oracle.** A speedup is only valid if output is unchanged, so decide up front what proves that: the test suite, golden outputs captured from the baseline build, or a differential check against a known-good implementation. For numeric or lossy work, state the allowed drift (for example, a 5% quality regression cap). Run the oracle after every accepted change, not once at the end.
+
+### Measurement rules
+
+- **One benchmark process at a time.** Benchmarks that run in parallel, or alongside a build or test run, compete for cores, caches, and memory bandwidth, and the numbers are noise. This includes helpers: subagents that generate hypotheses must not run benchmarks.
+- **Benchmarks must be independent.** If a caching feature lets iteration N+1 reuse iteration N's work, disable it in the bench or reset state per iteration. Otherwise the measurement is of the cache, not the code.
+- **Default flags for both sides.** No `RUSTFLAGS` and no `target-cpu=native` for the baseline or the candidate. Shipped binaries do not get those flags (section 5), and changing flags mid-campaign makes before and after incomparable.
+- **Use criterion, not hand-rolled timers.** Criterion handles warmup and outliers and reports whether a change is statistically significant. A bespoke timing loop is easy to get subtly wrong and hard to audit. For end-to-end wall time, `hyperfine --warmup 3 --runs 20 <cmd>` gives the same rigor for whole binaries.
+- **Heterogeneous inputs.** Small and large, simple and complex, drawn from real-world distributions, plus a few adversarial cases. A win at one size often loses at another (rayon overhead on small inputs, cache effects on large ones), and a suite with one size gets overfitted.
+
+### After each iteration
+
+- **Diff the benchmark sources.** `git diff -- benches/` should be empty during an optimization pass. Fewer iterations, smaller inputs, a flipped feature flag, or a skipped step all invalidate the comparison. Benchmark changes go in their own commit with a fresh baseline.
+- **Treat implausible results as bugs.** A 100x speedup from a local change, or timings that are flat across input sizes that used to scale, almost always mean work was skipped rather than accelerated. Find the skipped work and run the oracle before reporting.
+- **Report per benchmark, relative to the original baseline,** and say whether criterion marked the change significant.
+- **Stop at convergence.** When a pass yields a few percent that criterion does not call significant while adding a disproportionate amount of code, the trade is not worth it. Stop, or change the algorithm instead of micro-optimizing further.
+
+For PGO/BOLT comparisons, benchmark both the training workload and a held-out one; divergence reveals overfitting.

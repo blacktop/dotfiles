@@ -177,9 +177,13 @@ jq '.functions[] | select(.name | contains("my_hot_function")) | .self_pct' anal
 
 ## Optimization Workflow
 
-1. **Baseline**: Profile current code, save as `baseline.json`
+1. **Baseline**: On an untouched tree, save both the profile and the benchmark numbers, then pick the correctness oracle and a pass/fail target (see `optimization.md` section 7)
+   ```bash
+   samply record --save-only -o baseline.json ./target/profiling/myapp
+   cargo bench -- --save-baseline before
+   ```
 2. **Identify**: Find top 3 functions by self-time
 3. **Analyze**: Use `--callers` to understand call patterns
-4. **Optimize**: Make targeted change
-5. **Verify**: Profile again, compare with `--diff baseline.json`
-6. **Repeat**: Until satisfied with performance
+4. **Optimize**: Make one targeted change
+5. **Verify**: The oracle passes, `cargo bench -- --baseline before` shows a change criterion calls significant, `--diff baseline.json` shows the hot function moved, and `git diff -- benches/` is empty
+6. **Repeat**: Until the target is met and further passes add code without significant gains
