@@ -4,7 +4,7 @@ GitHub Actions workflows for iOS/macOS apps.
 
 ## Scaffold Workflow
 
-The action tags and `macos-14` runner below are placeholders, not current releases. Before enabling the workflow, pin each action to its latest release by full commit SHA with a version comment (`uses: actions/checkout@<sha>  # vX.Y.Z`), set `persist-credentials: false` on checkout, and pick a current `macos-*` runner image. The same applies to `assets/templates/ios-build.yml.disabled`.
+The action tags below are placeholders, not current releases. The `macos-latest` label tracks GitHub’s latest stable macOS runner image. Before enabling the workflow, pin each action to its latest release by full commit SHA with a version comment (`uses: actions/checkout@<sha>  # vX.Y.Z`), set `persist-credentials: false` on checkout, and pick a current `macos-*` runner image. The same applies to `assets/templates/ios-build.yml.disabled`.
 
 Create `.github/workflows/ios-build.yml.disabled` (rename to enable):
 
@@ -32,7 +32,7 @@ env:
 jobs:
   build:
     name: Build iOS App
-    runs-on: macos-14
+    runs-on: macos-latest
     timeout-minutes: 30
 
     steps:
@@ -68,7 +68,7 @@ jobs:
 
   test:
     name: Run Tests
-    runs-on: macos-14
+    runs-on: macos-latest
     timeout-minutes: 20
 
     steps:
