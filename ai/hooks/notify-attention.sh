@@ -1,13 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
-# Claude Notification and StopFailure hook. Every alert is a local desktop
-# banner that Claude emits through its own terminal (OSC 777, Ghostty, passes
-# through tmux), plus a spoken phrase: voice-say with a delivery style for
-# approval and failure, the system voice for input requests. Banner and phrase
-# are fixed text chosen from the event type; the prompt and tool input in the
-# payload are never read, and the error text is only matched, never shown or
-# spoken. Any failure exits quietly so the notifier cannot disturb a turn.
+# Claude Notification and StopFailure hook. Every alert is a macOS notification
+# naming the tmux pane (notify-pane.sh, which works in any terminal app) plus a
+# spoken phrase: voice-say with a delivery style for approval and failure, the
+# system voice for input requests. Notification and phrase are fixed text chosen
+# from the event type; the prompt and tool input in the payload are never read,
+# and the error text is only matched, never shown or spoken. Any failure exits
+# quietly so the notifier cannot disturb a turn.
 cooldown_seconds=60
 mute_file="$HOME/.agents/notify-mute"
 
@@ -93,5 +93,5 @@ if [[ ! -e "$mute_file" ]]; then
 	speak </dev/null >/dev/null 2>&1 &
 fi
 
-sequence=$(printf '\033]777;notify;%s;%s\007' "$title" "$body")
-jq -nc --arg sequence "$sequence" '{terminalSequence: $sequence}'
+script_dir=$(CDPATH='' cd -- "$(dirname "$0")" && pwd)
+bash "$script_dir/notify-pane.sh" claude "$body" <<<"$input" || exit 0

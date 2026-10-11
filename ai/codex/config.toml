@@ -31,7 +31,7 @@ allow_login_shell = false
 [auto_review]
 policy = """
 Allow routine authorized local development: source edits, builds, tests, dependency \
-fetches from allowed hosts, reusable build caches, and Git staging, commits, local \
+fetches, reusable build caches, and Git staging, commits, local \
 branches and merges. Git may update the assigned checkout's Git directory and its \
 resolved common metadata directory. The PM may create worktrees, integrate reviewed \
 work, and remove clean integrated worktrees without force; workers checkpoint their \
@@ -40,8 +40,9 @@ Deny remote pushes, destructive resets or cleaning, forced worktree removal, for
 branch replacement/deletion, credential probing, edits to another worker's source \
 files, and force-adding ignored files. Do not bypass hooks or sandbox restrictions \
 merely to complete a task. User-requested configuration changes are authorized; \
-unrelated tasks do not authorize weakening safeguards. Keep secret-store and \
-network restrictions in force as defined by the selected permission profile. \
+unrelated tasks do not authorize weakening safeguards. Keep secret-store \
+restrictions in force as defined by the selected permission profile. Network \
+destinations are controlled by the host firewall, not an agent domain allowlist. \
 When the gcloud permission profile is selected, allow authorized gcloud and \
 Terraform workflows, including authentication through the tools, downloads, \
 provider subprocesses, local sockets, plans, applies, and cloud administration. \
@@ -50,13 +51,16 @@ Permission to use these tools does not override a task's deployment or review ho
 """
 
 [permissions.dev]
-description = "Workspace write, toolchain caches, allowlisted network, secrets unreadable"
+description = "Workspace write, toolchain caches, firewall-managed network, secrets unreadable"
 extends = ":workspace"
 
 # Caches are writable; bin directories on PATH are not, so an install needs approval.
 [permissions.dev.filesystem]
 "~/.Trash" = "write"
 "~/Library/Caches/go-build" = "write"
+"~/Library/Caches/golangci-lint" = "write"
+"~/Library/Caches/staticcheck" = "write"
+"~/Library/Caches/gopls" = "write"
 "~/go/pkg/mod" = "write"
 "~/go/pkg/sumdb" = "write"
 "~/.cargo/registry" = "write"
@@ -65,15 +69,26 @@ extends = ":workspace"
 "~/.cargo/.package-cache-mutate" = "write"
 "~/.cargo/.global-cache" = "write"
 "~/.cargo/.global-cache-journal" = "write"
+"~/.cargo/advisory-db" = "write"
+"~/.cargo/advisory-db..lock" = "write"
+"~/.cargo/advisory-dbs" = "write"
 "~/Library/Caches/kache" = "write"
+"~/Library/Caches/cargo-vet" = "write"
+"~/Library/Caches/org.rust-lang.miri" = "write"
+"~/.cache/nextest" = "write"
+"~/.local/state/nextest" = "write"
 "~/.rustup" = "write"
 "~/.cache/uv" = "write"
 "~/.cache/zig" = "write"
+"~/.cache/prek" = "write"
+"~/.bun/install/cache" = "write"
 "~/.local/share/uv" = "write"
 "~/Library/pnpm" = "write"
 "~/Library/Caches/node-gyp" = "write"
 "~/Library/Caches/corepack" = "write"
 "~/Library/Caches/org.swift.swiftpm" = "write"
+# IDA updates its registry through temporary files in the same directory.
+"${HOME}/.idapro" = "write"
 "~/.ssh" = "deny"
 "~/.gnupg" = "deny"
 "~/.aws" = "deny"
@@ -106,9 +121,8 @@ extends = ":workspace"
 ".codex" = "read"
 ".agents" = "read"
 
-# Domain rules are enforced only while features.network_proxy is on. Loopback TCP
-# is open so tests reach services such as a PostgreSQL container on localhost;
-# a database driver connects directly, which a localhost allow rule cannot cover.
+# Network destinations are controlled by the host firewall. No agent proxy or
+# domain allowlist; local TCP remains available for development servers and tests.
 [permissions.dev.network]
 enabled = true
 allow_local_binding = true
@@ -118,22 +132,7 @@ allow_local_binding = true
 [permissions.dev.network.unix_sockets]
 "/private/tmp/tmux-501/default" = "allow"
 "/var/run/docker.sock" = "allow"
-
-[permissions.dev.network.domains]
-"github.com" = "allow"
-"api.github.com" = "allow"
-"codeload.github.com" = "allow"
-"objects.githubusercontent.com" = "allow"
-"raw.githubusercontent.com" = "allow"
-"proxy.golang.org" = "allow"
-"sum.golang.org" = "allow"
-"storage.googleapis.com" = "allow"
-"index.crates.io" = "allow"
-"static.crates.io" = "allow"
-"static.rust-lang.org" = "allow"
-"pypi.org" = "allow"
-"files.pythonhosted.org" = "allow"
-"registry.npmjs.org" = "allow"
+"${HOME}/Library/Caches/kache/daemon.sock" = "allow"
 
 # Opt-in cloud administration profile. Network destinations and local sockets
 # are unrestricted here so SDKs, providers, emulators and tunnels work normally.
@@ -159,10 +158,6 @@ allow_local_binding = true
 # TCP binding permission alone does not allow AF_UNIX bind/connect on macOS.
 dangerously_allow_all_unix_sockets = true
 
-# Providers, private registries, cloud APIs and redirects may use arbitrary hosts.
-[permissions.gcloud.network.domains]
-"*" = "allow"
-
 # ── Shell environment ────────────────────────────────────────────────────────
 [shell_environment_policy]
 inherit = "core"
@@ -175,6 +170,10 @@ CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY = "1"
 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"
 DISABLE_ERROR_REPORTING = "1"
 DISABLE_TELEMETRY = "1"
+DO_NOT_TRACK = "1"
+HOMEBREW_NO_ANALYTICS = "1"
+SEMGREP_SEND_METRICS = "off"
+KACHE_RECORD_SESSIONS = "0"
 
 # ── History & privacy ───────────────────────────────────────────────────────
 [history]
@@ -201,7 +200,7 @@ apps = false                   # No connected ChatGPT Apps
 computer_use = false           # Never launch the Computer Use.app helper (macOS TCC prompts)
 memories = true                # Persistent agent memories
 multi_agent = false            # Opt in per project; child hosts multiply session cost
-network_proxy = true           # Enforces permissions.*.network.domains (experimental)
+network_proxy = false          # Host firewall handles network policy
 prevent_idle_sleep = true      # Keep Mac awake during turns
 
 # ── Multi-agent ──────────────────────────────────────────────────────────────
@@ -247,6 +246,15 @@ command = 'bash "${HOME}/.codex/hooks/enforce-package-manager.sh"'
 timeout = 30
 statusMessage = "Checking package manager"
 
+# Post a macOS notification naming the tmux pane behind each spoken alert.
+[[hooks.PostToolUse]]
+matcher = "^mcp__mcp_tts__"
+
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = 'bash "${HOME}/.agents/hooks/notify-pane.sh" codex'
+timeout = 10
+
 # Trust only these reviewed definitions. Codex marks a changed command,
 # matcher, timeout, or status message as modified until its hash is refreshed.
 # ai/sync-codex-config.sh renders the CODEX_HOME placeholder per profile.
@@ -257,6 +265,10 @@ trusted_hash = "sha256:438c5a4b4adbe50960ee7f8d911956f7a4f59db1d19e7975a4def6eb1
 [hooks.state."${CODEX_HOME}/config.toml:pre_tool_use:1:0"]
 enabled = true
 trusted_hash = "sha256:d15f2f652907d9363037c22c399e0e0347e08ecf9b455e6fa94532d66bafeec2"
+
+[hooks.state."${CODEX_HOME}/config.toml:post_tool_use:0:0"]
+enabled = true
+trusted_hash = "sha256:8b2f03c5885e6b0e90042f3e43d8c25668ac3dfa0ec432d42ee2d4b614ba470f"
 
 # ── MCP servers ──────────────────────────────────────────────────────────────
 [mcp_servers.ida]
@@ -277,6 +289,13 @@ env_vars = ["CONTEXT7_API_KEY"]
 command = "/opt/homebrew/bin/mcp-tts"
 args = ["--verbose"]
 env_vars = ["ELEVENLABS_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"]
+
+# Local speech alerts must also work in unattended sessions that cannot prompt.
+[mcp_servers.mcp_tts.tools.say_tts]
+approval_mode = "approve"
+
+[mcp_servers.mcp_tts.tools.voice_tts]
+approval_mode = "approve"
 
 [mcp_servers.exa]
 url = "https://mcp.exa.ai/mcp"

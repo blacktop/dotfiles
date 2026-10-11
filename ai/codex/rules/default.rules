@@ -83,12 +83,48 @@ prefix_rule(
     match = ["git please", "/opt/homebrew/bin/git please origin feature"],
 )
 
-# An allow rule runs its command outside the sandbox with no approval, so the
-# list is short. xcodebuild cannot run inside Seatbelt. gcloud needs the gcloud
-# and SSH credential stores, which stay unreadable inside the sandbox; the user
-# accepted that an unattended worker may then run any gcloud command, including
-# gcloud compute ssh with a remote command, with no gate. cargo stays sandboxed.
-prefix_rule(pattern = ["xcodebuild"], decision = "allow")
+# Xcode/SwiftPM and compiler macros may start their own macOS sandbox, which
+# fails inside Seatbelt. These build commands run trusted package manifests,
+# plugins, build phases and tests on the host. Keep other Swift subcommands,
+# arbitrary xcrun tools, and project wrappers such as just sandboxed.
+prefix_rule(pattern = [["xcodebuild", "/usr/bin/xcodebuild"]], decision = "allow")
+prefix_rule(
+    pattern = [["xcrun", "/usr/bin/xcrun"], ["xcodebuild", "swiftc"]],
+    decision = "allow",
+)
+prefix_rule(pattern = [["swiftc", "/usr/bin/swiftc"]], decision = "allow")
+prefix_rule(
+    pattern = [["swift", "/usr/bin/swift"], ["build", "test"]],
+    decision = "allow",
+)
+prefix_rule(
+    pattern = [["xcrun", "/usr/bin/xcrun"], "swift", ["build", "test"]],
+    decision = "allow",
+)
+prefix_rule(
+    pattern = [["swift", "/usr/bin/swift"], "package",
+               ["resolve", "describe", "dump-package", "show-dependencies"]],
+    decision = "allow",
+)
+prefix_rule(
+    pattern = [["xcrun", "/usr/bin/xcrun"], "swift", "package",
+               ["resolve", "describe", "dump-package", "show-dependencies"]],
+    decision = "allow",
+)
+
+# headroom is the read-only host admission check. Seatbelt hides the swap and
+# memory-pressure sysctls, so direct calls to this installed binary need the host.
+# Keep PATH-resolved lookalikes and shell wrappers outside this allowance.
+prefix_rule(
+    pattern = ["/opt/homebrew/bin/headroom"],
+    decision = "allow",
+    match = ["/opt/homebrew/bin/headroom", "/opt/homebrew/bin/headroom --format json"],
+    not_match = ["headroom", "/tmp/headroom", "/opt/homebrew/bin/headroom-helper"],
+)
+
+# gcloud needs its own and SSH credential stores, which stay unreadable inside
+# the sandbox. The user accepted unattended gcloud commands, including compute
+# ssh with a remote command. Cargo builds stay sandboxed.
 prefix_rule(pattern = ["gcloud"], decision = "allow")
 
 # Local Git metadata is writable. Retain these named escalation allowances for

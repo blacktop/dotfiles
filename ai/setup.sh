@@ -19,6 +19,8 @@ esac
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 SCRIPT_DIR="$(dirname "$0")"
+# shellcheck source=privacy/env.sh
+. "$SCRIPT_DIR/../privacy/env.sh"
 # shellcheck source=ai/lib.sh
 . "$SCRIPT_DIR/lib.sh"
 

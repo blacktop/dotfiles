@@ -2,6 +2,11 @@
 
 set -e
 
+DOTFILES_ROOT=$(CDPATH='' cd -- "$(dirname "$0")" && pwd)
+# Apply opt-outs before the first installer or Homebrew invocation.
+# shellcheck source=privacy/env.sh
+. "$DOTFILES_ROOT/privacy/env.sh"
+
 # Colors
 export ESC_SEQ="\x1b["
 export COL_RESET=$ESC_SEQ"39;49;00m"
@@ -104,6 +109,7 @@ info "Homebrew Version"
 brew --version
 
 brew bundle --file=Brewfile || true
+sh "$DOTFILES_ROOT/privacy/setup.sh"
 brew cleanup --scrub --prune 0 || true
 
 # Python tooling is managed by Brewfile/uv. Avoid mutating system Python.

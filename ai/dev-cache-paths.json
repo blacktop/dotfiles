@@ -1,0 +1,28 @@
+{
+  "writable": [
+    "~/Library/Caches/go-build",
+    "~/Library/Caches/golangci-lint",
+    "~/Library/Caches/staticcheck",
+    "~/Library/Caches/gopls",
+    "~/go/pkg/mod",
+    "~/go/pkg/sumdb",
+    "~/.cargo/registry",
+    "~/.cargo/git",
+    "~/.cargo/.package-cache",
+    "~/.cargo/.package-cache-mutate",
+    "~/.cargo/.global-cache",
+    "~/.cargo/.global-cache-journal",
+    "~/.cargo/advisory-db",
+    "~/.cargo/advisory-db..lock",
+    "~/.cargo/advisory-dbs",
+    "~/.rustup",
+    "~/Library/Caches/kache",
+    "~/Library/Caches/cargo-vet",
+    "~/Library/Caches/org.rust-lang.miri",
+    "~/.cache/nextest",
+    "~/.local/state/nextest"
+  ],
+  "unix_sockets": [
+    "~/Library/Caches/kache/daemon.sock"
+  ]
+}

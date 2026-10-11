@@ -13,7 +13,7 @@
     ],
     "allow": [
       "$defaults",
-      "Routine local development in the assigned checkout: edits, builds, tests, dependency downloads from approved hosts, Git staging and commits, local branches, and PM-owned merges and removal of clean integrated worktrees without force. Writes to the repository shared Git metadata and configured shared caches are part of this work. This does not permit pushes, destructive operations, secret access or edits to another worker source checkout."
+      "Routine local development in the assigned checkout: edits, builds, tests, dependency downloads, Git staging and commits, local branches, and PM-owned merges, non-forced worktree creation/removal, stale worktree-registration pruning, and git branch -d for merged branches. Network destinations are controlled by the host firewall, not an agent domain allowlist. This includes the installed tmux-pm worktree-lifecycle helper and recoverable deletion with trash, even when these commands use configured sandbox exclusions. Writes to the repository shared Git metadata and configured shared caches are part of this work. This does not permit pushes, destructive operations, secret access or edits to another worker source checkout."
     ],
     "soft_deny": [
       "$defaults",
@@ -23,6 +23,10 @@
   },
   "env": {
     "DISABLE_TELEMETRY": "1",
+    "DO_NOT_TRACK": "1",
+    "HOMEBREW_NO_ANALYTICS": "1",
+    "SEMGREP_SEND_METRICS": "off",
+    "KACHE_RECORD_SESSIONS": "0",
     "DISABLE_ERROR_REPORTING": "1",
     "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1",
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
@@ -119,17 +123,37 @@
       "docker *",
       "gcloud *",
       "xcodebuild *",
+      "/opt/homebrew/bin/headroom *",
       "git commit *",
       "git merge *",
       "git rebase *",
       "git cherry-pick *",
       "git revert *",
-      "git tag *"
+      "git tag *",
+      "git branch *",
+      "git -C * branch *",
+      "/usr/bin/git branch *",
+      "/usr/bin/git -C * branch *",
+      "/opt/homebrew/bin/git branch *",
+      "/opt/homebrew/bin/git -C * branch *",
+      "git worktree *",
+      "git -C * worktree *",
+      "/usr/bin/git worktree *",
+      "/usr/bin/git -C * worktree *",
+      "/opt/homebrew/bin/git worktree *",
+      "/opt/homebrew/bin/git -C * worktree *",
+      "~/.agents/skills/tmux-pm/scripts/worktree-lifecycle.sh *",
+      "/Users/blacktop/.agents/skills/tmux-pm/scripts/worktree-lifecycle.sh *",
+      "/Users/blacktop/Developer/Mine/blacktop/private-skills/skills/tmux-pm/scripts/worktree-lifecycle.sh *",
+      "trash *",
+      "/usr/bin/trash *"
     ],
     "filesystem": {
       "allowWrite": [
-        "~/.Trash",
         "~/Library/Caches/go-build",
+        "~/Library/Caches/staticcheck",
+        "~/Library/Caches/golangci-lint",
+        "~/Library/Caches/gopls",
         "~/go/pkg/mod",
         "~/go/pkg/sumdb",
         "~/.cargo/registry",
@@ -138,9 +162,19 @@
         "~/.cargo/.package-cache-mutate",
         "~/.cargo/.global-cache",
         "~/.cargo/.global-cache-journal",
+        "~/.cargo/advisory-db",
+        "~/.cargo/advisory-db..lock",
+        "~/.cargo/advisory-dbs",
+        "~/.rustup",
         "~/Library/Caches/kache",
+        "~/Library/Caches/cargo-vet",
+        "~/Library/Caches/org.rust-lang.miri",
+        "~/.cache/nextest",
+        "~/.local/state/nextest",
         "~/.cache/uv",
         "~/.cache/zig",
+        "~/.cache/prek",
+        "~/.bun/install/cache",
         "~/.local/share/uv",
         "~/Library/pnpm",
         "~/Library/Caches/org.swift.swiftpm"
@@ -155,7 +189,6 @@
     "credentials": {
       "envVars": [
         { "name": "GITHUB_TOKEN", "mode": "deny" },
-        { "name": "GH_TOKEN", "mode": "mask", "injectHosts": ["api.github.com"] },
         { "name": "NPM_TOKEN", "mode": "deny" },
         { "name": "CARGO_REGISTRY_TOKEN", "mode": "deny" },
         { "name": "OPENAI_API_KEY", "mode": "deny" },
@@ -167,24 +200,10 @@
       ]
     },
     "network": {
-      "allowUnixSockets": ["/private/tmp/tmux-501/default", "/var/run/docker.sock"],
+      "allowUnixSockets": ["/private/tmp/tmux-501/default", "/var/run/docker.sock", "/Users/blacktop/Library/Caches/kache/daemon.sock"],
       "allowLocalBinding": true,
-      "tlsTerminate": {},
       "allowedDomains": [
-        "github.com",
-        "api.github.com",
-        "codeload.github.com",
-        "objects.githubusercontent.com",
-        "raw.githubusercontent.com",
-        "proxy.golang.org",
-        "sum.golang.org",
-        "storage.googleapis.com",
-        "index.crates.io",
-        "static.crates.io",
-        "static.rust-lang.org",
-        "pypi.org",
-        "files.pythonhosted.org",
-        "registry.npmjs.org"
+        "*"
       ]
     }
   },
@@ -195,7 +214,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "CMD=$(jq -r '.tool_input.command'); if echo \"$CMD\" | grep -qiE '(^|;[[:space:]]*|&&[[:space:]]*|[|][|][[:space:]]*|[|][[:space:]]*)rm[[:space:]]'; then echo 'BLOCKED: Use trash instead of rm. Files go to macOS Trash and are recoverable.' >&2; exit 2; fi"
+            "command": "CMD=$(jq -r '.tool_input.command'); if echo \"$CMD\" | grep -qiE '(^|;[[:space:]]*|&&[[:space:]]*|[|][|][[:space:]]*|[|][[:space:]]*)rm[[:space:]]'; then echo 'BLOCKED: Use trash instead of rm, as its own Bash call: trash /absolute/path. Files go to macOS Trash and are recoverable.' >&2; exit 2; fi"
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.agents/hooks/block-chained-trash.py\""
           },
           {
             "type": "command",
@@ -212,6 +235,18 @@
           {
             "type": "command",
             "command": "bash \"$HOME/.agents/hooks/block-git-force-add.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__mcp-tts__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.agents/hooks/notify-pane.sh\" claude",
+            "timeout": 10
           }
         ]
       }

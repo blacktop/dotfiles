@@ -78,25 +78,32 @@ wastes the SSD and throws away every cache hit.
 - The sandbox already allows writes to these caches. If a build cannot write to
   one, or cannot download a dependency, stop and report the denied path or host.
   Do not work around it with a private cache.
+- `[kache] the cache index could not be opened … Error code 14` means the
+  sandbox denied writes to the kache directory. Ignore its advice to set
+  `KACHE_CACHE_DIR`: the build still succeeds uncached, so continue and report
+  the warning. Never bypass kache with `KACHE_DISABLED`, `RUSTC_WRAPPER=` or
+  `env -u RUSTC_WRAPPER` unless the task measures compile time.
 - Do not run `go clean -cache`, `go clean -modcache` or clear the `kache` cache.
 - A worktree gets its own `target/`; that is expected, and `kache` makes it cheap.
 
 ## Host Defaults
 
-- User-facing terminal examples should assume macOS with Homebrew and Fish unless the target is explicitly Linux, a container, or a remote host.
-- Use Fish-compatible syntax for copy/paste snippets. Prefer `env NAME=value command` for one-shot environment variables.
+- User-facing terminal examples should assume macOS with Homebrew unless the target is explicitly Linux, a container, or a remote host. Choose zsh or Fish syntax as Shell Examples describes.
+- Prefer `env NAME=value command` for one-shot environment variables; it works in both shells.
 - Prefer macOS-native tools in examples: `brew`, `open`, `pbcopy`/`pbpaste`, `security`, and `xcode-select`. Avoid `apt`, `yum`, `systemctl`, `xdg-open`, or Linux clipboard tools unless the target environment requires them.
 - Homebrew is available under the Apple Silicon prefix when an absolute path is necessary; prefer `brew --prefix` in reusable commands.
 
 ## Shell Examples
 
-The user's interactive shell is Fish. When giving commands for the user to copy/paste into their terminal, prefer Fish-compatible syntax:
+Pick the syntax for where the command runs, and say where:
 
-- Use `set -gx NAME value` for exported variables, or `env NAME=value command` for one command.
-- Use Fish command substitution: `(command)`, not `$(command)`.
-- Avoid Bash-only snippets in interactive examples: `export NAME=value`, `VAR=value command`, `source venv/bin/activate`, arrays, heredocs, and `for x in ...; do ...; done`.
-- If a snippet is specifically a script file, use Bash/sh with a shebang and say to run it as `bash script.sh` or `sh script.sh`.
-- Agent-executed commands may still use the harness shell; this guidance is for user-facing copy/paste examples.
+- **Your own commands** run in the harness shell, zsh here. Never wrap them in `fish -c`.
+- **A command you need the user to run** (blocked by the sandbox, needs approval, and so on) defaults to this agent session: Claude's `! <command>` prompt prefix or Codex's `!` shell command. That runs in the harness's zsh, so give zsh syntax in the `!` form, e.g. `! kache daemon stop`.
+- **Only when a step needs the user's own terminal** (a separate window or tab: interactive or long-running, a login or password prompt, or something that must outlive the session) use Fish, the user's interactive shell:
+  - `set -gx NAME value` for exported variables, or `env NAME=value command` for one command.
+  - Command substitution `(command)`, not `$(command)`.
+  - No Bash-only constructs: `export NAME=value`, `VAR=value command`, `source venv/bin/activate`, arrays, heredocs, `for x in ...; do ...; done`.
+- A snippet that is really a script file uses Bash/sh with a shebang; say to run it as `bash script.sh` or `sh script.sh`.
 
 ### TypeScript
 

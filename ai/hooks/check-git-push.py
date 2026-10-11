@@ -6,6 +6,8 @@ another program (Python, make, a script file) still require sandboxing and
 approval controls.
 """
 
+from __future__ import annotations
+
 import dataclasses
 import os
 import re
@@ -194,14 +196,17 @@ def destructive_git(subcommand: str, arguments: list[str]) -> bool:
     if subcommand == "clean":
         return not dry_run
     if subcommand == "branch":
-        return has_short("D") or force
+        return has_short("DMC") or force
     if subcommand == "worktree" and arguments:
+        if force:
+            return True
         if arguments[0] == "remove":
-            return force
+            return False
         if arguments[0] == "prune":
-            return not dry_run
+            # Removes stale administrative records, not worktrees or branches.
+            return False
         if arguments[0] == "add":
-            return force or "-B" in options
+            return "-B" in options
     if subcommand == "stash" and arguments:
         return arguments[0] in {"drop", "clear"}
     if subcommand in {"checkout", "switch"}:
