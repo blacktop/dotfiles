@@ -168,7 +168,6 @@ cask "raycast" # Spotlight on steroids
 cask "rectangle"
 cask "reikey"
 cask "tableplus"
-# cask "tailscale"
 cask "temurin"
 # cask "tunnelblick"
 # cask "viscosity"

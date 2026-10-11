@@ -148,6 +148,8 @@ brew cleanup --scrub --prune 0 || true
 # Python tooling is managed by Brewfile/uv. Avoid mutating system Python.
 info "Skipping system pip package install"
 
+# Tailscale (optional desktop app or headless server)
+"$DOTFILES_ROOT/tailscale/setup.sh"
 # git
 git/setup.sh
 # Visual Studio Code (optional)
