@@ -59,6 +59,35 @@ function confirm_step() {
     fi
 }
 
+function initialize_xcode() {
+    local developer_dir="$1"
+    local xcodebuild_bin="$developer_dir/usr/bin/xcodebuild"
+
+    # Standalone Command Line Tools do not include the full Xcode app.
+    [[ -x "$xcodebuild_bin" ]] || return 0
+
+    running "Accepting the Xcode license for $developer_dir"
+    sudo env DEVELOPER_DIR="$developer_dir" "$xcodebuild_bin" -license accept
+    if ! env DEVELOPER_DIR="$developer_dir" "$xcodebuild_bin" -checkFirstLaunchStatus >/dev/null 2>&1; then
+        running "Completing Xcode first launch for $developer_dir"
+        sudo env DEVELOPER_DIR="$developer_dir" "$xcodebuild_bin" -runFirstLaunch
+    fi
+}
+
+function initialize_installed_xcodes() {
+    local selected_dir
+    local standard_dir="/Applications/Xcode.app/Contents/Developer"
+    if ! selected_dir="$(xcode-select -p 2>/dev/null)"; then
+        printf '%s\n' "Finish installing the Xcode Command Line Tools, then rerun ./setup.sh." >&2
+        return 1
+    fi
+
+    initialize_xcode "$selected_dir"
+    if [[ "$selected_dir" != "$standard_dir" ]]; then
+        initialize_xcode "$standard_dir"
+    fi
+}
+
 running "Configuring macOS"
 
 if xcode-select -p >/dev/null 2>&1; then
@@ -81,6 +110,8 @@ if [ -d "/Applications/Xcode-beta.app" ]; then
         sudo xcode-select -s /Applications/Xcode-beta.app
     fi
 fi
+
+initialize_installed_xcodes
 
 BREW_BIN="$(command -v brew || true)"
 if [[ -n "$BREW_BIN" ]]; then
@@ -109,6 +140,8 @@ info "Homebrew Version"
 brew --version
 
 brew bundle --file=Brewfile || true
+# The Brewfile can install or update the App Store's Xcode.
+initialize_installed_xcodes
 sh "$DOTFILES_ROOT/privacy/setup.sh"
 brew cleanup --scrub --prune 0 || true
 
