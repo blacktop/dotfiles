@@ -5,6 +5,11 @@ My personal .files
 
 Mostly borrowed from https://dotfiles.github.io/
 
+Visual Studio Code is optional. Full setup prompts before installing and
+configuring it. For unattended setup, opt in with
+`env SETUP_VSCODE=yes ./setup.sh`; otherwise it is skipped. To install and
+configure it separately, run `sh vscode/setup.sh`.
+
 Developer-tool telemetry defaults to off. Full setup exports the opt-outs before
 running installers and applies Go's persistent opt-out after installing Go.
 To apply only the privacy defaults to an existing machine:

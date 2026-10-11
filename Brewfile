@@ -172,7 +172,6 @@ cask "tableplus"
 cask "temurin"
 # cask "tunnelblick"
 # cask "viscosity"
-cask "visual-studio-code"
 # cask "wireshark"
 # cask "xquartz"
 

@@ -3,8 +3,10 @@ set -o errexit -o nounset
 
 echo "$(gum style --bold --foreground "#6F08B2" " ⇒") $(gum style --bold "Setup VSCode")"
 
+brew install --cask visual-studio-code
+
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Create VSCode cli 'code' alias"
-ln -sf /Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code $(brew --prefix)/bin/code
+ln -sf "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" "$(brew --prefix)/bin/code"
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Install VSCode plugins..."
 code --install-extension adamhartford.vscode-base64 --force
@@ -62,4 +64,5 @@ code --install-extension yzhang.markdown-all-in-one --force
 code --install-extension ziglang.vscode-zig --force
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Configure VSCode settings..."
-cp $(dirname "$0")/vscode_settings.json "$HOME/Library/Application Support/Code/User/settings.json"
+mkdir -p "$HOME/Library/Application Support/Code/User"
+cp "$(dirname "$0")/vscode_settings.json" "$HOME/Library/Application Support/Code/User/settings.json"

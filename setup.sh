@@ -117,8 +117,12 @@ info "Skipping system pip package install"
 
 # git
 git/setup.sh
-# vscode
-vscode/setup.sh
+# Visual Studio Code (optional)
+if confirm_step "Install and configure Visual Studio Code?" "SETUP_VSCODE"; then
+    "$DOTFILES_ROOT/vscode/setup.sh"
+else
+    info "Skipping Visual Studio Code setup (set SETUP_VSCODE=yes to enable non-interactively)"
+fi
 # fish
 fish/setup.sh
 # atuin
