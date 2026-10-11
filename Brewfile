@@ -155,6 +155,7 @@ cask "ghostty@tip"
 cask "github"
 # cask "gpg-suite-no-mail"
 # cask "iterm2"
+cask "jellyfin"
 cask "kap" # Screen recorder
 cask "keycastr" # Show keystrokes
 cask "knockknock"
