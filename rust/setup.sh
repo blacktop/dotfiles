@@ -6,12 +6,11 @@ echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Set
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 # shellcheck source=privacy/env.sh
 . "$script_dir/../privacy/env.sh"
-export PATH="$HOME/.cargo/bin:$PATH"
+# Homebrew ships rustup and its tool proxies, without rustup-init.
+brew install rustup
+rustup_prefix=$(brew --prefix rustup)
+export PATH="$HOME/.cargo/bin:$rustup_prefix/bin:$PATH"
 COMPLETIONS_DIR="$HOME/.config/fish/completions"
-
-if ! command -v rustc >/dev/null; then
-	rustup-init -y # rustup-init was installed by Homebrew
-fi
 
 set -x
 mkdir -p "$COMPLETIONS_DIR"
