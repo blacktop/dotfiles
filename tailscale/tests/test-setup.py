@@ -138,8 +138,18 @@ elif name == "tailscale" and args[:1] == ["up"]:
     def test_connected_server_preserves_preferences(self):
         self.assert_ok(
             self.run_setup(
-                "--profile", "server", terminal=True, TEST_CONNECTION_STATUS="0"
+                "--profile",
+                "server",
+                terminal=True,
+                TEST_FORMULA_STATUS="0",
+                TEST_INSTALL_STATUS="7",
+                TEST_CONNECTION_STATUS="0",
             )
+        )
+        self.assertFalse(any(call[:2] == ["brew", "install"] for call in self.calls))
+        self.assertIn(
+            ["sudo", str(self.bin / "brew"), "services", "start", "tailscale"],
+            self.calls,
         )
         self.assertIn(["tailscale", "status", "--peers=false"], self.calls)
         self.assertFalse(any(call[:2] == ["tailscale", "up"] for call in self.calls))
@@ -163,6 +173,18 @@ elif name == "tailscale" and args[:1] == ["up"]:
     def test_existing_standalone_is_reused(self):
         self.assert_ok(
             self.run_setup("--profile", "desktop", "--no-login", gui="standalone")
+        )
+        self.assert_no_mutations()
+
+    def test_installed_cask_is_reused(self):
+        self.assert_ok(
+            self.run_setup(
+                "--profile",
+                "desktop",
+                "--no-login",
+                TEST_CASK_STATUS="0",
+                TEST_INSTALL_STATUS="7",
+            )
         )
         self.assert_no_mutations()
 

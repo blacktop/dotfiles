@@ -27,8 +27,9 @@ profile installs its software, but authentication stays interactive. Use
 `--no-login` to defer sign-in even when running from a terminal. Complete a
 server's sign-in later with `sudo tailscale up`.
 
-Setup preserves an existing connection and refuses to replace another variant
-or a manually installed daemon. To migrate, use Tailscale's
+Setup reuses an installed app or formula without reinstalling it, preserves an
+existing connection, and refuses to replace another variant or a manually
+installed daemon. To migrate, use Tailscale's
 [switching instructions](https://tailscale.com/docs/concepts/macos-variants).
 
 ## Access to the Mac mini

@@ -46,7 +46,7 @@ has_manual_daemon() {
 main() {
     local profile="${SETUP_TAILSCALE_PROFILE:-}" login=true
     local brew_bin script_dir gui_kind formula_installed=false tailscale_prefix
-    local installed_formulae installed_casks
+    local installed_formulae installed_casks cask_installed=false
     script_dir=$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
     while [[ $# -gt 0 ]]; do
@@ -121,8 +121,12 @@ main() {
 
     gui_kind=$(installed_gui_kind || true)
     installed_formulae=$("$brew_bin" list --formula -1) || return $?
+    installed_casks=$("$brew_bin" list --cask -1) || return $?
     if grep -Fxq tailscale <<<"$installed_formulae"; then
         formula_installed=true
+    fi
+    if grep -Fxq -e tailscale-app -e tailscale <<<"$installed_casks"; then
+        cask_installed=true
     fi
     if has_manual_daemon || { [[ "$formula_installed" == false ]] && command -v tailscaled >/dev/null 2>&1; }; then
         info 'Found a manually installed tailscaled. Stop and remove that installation before changing its manager.'
@@ -139,7 +143,7 @@ main() {
             info 'A different Tailscale app is installed. Follow the macOS variant-switching instructions before continuing: https://tailscale.com/docs/concepts/macos-variants'
             return 1
         fi
-        if [[ "$gui_kind" == standalone ]]; then
+        if [[ "$gui_kind" == standalone || "$cask_installed" == true ]]; then
             info 'The standalone Mac app is already installed.'
         else
             "$brew_bin" install --cask tailscale-app
@@ -150,12 +154,15 @@ main() {
         info 'Open Tailscale to approve its network extension, sign in, and enable automatic updates.'
         ;;
     server)
-        installed_casks=$("$brew_bin" list --cask -1) || return $?
-        if [[ -n "$gui_kind" ]] || grep -Fxq -e tailscale-app -e tailscale <<<"$installed_casks"; then
+        if [[ -n "$gui_kind" || "$cask_installed" == true ]]; then
             info 'A Tailscale Mac app is installed. Follow the macOS variant-switching instructions before choosing server: https://tailscale.com/docs/concepts/macos-variants'
             return 1
         fi
-        "$brew_bin" install --formula tailscale
+        if [[ "$formula_installed" == true ]]; then
+            info 'The Homebrew daemon is already installed.'
+        else
+            "$brew_bin" install --formula tailscale
+        fi
         tailscale_prefix=$("$brew_bin" --prefix tailscale)
         sudo "$brew_bin" services start tailscale
         if [[ "$login" == true ]] && has_terminal; then
