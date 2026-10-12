@@ -23,8 +23,8 @@ usage() {
 	cat <<'EOF'
 Usage: sudo bash macos/harden-ssh.sh [--user NAME] [--dry-run]
 
-Require SSH keys, disable root/password login, and allow only NAME (default:
-the user invoking sudo). Existing Remote Login account restrictions still apply.
+Require SSH keys for normal macOS logins, disable root/password login, and allow
+only NAME (default: the user invoking sudo). Existing account restrictions apply.
 Keep a working SSH session open and test a fresh SEP-key login afterward.
 
 --dry-run  Validate and preview without changing system files; no sudo needed.
@@ -32,6 +32,7 @@ Keep a working SSH session open and test a fresh SEP-key login afterward.
 --help     Show this help.
 
 Applies to Apple's Remote Login SSH server, not a separate Tailscale SSH server.
+FileVault's preboot password-unlock service is also separate.
 Does not change the firewall, Remote Login switch, forwarding, or SSH keys.
 EOF
 }
@@ -57,8 +58,9 @@ cleanup() {
 
 validate() {
 	local config=$1
-	local actual
-	actual=$(/usr/sbin/sshd -G -f "${config}") || return 1
+	local actual algorithms
+	# OpenSSH 10.5 changed config dumps from lowercase to mixed-case keywords.
+	actual=$(/usr/sbin/sshd -G -f "${config}" | /usr/bin/tr '[:upper:]' '[:lower:]') || return 1
 	# Check effective values, so an earlier drop-in cannot silently win.
 	while IFS= read -r expected; do
 		if ! /usr/bin/grep -Fqx "${expected}" <<<"${actual}"; then
@@ -70,6 +72,39 @@ validate() {
 		printf 'Existing AllowUsers rules permit additional accounts; review them first.\n' >&2
 		return 1
 	}
+	algorithms=$(/usr/bin/sed -n 's/^pubkeyacceptedalgorithms //p' <<<"${actual}")
+	[[ ,${algorithms}, == *',sk-ecdsa-sha2-nistp256@openssh.com,'* ]] || {
+		printf 'Existing PubkeyAcceptedAlgorithms excludes the native Secure Enclave SSH key; review it first.\n' >&2
+		return 1
+	}
+}
+
+print_login_checks() {
+	cat <<EOF
+
+Keep this session open. On your client Mac, replace MINI_LAN_IP with the mini's
+LAN address and test the selected SEP key. This ignores SSH aliases, other keys,
+and existing connection sharing:
+
+  /usr/bin/ssh -F /dev/null -o ControlMaster=no -o ControlPath=none -o IdentitiesOnly=yes -o IdentityAgent=none -o IdentityFile=none -o SecurityKeyProvider=/usr/lib/ssh-keychain.dylib -o PubkeyAcceptedAlgorithms=sk-ecdsa-sha2-nistp256@openssh.com -o PreferredAuthentications=publickey -i ~/.ssh/id_ecdsa_sk_rk ${LOGIN_USER}@MINI_LAN_IP
+
+After applying, verify that password-only login fails with "Permission denied (publickey)":
+
+  /usr/bin/ssh -F /dev/null -o ControlMaster=no -o ControlPath=none -o PubkeyAuthentication=no -o PreferredAuthentications=password,keyboard-interactive ${LOGIN_USER}@MINI_LAN_IP
+
+For the same SEP authentication over Tailscale, use ordinary SSH to the mini's
+Tailscale address and allow TCP 22 in your tailnet grants. If Tailscale SSH is
+enabled, disable it from the console or a working LAN session first:
+
+  sudo tailscale set --ssh=false
+
+Tailscale SSH has its own authentication policy and does not enforce this file
+or your authorized_keys. Keep TCP 22 restricted to trusted LAN/VPN clients.
+
+On macOS 26+, FileVault can accept an SSH password to unlock the disk before
+the normal SSH configuration is available. Test that reboot/unlock path before
+leaving the mini unattended. These settings apply after the disk is unlocked.
+EOF
 }
 
 while (($#)); do
@@ -154,6 +189,7 @@ printf 'SSH configuration for account %s:\n' "${LOGIN_USER}"
 /bin/cat "${WORK}/snippets/${NAME}"
 if ((DRY_RUN)); then
 	printf '\nDry run passed. Apply with sudo to also validate host keys and install.\n'
+	print_login_checks
 	exit 0
 fi
 
@@ -162,6 +198,7 @@ fi
 /usr/sbin/sshd -t -f "${WORK}/sshd_config"
 if [[ -f ${TARGET} ]] && /usr/bin/cmp -s "${WORK}/snippets/${NAME}" "${TARGET}"; then
 	printf '\nAlready configured; no changes needed.\n'
+	print_login_checks
 	exit 0
 fi
 
@@ -183,18 +220,7 @@ PENDING=1
 validate "${CONFIG}" || die 'installed settings did not take effect'
 PENDING=0
 
-cat <<'EOF'
-
-Installed and validated. Apple's launchd reads the configuration on new connections.
-Keep this session open. From your client Mac, test a fresh connection:
-
-  ssh -o ControlMaster=no -o ControlPath=none bmo-m6
-
-Then verify that password-only login fails with "Permission denied (publickey)":
-
-  ssh -o ControlMaster=no -o ControlPath=none -o PubkeyAuthentication=no -o PreferredAuthentications=password,keyboard-interactive bmo-m6
-
-If key login fails, use the rollback command above from this session or the console.
-To stop internet scanning, restrict TCP 22 at your router/firewall to your LAN/VPN.
-These settings do not provide network-wide rate limiting under macOS launchd.
-EOF
+printf "\nInstalled and validated. Apple's launchd reads the configuration on new connections.\n"
+print_login_checks
+printf '\nIf key login fails, use the rollback command above from this session or the console.\n'
+printf 'These settings do not provide network-wide rate limiting under macOS launchd.\n'
