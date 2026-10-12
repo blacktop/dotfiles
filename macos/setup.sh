@@ -277,7 +277,7 @@ configure_finder() {
 	defaults_write com.apple.frameworks.diskimages auto-open-rw-root -bool true
 	defaults_write com.apple.finder OpenWindowForNewRemovableDisk -bool true
 	defaults_write com.apple.finder FXPreferredViewStyle -string Nlsv
-	run /bin/chflags nohidden "${HOME}/Library"
+	run /usr/bin/chflags nohidden "${HOME}/Library"
 	if ((DRY_RUN)); then
 		print_command /usr/bin/xattr -d com.apple.FinderInfo "${HOME}/Library"
 	else
@@ -358,7 +358,7 @@ configure_terminal() {
 
 	if [[ -f "${theme}" ]]; then
 		run /usr/bin/open "${theme}"
-		if ((!DRY_RUN)); then
+		if ((! DRY_RUN)); then
 			/bin/sleep 1
 		fi
 		defaults_write com.apple.Terminal 'Default Window Settings' -string Nord
