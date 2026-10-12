@@ -27,4 +27,20 @@ brew install kunobi-ninja/kunobi/kache
 # sandboxed kache command starts a daemon confined to that agent's sandbox.
 kache init --yes
 
-"$script_dir/install-cargo-cleaner.sh"
+# Optional scheduled cleanup of large, inactive Rust target directories.
+should_install_cargo_cleaner() {
+    case "$(printf '%s' "${SETUP_CARGO_CLEANER:-}" | tr '[:upper:]' '[:lower:]')" in
+    1 | true | yes | y) return 0 ;;
+    0 | false | no | n) return 1 ;;
+    esac
+
+    [ -t 0 ] && [ -t 1 ] && command -v gum >/dev/null 2>&1 || return 1
+    gum confirm --default=false \
+        "Install cargo-clean-big-targets? Weekly cleanup of Rust targets over 10 GiB inactive for 14 days."
+}
+
+if should_install_cargo_cleaner; then
+    "$script_dir/install-cargo-cleaner.sh"
+else
+    printf '%s\n' 'Skipping cargo-clean-big-targets (set SETUP_CARGO_CLEANER=yes to enable non-interactively)'
+fi
