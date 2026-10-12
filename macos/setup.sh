@@ -38,6 +38,10 @@ Options:
 
 With no mode, an interactive Gum survey offers Apply all, Review each, or
 Cancel. For unattended use, pass --all or set MACOS_SETUP_MODE=all.
+
+Interactive setup also offers to open Full Disk Access settings. Grant access
+to the terminal app running setup, then quit and reopen it. sudo cannot grant
+this permission. --all and --dry-run skip the permission prompt.
 EOF
 }
 
@@ -135,6 +139,16 @@ defaults_write() {
 	PREFERENCES_CHANGED=1
 }
 
+app_defaults_write() {
+	local app_name=${1##*.}
+	if defaults_write "$@"; then
+		return 0
+	fi
+	warn "Could not write ${app_name} preference '$2'. If access was denied, give this terminal Full Disk Access in System Settings > Privacy & Security, reopen it, then rerun macos/setup.sh --review."
+	SECTION_INCOMPLETE=1
+	return 1
+}
+
 sudo_defaults_write() {
 	sudo_run /usr/bin/defaults write "$@"
 }
@@ -142,6 +156,40 @@ sudo_defaults_write() {
 quit_app() {
 	local app_name=$1
 	run_quietly /usr/bin/osascript -e "tell application \"${app_name}\" to quit"
+}
+
+preflight_full_disk_access() {
+	local requested_mode=$1
+	local choice
+
+	((DRY_RUN)) && return 0
+	info 'Safari settings and Time Machine exclusions need Full Disk Access for the terminal app running setup.'
+	info 'Enable it in System Settings > Privacy & Security > Full Disk Access, then quit and reopen the terminal app.'
+	[[ ${requested_mode} == all ]] && return 0
+	has_gum_ui || return 0
+
+	if ! choice=$("${GUM}" choose \
+		--header 'Check Full Disk Access before applying settings' \
+		--cursor.foreground '#FF9400' \
+		--item.foreground '#F7BA00' \
+		'Open Full Disk Access settings and stop' \
+		'Continue setup' \
+		'Cancel'); then
+		exit 130
+	fi
+
+	case "${choice}" in
+	'Open Full Disk Access settings and stop')
+		if ! run /usr/bin/open 'x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles'; then
+			warn 'Could not open System Settings; open Privacy & Security > Full Disk Access manually.'
+		fi
+		info 'After enabling access and reopening the terminal app, rerun bash macos/setup.sh.'
+		exit 0
+		;;
+	'Continue setup') return 0 ;;
+	'Cancel') exit 0 ;;
+	*) die "unexpected Gum selection: ${choice}" ;;
+	esac
 }
 
 choose_mode() {
@@ -311,21 +359,12 @@ configure_dock() {
 	RESTART_DOCK=1
 }
 
-safari_defaults_write() {
-	if defaults_write com.apple.Safari "$@"; then
-		return 0
-	fi
-	warn "Could not write Safari preference '$1'. If access was denied, give this terminal Full Disk Access in System Settings > Privacy & Security, reopen it, then rerun macos/setup.sh --review."
-	SECTION_INCOMPLETE=1
-	return 1
-}
-
 configure_safari() {
 	local safaridriver
 	quit_app Safari
 	# Test the protected preference domain before WebDriver requests authorization.
 	# These private preference keys still need UI verification on new macOS releases.
-	safari_defaults_write IncludeDevelopMenu -bool true || return 0
+	app_defaults_write com.apple.Safari IncludeDevelopMenu -bool true || return 0
 
 	safaridriver=$(command -v safaridriver || true)
 	if [[ -n "${safaridriver}" ]]; then
@@ -339,28 +378,28 @@ configure_safari() {
 	fi
 
 	defaults_write NSGlobalDomain WebKitDeveloperExtras -bool true
-	safari_defaults_write UniversalSearchEnabled -bool false || return 0
-	safari_defaults_write SuppressSearchSuggestions -bool true || return 0
-	safari_defaults_write ShowFullURLInSmartSearchField -bool true || return 0
-	safari_defaults_write HomePage -string about:blank || return 0
-	safari_defaults_write AutoOpenSafeDownloads -bool false || return 0
-	safari_defaults_write ShowFavoritesBar -bool false || return 0
-	safari_defaults_write WebContinuousSpellCheckingEnabled -bool true || return 0
-	safari_defaults_write WebAutomaticSpellingCorrectionEnabled -bool false || return 0
-	safari_defaults_write AutoFillFromAddressBook -bool false || return 0
-	safari_defaults_write AutoFillPasswords -bool false || return 0
-	safari_defaults_write AutoFillCreditCardData -bool false || return 0
-	safari_defaults_write AutoFillMiscellaneousForms -bool false || return 0
-	safari_defaults_write WarnAboutFraudulentWebsites -bool true || return 0
-	safari_defaults_write WebKitJavaScriptCanOpenWindowsAutomatically -bool false || return 0
+	app_defaults_write com.apple.Safari UniversalSearchEnabled -bool false || return 0
+	app_defaults_write com.apple.Safari SuppressSearchSuggestions -bool true || return 0
+	app_defaults_write com.apple.Safari ShowFullURLInSmartSearchField -bool true || return 0
+	app_defaults_write com.apple.Safari HomePage -string about:blank || return 0
+	app_defaults_write com.apple.Safari AutoOpenSafeDownloads -bool false || return 0
+	app_defaults_write com.apple.Safari ShowFavoritesBar -bool false || return 0
+	app_defaults_write com.apple.Safari WebContinuousSpellCheckingEnabled -bool true || return 0
+	app_defaults_write com.apple.Safari WebAutomaticSpellingCorrectionEnabled -bool false || return 0
+	app_defaults_write com.apple.Safari AutoFillFromAddressBook -bool false || return 0
+	app_defaults_write com.apple.Safari AutoFillPasswords -bool false || return 0
+	app_defaults_write com.apple.Safari AutoFillCreditCardData -bool false || return 0
+	app_defaults_write com.apple.Safari AutoFillMiscellaneousForms -bool false || return 0
+	app_defaults_write com.apple.Safari WarnAboutFraudulentWebsites -bool true || return 0
+	app_defaults_write com.apple.Safari WebKitJavaScriptCanOpenWindowsAutomatically -bool false || return 0
 }
 
 configure_textedit() {
 	quit_app TextEdit
-	defaults_write com.apple.TextEdit RichText -int 0
-	defaults_write com.apple.TextEdit PlainTextEncoding -int 4
-	defaults_write com.apple.TextEdit PlainTextEncodingForWrite -int 4
-	defaults_write com.apple.TextEdit TabWidth -int 4
+	app_defaults_write com.apple.TextEdit RichText -int 0 || return 0
+	app_defaults_write com.apple.TextEdit PlainTextEncoding -int 4 || return 0
+	app_defaults_write com.apple.TextEdit PlainTextEncodingForWrite -int 4 || return 0
+	app_defaults_write com.apple.TextEdit TabWidth -int 4 || return 0
 }
 
 configure_updates() {
@@ -374,17 +413,17 @@ configure_updates() {
 
 configure_terminal() {
 	local theme="${REPO_ROOT}/init/Nord.terminal"
-	defaults_write com.apple.Terminal StringEncodings -array 4
-	defaults_write com.apple.Terminal SecureKeyboardEntry -bool true
-	defaults_write com.apple.Terminal ShowLineMarks -int 0
+	app_defaults_write com.apple.Terminal StringEncodings -array 4 || return 0
+	app_defaults_write com.apple.Terminal SecureKeyboardEntry -bool true || return 0
+	app_defaults_write com.apple.Terminal ShowLineMarks -int 0 || return 0
 
 	if [[ -f "${theme}" ]]; then
 		run /usr/bin/open "${theme}"
 		if ((! DRY_RUN)); then
 			/bin/sleep 1
 		fi
-		defaults_write com.apple.Terminal 'Default Window Settings' -string Nord
-		defaults_write com.apple.Terminal 'Startup Window Settings' -string Nord
+		app_defaults_write com.apple.Terminal 'Default Window Settings' -string Nord || return 0
+		app_defaults_write com.apple.Terminal 'Startup Window Settings' -string Nord || return 0
 	else
 		warn "Terminal theme not found: ${theme}"
 	fi
@@ -435,8 +474,15 @@ configure_touchid() {
 }
 
 configure_time_machine() {
+	local status
 	[[ -x "${SCRIPT_DIR}/tm.sh" ]] || die "missing executable: ${SCRIPT_DIR}/tm.sh"
-	run "${SCRIPT_DIR}/tm.sh"
+	if run "${SCRIPT_DIR}/tm.sh"; then
+		return 0
+	else
+		status=$?
+	fi
+	warn "Time Machine exclusions stopped (exit ${status}). If tmutil reported missing Full Disk Access, enable the terminal app running setup in System Settings > Privacy & Security > Full Disk Access, quit and reopen it, then rerun bash macos/tm.sh."
+	SECTION_INCOMPLETE=1
 }
 
 finalize_preferences() {
@@ -500,6 +546,7 @@ if ((macos_major > TARGET_MACOS_MAJOR)); then
 	warn "macOS ${macos_version} is newer than the verified Tahoe target; review with --dry-run first"
 fi
 
+requested_mode=${MODE}
 choose_mode
 if [[ ${MODE} == review ]]; then
 	has_gum_ui || die '--review requires Gum and an interactive TTY'
@@ -509,6 +556,7 @@ heading "Setup macOS ${macos_version}"
 if ((DRY_RUN)); then
 	warn 'Dry run: commands will be printed but not executed'
 fi
+preflight_full_disk_access "${requested_mode}"
 
 # Apple recommends changing app preferences while the target app is not running.
 quit_app 'System Settings'
