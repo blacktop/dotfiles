@@ -10,6 +10,8 @@ DRY_RUN=0
 SUDO_READY=0
 APPLIED_COUNT=0
 SKIPPED_COUNT=0
+INCOMPLETE_COUNT=0
+SECTION_INCOMPLETE=0
 PREFERENCES_CHANGED=0
 RESTART_DOCK=0
 RESTART_FINDER=0
@@ -129,7 +131,7 @@ sudo_run() {
 }
 
 defaults_write() {
-	run /usr/bin/defaults write "$@"
+	run /usr/bin/defaults write "$@" || return $?
 	PREFERENCES_CHANGED=1
 }
 
@@ -206,9 +208,15 @@ run_section() {
 	if approve_section "${title}" "${description}"; then
 		heading "${title}"
 		info "${description}"
+		SECTION_INCOMPLETE=0
 		"${function_name}"
-		APPLIED_COUNT=$((APPLIED_COUNT + 1))
-		ok "${title} complete"
+		if ((SECTION_INCOMPLETE)); then
+			INCOMPLETE_COUNT=$((INCOMPLETE_COUNT + 1))
+			warn "${title} incomplete"
+		else
+			APPLIED_COUNT=$((APPLIED_COUNT + 1))
+			ok "${title} complete"
+		fi
 	else
 		SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
 		info "Skipped ${title}"
@@ -303,34 +311,48 @@ configure_dock() {
 	RESTART_DOCK=1
 }
 
+safari_defaults_write() {
+	if defaults_write com.apple.Safari "$@"; then
+		return 0
+	fi
+	warn "Could not write Safari preference '$1'. If access was denied, give this terminal Full Disk Access in System Settings > Privacy & Security, reopen it, then rerun macos/setup.sh --review."
+	SECTION_INCOMPLETE=1
+	return 1
+}
+
 configure_safari() {
 	local safaridriver
 	quit_app Safari
-	warn 'Safari preference writes require Full Disk Access for the terminal running this script'
+	# Test the protected preference domain before WebDriver requests authorization.
+	# These private preference keys still need UI verification on new macOS releases.
+	safari_defaults_write IncludeDevelopMenu -bool true || return 0
 
 	safaridriver=$(command -v safaridriver || true)
 	if [[ -n "${safaridriver}" ]]; then
-		run "${safaridriver}" --enable
+		if ! run "${safaridriver}" --enable; then
+			warn 'Safari remote automation was not enabled; enable it in Safari Settings > Developer.'
+			SECTION_INCOMPLETE=1
+		fi
 	else
 		warn 'safaridriver was not found; remote automation was not enabled'
+		SECTION_INCOMPLETE=1
 	fi
 
-	defaults_write com.apple.Safari IncludeDevelopMenu -bool true
 	defaults_write NSGlobalDomain WebKitDeveloperExtras -bool true
-	defaults_write com.apple.Safari UniversalSearchEnabled -bool false
-	defaults_write com.apple.Safari SuppressSearchSuggestions -bool true
-	defaults_write com.apple.Safari ShowFullURLInSmartSearchField -bool true
-	defaults_write com.apple.Safari HomePage -string about:blank
-	defaults_write com.apple.Safari AutoOpenSafeDownloads -bool false
-	defaults_write com.apple.Safari ShowFavoritesBar -bool false
-	defaults_write com.apple.Safari WebContinuousSpellCheckingEnabled -bool true
-	defaults_write com.apple.Safari WebAutomaticSpellingCorrectionEnabled -bool false
-	defaults_write com.apple.Safari AutoFillFromAddressBook -bool false
-	defaults_write com.apple.Safari AutoFillPasswords -bool false
-	defaults_write com.apple.Safari AutoFillCreditCardData -bool false
-	defaults_write com.apple.Safari AutoFillMiscellaneousForms -bool false
-	defaults_write com.apple.Safari WarnAboutFraudulentWebsites -bool true
-	defaults_write com.apple.Safari WebKitJavaScriptCanOpenWindowsAutomatically -bool false
+	safari_defaults_write UniversalSearchEnabled -bool false || return 0
+	safari_defaults_write SuppressSearchSuggestions -bool true || return 0
+	safari_defaults_write ShowFullURLInSmartSearchField -bool true || return 0
+	safari_defaults_write HomePage -string about:blank || return 0
+	safari_defaults_write AutoOpenSafeDownloads -bool false || return 0
+	safari_defaults_write ShowFavoritesBar -bool false || return 0
+	safari_defaults_write WebContinuousSpellCheckingEnabled -bool true || return 0
+	safari_defaults_write WebAutomaticSpellingCorrectionEnabled -bool false || return 0
+	safari_defaults_write AutoFillFromAddressBook -bool false || return 0
+	safari_defaults_write AutoFillPasswords -bool false || return 0
+	safari_defaults_write AutoFillCreditCardData -bool false || return 0
+	safari_defaults_write AutoFillMiscellaneousForms -bool false || return 0
+	safari_defaults_write WarnAboutFraudulentWebsites -bool true || return 0
+	safari_defaults_write WebKitJavaScriptCanOpenWindowsAutomatically -bool false || return 0
 }
 
 configure_textedit() {
@@ -540,7 +562,7 @@ run_section \
 finalize_preferences
 
 heading 'macOS setup complete'
-printf 'Applied: %d  Skipped: %d  Mode: %s' "${APPLIED_COUNT}" "${SKIPPED_COUNT}" "${MODE}"
+printf 'Applied: %d  Skipped: %d  Incomplete: %d  Mode: %s' "${APPLIED_COUNT}" "${SKIPPED_COUNT}" "${INCOMPLETE_COUNT}" "${MODE}"
 if ((DRY_RUN)); then
 	printf '  (dry run)'
 fi
