@@ -10,9 +10,10 @@ Profiles:
   desktop  Standalone Mac app with automatic updates
   skip     Leave Tailscale unchanged
 
-With no profile, gum prompts in a terminal. Unattended runs skip Tailscale
-unless SETUP_TAILSCALE_PROFILE is set. --no-login installs the selected
-variant without opening the app or starting an interactive login.
+With no profile, an existing installation is left alone; otherwise gum prompts
+in a terminal. Unattended runs skip Tailscale unless SETUP_TAILSCALE_PROFILE is
+set. --no-login installs the selected variant without opening the app or
+starting an interactive login.
 USAGE
 }
 
@@ -46,7 +47,7 @@ has_manual_daemon() {
 main() {
     local profile="${SETUP_TAILSCALE_PROFILE:-}" login=true
     local brew_bin script_dir gui_kind formula_installed=false tailscale_prefix
-    local installed_formulae installed_casks cask_installed=false
+    local installed_formulae installed_casks cask_installed=false manual_daemon=false
     script_dir=$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
     while [[ $# -gt 0 ]]; do
@@ -98,7 +99,24 @@ main() {
     # shellcheck source=privacy/env.sh
     . "$script_dir/../privacy/env.sh"
 
+    gui_kind=$(installed_gui_kind || true)
+    installed_formulae=$("$brew_bin" list --formula -1) || return $?
+    installed_casks=$("$brew_bin" list --cask -1) || return $?
+    if grep -Fxq tailscale <<<"$installed_formulae"; then
+        formula_installed=true
+    fi
+    if grep -Fxq -e tailscale-app -e tailscale <<<"$installed_casks"; then
+        cask_installed=true
+    fi
+    if has_manual_daemon || { [[ "$formula_installed" == false ]] && command -v tailscaled >/dev/null 2>&1; }; then
+        manual_daemon=true
+    fi
+
     if [[ -z "$profile" ]]; then
+        if [[ -n "$gui_kind" || "$formula_installed" == true || "$cask_installed" == true || "$manual_daemon" == true ]]; then
+            info 'Tailscale is already installed; leaving its setup unchanged.'
+            return 0
+        fi
         if ! command -v gum >/dev/null 2>&1; then
             "$brew_bin" install gum
         fi
@@ -119,16 +137,7 @@ main() {
         esac
     fi
 
-    gui_kind=$(installed_gui_kind || true)
-    installed_formulae=$("$brew_bin" list --formula -1) || return $?
-    installed_casks=$("$brew_bin" list --cask -1) || return $?
-    if grep -Fxq tailscale <<<"$installed_formulae"; then
-        formula_installed=true
-    fi
-    if grep -Fxq -e tailscale-app -e tailscale <<<"$installed_casks"; then
-        cask_installed=true
-    fi
-    if has_manual_daemon || { [[ "$formula_installed" == false ]] && command -v tailscaled >/dev/null 2>&1; }; then
+    if [[ "$manual_daemon" == true ]]; then
         info 'Found a manually installed tailscaled. Stop and remove that installation before changing its manager.'
         return 1
     fi

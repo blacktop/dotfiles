@@ -3,13 +3,12 @@
 
 import json
 import os
-from pathlib import Path
 import shlex
 import subprocess
 import sys
 import tempfile
 import unittest
-
+from pathlib import Path
 
 SETUP = Path(__file__).resolve().parents[1] / "setup.sh"
 
@@ -85,6 +84,7 @@ elif name == "tailscale" and args[:1] == ["up"]:
         result = subprocess.run(
             ["/bin/bash", "-c", script, "test-setup", *args],
             env=env,
+            check=False,
             capture_output=True,
             text=True,
             timeout=15,
@@ -104,6 +104,28 @@ elif name == "tailscale" and args[:1] == ["up"]:
     def test_unattended_default_skips(self):
         self.assert_ok(self.run_setup())
         self.assertEqual(self.calls, [])
+
+    def test_existing_installations_skip_profile_prompt(self):
+        cases = (
+            ("formula", {"TEST_FORMULA_STATUS": "0"}),
+            ("cask", {"TEST_CASK_STATUS": "0"}),
+            ("standalone app", {"gui": "standalone"}),
+            ("other app", {"gui": "app-store-or-unknown"}),
+            ("manual daemon", {"manual": True}),
+        )
+        for name, options in cases:
+            with self.subTest(name=name):
+                result = self.run_setup(terminal=True, **options)
+                self.assert_ok(result)
+                self.assertIn("already installed", result.stderr)
+                self.assertFalse(any(call[0] == "gum" for call in self.calls))
+                self.assert_no_mutations()
+
+    def test_daemon_on_path_skips_profile_prompt(self):
+        (self.bin / "tailscaled").symlink_to(self.bin / "dispatcher")
+        self.assert_ok(self.run_setup(terminal=True))
+        self.assertFalse(any(call[0] == "gum" for call in self.calls))
+        self.assert_no_mutations()
 
     def test_invalid_profile_fails_before_changes(self):
         result = self.run_setup("--profile", "typo")
@@ -166,9 +188,14 @@ elif name == "tailscale" and args[:1] == ["up"]:
         self.assertFalse(any(call[0] == "sudo" for call in self.calls))
 
     def test_inventory_failure_stops_before_changes(self):
-        result = self.run_setup("--profile", "desktop", TEST_FORMULA_LIST_STATUS="7")
-        self.assertEqual(result.returncode, 7)
-        self.assert_no_mutations()
+        for args in ((), ("--profile", "desktop")):
+            with self.subTest(args=args):
+                result = self.run_setup(
+                    *args, terminal=True, TEST_FORMULA_LIST_STATUS="7"
+                )
+                self.assertEqual(result.returncode, 7)
+                self.assertFalse(any(call[0] == "gum" for call in self.calls))
+                self.assert_no_mutations()
 
     def test_existing_standalone_is_reused(self):
         self.assert_ok(
