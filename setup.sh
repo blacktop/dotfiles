@@ -50,12 +50,33 @@ function confirm_step() {
 
     if has_gum_prompt_ui; then
         gum confirm "$prompt" \
+            --default="${3:-true}" \
             --prompt.foreground "#FF9400" \
             --selected.foreground "#230" \
             --selected.background "#FF9400" \
             --unselected.foreground "#F7BA00"
     else
         return 1
+    fi
+}
+
+function initialize_rosetta() {
+    # uname reports x86_64 when the shell itself runs under Rosetta.
+    if [[ "$(uname -m)" != arm64 && "$(sysctl -n hw.optional.arm64 2>/dev/null || true)" != 1 ]]; then
+        info "Skipping Rosetta 2 on non-Apple-silicon Mac"
+        return 0
+    fi
+    if test -e /Library/Apple/usr/libexec/oah/libRosettaRuntime; then
+        info "Rosetta 2 is already installed"
+        return 0
+    fi
+    if confirm_step "Install Rosetta 2 for Intel-only apps and tools?" "SETUP_ROSETTA" false; then
+        running "Installing Rosetta 2"
+        sudo /usr/sbin/softwareupdate --install-rosetta --agree-to-license
+    else
+        local status=$?
+        ((status == 1)) || return "$status"
+        info "Skipping Rosetta 2 (set SETUP_ROSETTA=yes to install non-interactively)"
     fi
 }
 
@@ -97,13 +118,6 @@ else
     xcode-select --install
 fi
 
-if [[ "$(uname -m)" = "arm64" ]]; then
-    running "Installing Rosetta 2"
-    sudo softwareupdate --install-rosetta --agree-to-license
-else
-    info "Skipping Rosetta 2 install on non-Apple-silicon Mac"
-fi
-
 if [ -d "/Applications/Xcode-beta.app" ]; then
     if [ "$(xcode-select -p)" != "/Applications/Xcode-beta.app/Contents/Developer" ]; then
         running "Setting Xcode-beta.app as default Xcode"
@@ -128,6 +142,13 @@ else
 fi
 
 eval "$("$BREW_BIN" shellenv)"
+
+# Gum is also in the Brewfile; bootstrap it so optional dependencies can be
+# selected before an Intel-only cask's installation steps run.
+if ! command -v gum >/dev/null 2>&1; then
+    brew install gum
+fi
+initialize_rosetta
 
 export HOMEBREW_CASK_OPTS="--appdir=/Applications"
 
@@ -176,8 +197,8 @@ zed/setup.sh
 bat/setup.sh
 # ollama
 # ollama/setup.sh
-# LM Studio (large model downloads; opt-in only)
-if confirm_step "Install LM Studio and download local models? This downloads large models." "SETUP_LMSTUDIO"; then
+# LM Studio (each model download is separately opt-in)
+if confirm_step "Set up LM Studio? Each model download is optional." "SETUP_LMSTUDIO"; then
     lmstudio/lms.sh
 else
     info "Skipping LM Studio setup (set SETUP_LMSTUDIO=yes to enable non-interactively)"
