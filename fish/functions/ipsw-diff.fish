@@ -1,5 +1,5 @@
-function ipsw-diff --description 'Diff two IPSWs with comprehensive analysis'
-    set -l usage 'Usage: ipsw-diff [--block] [--device <product-type|board>] <old.ipsw> <new.ipsw> [--kdk <old.kdk> <new.kdk>]'
+function ipsw-diff --description 'Diff two IPSWs or full OTAs with comprehensive analysis'
+    set -l usage 'Usage: ipsw-diff [--block] [--device <product-type|board>] <old> <new> [--kdk <old.kdk> <new.kdk>]'
 
     # Parse arguments
     set -l ipsw_old ''
@@ -16,17 +16,18 @@ function ipsw-diff --description 'Diff two IPSWs with comprehensive analysis'
             case -h --help
                 printf '%s\n\n' $usage
                 printf 'Positional arguments:\n'
-                printf '  old.ipsw    The older IPSW to compare from\n'
-                printf '  new.ipsw    The newer IPSW to compare to\n\n'
+                printf '  old    The older IPSW or full OTA to compare from\n'
+                printf '  new    The newer IPSW or full OTA to compare to\n\n'
                 printf 'Options:\n'
                 printf '  --block            Wait for the inputs to appear and finish\n'
                 printf '                     downloading instead of erroring when missing.\n'
                 printf '                     Waits forever, so check the path for typos.\n'
                 printf '                     Ctrl-C to give up.\n'
                 printf '  --kdk <old> <new>  KDK kernel paths for symbolication (must provide both)\n'
-                printf '  --device <value>   Device product type or board (e.g. Mac18,5)\n'
+                printf '  --device <value>   IPSW device product type or board (e.g. Mac18,5)\n'
                 printf '  -h, --help         Show this help\n\n'
-                printf 'Output directory: %s/{iOS,macOS} (detected from IPSW metadata)\n' ~/Developer/Mine/blacktop/ipsw-diffs
+                printf 'Full OTAs are detected automatically; preserve embedded AEA filename keys.\n'
+                printf 'Output directory: %s/{iOS,macOS} (detected from firmware metadata)\n' ~/Developer/Mine/blacktop/ipsw-diffs
                 return 0
             case --block
                 set block 1
@@ -74,7 +75,7 @@ function ipsw-diff --description 'Diff two IPSWs with comprehensive analysis'
 
     # Validate required arguments
     if test -z "$ipsw_old" -o -z "$ipsw_new"
-        printf 'Error: two IPSW files are required\n' >&2
+        printf 'Error: two IPSW or OTA files are required\n' >&2
         printf '%s\n' $usage >&2
         return 64
     end
@@ -95,7 +96,7 @@ function ipsw-diff --description 'Diff two IPSWs with comprehensive analysis'
         return 127
     end
     if not command -sq jq
-        printf 'Error: jq command not found on PATH (required to read IPSW metadata)\n' >&2
+        printf 'Error: jq command not found on PATH (required to read firmware metadata)\n' >&2
         return 127
     end
 
@@ -126,19 +127,26 @@ function ipsw-diff --description 'Diff two IPSWs with comprehensive analysis'
         end
     end
 
-    # Detect the platform from device products, including iMac and VirtualMac.
-    set -l info_json (ipsw info --json "$ipsw_old")
+    set -l info_json (__ipsw_diff_info "$ipsw_old")
     if test $status -ne 0
-        printf 'Error: failed to read IPSW metadata: %s\n' "$ipsw_old" >&2
+        printf 'Error: failed to read firmware metadata: %s\n' "$ipsw_old" >&2
         return 65
     end
-    set -l products (printf '%s\n' "$info_json" | command jq -er '.devices[].product | select(type == "string" and length > 0)')
+    # IPSW info has a summary schema; OTA info exposes the underlying plists.
+    set -l products (printf '%s\n' "$info_json" | command jq -er '
+        ((.devices[]? | if type == "string" then . else .product end),
+         .Plists.build_manifest.supported_product_types[]?,
+         .Plists.asset_data_info.product_type?,
+         .Plists.ota_info.mobile_asset_properties.SupportedDevices[]?,
+         .Plists.ota_info.mobile_asset_properties.SUProductSystemName?,
+         .os?)
+        | select(type == "string" and length > 0)')
     if test $status -ne 0
-        printf 'Error: failed to determine IPSW device products: %s\n' "$ipsw_old" >&2
+        printf 'Error: failed to determine firmware platform: %s\n' "$ipsw_old" >&2
         return 65
     end
     set -l output ~/Developer/Mine/blacktop/ipsw-diffs/iOS
-    if string match -q '*Mac*' -- $products
+    if string match -qi '*mac*' -- $products
         set output ~/Developer/Mine/blacktop/ipsw-diffs/macOS
     end
 
@@ -175,6 +183,27 @@ function ipsw-diff --description 'Diff two IPSWs with comprehensive analysis'
     # Run the command
     printf 'Running: %s\n' (string join ' ' -- $cmd)
     $cmd
+end
+
+function __ipsw_diff_info --description 'Read metadata using the matching firmware parser'
+    set -l input $argv[1]
+    if string match -qi '*.ipsw' -- "$input"
+        command ipsw info --json "$input"
+        return $status
+    end
+
+    switch (command head -c 4 -- "$input")
+        case AEA1 YAA1 AA01
+            command ipsw ota info --json "$input"
+        case '*'
+            # ZIPs can be IPSWs or OTAs. Preserve IPSW handling for non-OTA ZIPs.
+            set -l info_json (command ipsw ota info --json "$input" 2>/dev/null)
+            if test $status -eq 0; and printf '%s\n' "$info_json" | command jq -e '.Plists.type == "OTA"' >/dev/null
+                printf '%s\n' "$info_json"
+            else
+                command ipsw info --json "$input"
+            end
+    end
 end
 
 function __ipsw_diff_await --description 'Block until a file exists and has stopped growing'
