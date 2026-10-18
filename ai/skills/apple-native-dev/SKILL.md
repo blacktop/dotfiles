@@ -1,19 +1,23 @@
 ---
 name: apple-native-dev
 description: |
-  Build, sign, and deploy iOS/macOS apps using Zed Editor and CLI-only workflows without Xcode UI.
-  Use when: (1) Setting up a new iOS/macOS project with XcodeGen, (2) Configuring secure credential
-  management via xcconfig files, (3) Setting up Zed Editor with Swift LSP, (4) Building/deploying
-  to physical devices via CLI, (5) Creating CI/CD pipelines for Apple apps, (6) Troubleshooting
-  CLI build issues. Covers XcodeGen, xcode-build-server, justfile commands, devicectl, and
-  GitHub Actions scaffolding following 2026 best practices.
+  Build, test, preview, sign, and deploy iOS/macOS apps using CLI tools, Zed, or Xcode's MCP server.
+  Use for XcodeGen project setup, xcconfig signing settings, Swift LSP setup, headless Xcode 27+
+  workflows, simulator UI verification, physical-device deployment, CI, and build troubleshooting.
 ---
 
-# Apple Native Development (CLI + Zed)
+# Apple Native Development
 
-Build iOS/macOS apps without Xcode UI using XcodeGen, justfile, and Zed Editor.
+Use the repository's existing project format, build commands, and selected Xcode.
+Keep XcodeGen as the source of truth when the project is generated; use Xcode's
+project tools when the project is maintained directly.
 
-## Core Workflow
+For Xcode MCP setup, Apple-provided skills, native project templates, SwiftUI
+preview inspection, or simulator interaction, read
+[references/xcode-mcp.md](references/xcode-mcp.md). The CLI workflow below remains
+useful for reproducible builds, CI, Zed, and physical devices.
+
+## CLI and XcodeGen Workflow
 
 ### 1. Project Setup
 ```bash
@@ -85,7 +89,8 @@ GitHub Actions scaffold at `.github/workflows/ios-build.yml.disabled`. See [refe
 # Editor integration
 buildServer.json
 
-# XcodeGen output
+# Only ignore project bundles when XcodeGen is the source of truth.
+# Keep directly maintained Xcode projects in version control.
 *.xcodeproj/
 ```
 
