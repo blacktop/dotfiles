@@ -185,6 +185,8 @@ fish/setup.sh
 atuin/setup.sh
 # tmux
 tmux/setup.sh
+# Rex CLI (when the app is already installed)
+sh "$DOTFILES_ROOT/rex/setup.sh"
 # rust
 rust/setup.sh
 # neovim
