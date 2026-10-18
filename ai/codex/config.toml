@@ -133,6 +133,7 @@ allow_local_binding = true
 "/private/tmp/tmux-501/default" = "allow"
 "/var/run/docker.sock" = "allow"
 "${HOME}/Library/Caches/kache/daemon.sock" = "allow"
+"${HOME}/Library/Application Support/rex/server.sock" = "allow"
 
 # Opt-in cloud administration profile. Network destinations and local sockets
 # are unrestricted here so SDKs, providers, emulators and tunnels work normally.

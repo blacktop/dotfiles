@@ -200,7 +200,7 @@
       ]
     },
     "network": {
-      "allowUnixSockets": ["/private/tmp/tmux-501/default", "/var/run/docker.sock", "/Users/blacktop/Library/Caches/kache/daemon.sock"],
+      "allowUnixSockets": ["/private/tmp/tmux-501/default", "/var/run/docker.sock", "/Users/blacktop/Library/Caches/kache/daemon.sock", "~/Library/Application Support/rex/server.sock"],
       "allowLocalBinding": true,
       "allowedDomains": [
         "*"
