@@ -1,6 +1,6 @@
 ---
 name: instruments-profiling
-description: Use when profiling native macOS or iOS apps with Instruments/xctrace. Covers correct binary selection, CLI arguments, exports, and common gotchas.
+description: Capture, export, and symbolicate Instruments traces for native macOS or iOS apps with xctrace. Use for recording setup, correct binary selection, CLI arguments, trace tables, and capture troubleshooting. For bottleneck diagnosis and before/after comparisons, use apple-perf.
 metadata:
   short-description: Instruments profiling for macOS/iOS apps
 ---
@@ -9,10 +9,15 @@ metadata:
 
 Use this skill when the user wants performance profiling or stack analysis for native apps.
 Focus: Time Profiler, `xctrace` CLI, and picking the correct binary/app instance.
+For interpreting hotspots, Top Functions, and measured optimization results, use
+[apple-perf](../apple-perf/SKILL.md).
 
 ## Quick Start (CLI)
 
 - List templates: `xcrun xctrace list templates`
+- Choose a template advertised by the selected Xcode that records the data needed.
+  The Time Profiler examples below apply when that template is available; report
+  an unavailable template instead of silently substituting a different metric.
 - Record Time Profiler (launch):
   - `xcrun xctrace record --template 'Time Profiler' --time-limit 60s --output /tmp/App.trace --launch -- /path/To/App.app`
 - Record Time Profiler (attach):
@@ -48,6 +53,8 @@ Use these rules:
 
 ## Exporting Stacks (CLI)
 
+- If symbolication is needed, write a separate trace using the matching dSYM:
+  - `xcrun xctrace symbolicate --input /tmp/App.trace --output /tmp/App-symbolicated.trace --dsym /path/To/App.app.dSYM`
 - Inspect trace tables:
   - `xcrun xctrace export --input /tmp/App.trace --toc`
 - Export raw time-profile samples:
@@ -62,7 +69,7 @@ Use these rules:
   - Hide System Libraries
   - Invert Call Tree
   - Separate by Thread
-  - Focus on hot frames and call counts
+  - Focus on hot frames and sample weights; sampled weights are not call counts
 
 ## Gotchas & Fixes
 
