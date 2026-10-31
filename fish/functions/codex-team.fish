@@ -1,3 +1,3 @@
 function codex-team -w codex -d 'Codex CLI using team account'
-    CODEX_HOME=$HOME/.codex-team _rexurrect_codex codex-team $argv
+    env CODEX_HOME="$HOME/.codex-team" rexurrect-launch codex codex-team $argv
 end

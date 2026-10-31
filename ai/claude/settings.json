@@ -208,28 +208,6 @@
     }
   },
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh \"$HOME/.agents/hooks/rexurrect-claude.sh\"",
-            "timeout": 120
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh \"$HOME/.agents/hooks/rexurrect-claude.sh\"",
-            "timeout": 120
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -303,6 +281,7 @@
     "command": "~/.claude/statusline.sh"
   },
   "enabledPlugins": {
+    "rexurrect@rexurrect": true,
     "codex@openai-codex": true,
     "rust-analyzer-lsp@claude-plugins-official": true,
     "gopls-lsp@claude-plugins-official": true,

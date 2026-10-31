@@ -159,6 +159,12 @@ done
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync skills..."
 "$SCRIPT_DIR/sync-skills.sh"
 
+# Rex's native installer adds its skill and startup hook to each account.
+sh "$SCRIPT_DIR/../rex/setup.sh"
+
+# Portable agent lifecycle integration, installed independently per account.
+"$SCRIPT_DIR/setup-rexurrect.sh"
+
 # Install Claude Code plugin marketplaces and plugins.
 # `claude plugin` writes to $CLAUDE_CONFIG_DIR/plugins/, so each variant needs its own pass.
 if command -v claude >/dev/null 2>&1; then

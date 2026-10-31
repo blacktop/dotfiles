@@ -170,3 +170,10 @@ source ~/.orbstack/shell/init2.fish 2>/dev/null || :
 set -gx PATH $PATH /Users/user/.lmstudio/bin
 # End of LM Studio CLI section
 
+# Record commands and recover saved input in Rex panes.
+if status is-interactive; and command -q brew
+    set -l rr_bin (command brew --prefix)/bin/rexurrect
+    if test -x "$rr_bin"
+        "$rr_bin" hook fish | source
+    end
+end
