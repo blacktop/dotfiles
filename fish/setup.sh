@@ -16,6 +16,9 @@ fi
 FISHER="$HOME/.config/fish/functions/fisher.fish"
 FISH_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Account functions below use this portable launcher, including outside Rex.
+sh "$FISH_DIR/../ai/install-rexurrect-launch.sh"
+
 if [ ! -f "$FISHER" ]; then
     echo "$(gum style --bold --foreground "#BE05D0" "  -") Downloading fisher..."
     curl -Lo "$FISHER" --create-dirs https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish

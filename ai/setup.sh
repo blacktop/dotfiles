@@ -163,7 +163,15 @@ echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync skills..."
 sh "$SCRIPT_DIR/../rex/setup.sh"
 
 # Portable agent lifecycle integration, installed independently per account.
-"$SCRIPT_DIR/setup-rexurrect.sh"
+"$SCRIPT_DIR/install-rexurrect-launch.sh"
+# A fresh setup may have just created ~/.local/bin/rex in the child installer.
+PATH="$PATH:$HOME/.local/bin"
+export PATH
+if command -v rex >/dev/null 2>&1; then
+	"$SCRIPT_DIR/setup-rexurrect.sh"
+else
+	warn 'Rex CLI not found; skipping rexurrect plugin setup'
+fi
 
 # Install Claude Code plugin marketplaces and plugins.
 # `claude plugin` writes to $CLAUDE_CONFIG_DIR/plugins/, so each variant needs its own pass.

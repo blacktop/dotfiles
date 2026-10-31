@@ -281,7 +281,6 @@
     "command": "~/.claude/statusline.sh"
   },
   "enabledPlugins": {
-    "rexurrect@rexurrect": true,
     "codex@openai-codex": true,
     "rust-analyzer-lsp@claude-plugins-official": true,
     "gopls-lsp@claude-plugins-official": true,

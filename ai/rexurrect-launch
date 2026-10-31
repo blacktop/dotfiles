@@ -1,0 +1,131 @@
+#!/bin/sh
+# rexurrect-launch HOST COMMAND [ARGUMENTS...]
+#
+# Runs codex, claude, or omp (HOST) under the command name you typed (COMMAND)
+# so the rexurrect plugin can register the conversation against this Rex pane
+# and clear it again when the agent exits. The behaviour is documented in the
+# plugin README; the summary is: ownership markers RR_HOST, RR_HARNESS, and the
+# launcher's pid RR_LAUNCHER_PID go to the agent, nested or foreign launches
+# get blank markers, Codex runs with --no-daemon inside Rex, and the pane's
+# receipt is cleared after exit.
+set -eu
+
+rr_usage() {
+	printf 'usage: rexurrect-launch codex|claude|omp COMMAND [ARGUMENTS...]\n' >&2
+	exit 2
+}
+
+[ "$#" -ge 2 ] || rr_usage
+rr_host=$1
+rr_command=$2
+shift 2
+case "$rr_host" in
+codex) rr_agent=${REXURRECT_CODEX:-codex} ;;
+claude) rr_agent=${REXURRECT_CLAUDE:-claude} ;;
+omp) rr_agent=${REXURRECT_OMP:-omp} ;;
+*) rr_usage ;;
+esac
+[ -n "$rr_command" ] || rr_usage
+
+# The first non-option argument, skipping Codex global options that take a
+# value. Only daemon-facing subcommands matter here, so unknown options are
+# treated as flags without values.
+rr_subcommand() {
+	while [ "$#" -gt 0 ]; do
+		case "$1" in
+		--) return 0 ;;
+		-c | --config | --enable | --disable | --remote | --remote-auth-token-env | -i | --image | \
+			-m | --model | --local-provider | -p | --profile | -s | --sandbox | -C | --cd | --add-dir | \
+			-a | --ask-for-approval)
+			[ "$#" -ge 2 ] || return 0
+			shift 2
+			;;
+		-*) shift ;;
+		*)
+			printf '%s' "$1"
+			return 0
+			;;
+		esac
+	done
+}
+
+# Any preset marker means a launcher or an agent session is above us;
+# Claude and Codex tool shells carry CLAUDECODE or CODEX_THREAD_ID even when the
+# markers were filtered out. Those launches, launches outside a Rex pane, and
+# the Codex subcommands that exist to talk to the shared daemon run plainly
+# with blank markers, so hooks leave the enclosing pane's receipt alone.
+rr_plain=0
+[ -z "${RR_HARNESS+set}${RR_HOST+set}${RR_LAUNCHER_PID+set}${CLAUDECODE:-}${CODEX_THREAD_ID:-}" ] || rr_plain=1
+[ -n "${REX_SESSION:-}" ] && [ -n "${REX_BLOCK:-}" ] || rr_plain=1
+if [ "$rr_host" = codex ]; then
+	case "$(rr_subcommand "$@")" in
+	agents | app-server | remote-control) rr_plain=1 ;;
+	esac
+fi
+if [ "$rr_plain" = 1 ]; then
+	export RR_HARNESS='' RR_HOST='' RR_LAUNCHER_PID=''
+	exec "$rr_agent" "$@"
+fi
+
+# Inside Rex, Codex must not attach to the shared app-server daemon: its hooks
+# would run with the daemon's environment and outlive this pane. An explicit
+# flag before "--" is respected; a literal one after "--" is an argument.
+if [ "$rr_host" = codex ]; then
+	rr_no_daemon=1
+	for rr_arg in "$@"; do
+		case "$rr_arg" in
+		--) break ;;
+		--no-daemon)
+			rr_no_daemon=0
+			break
+			;;
+		esac
+	done
+	[ "$rr_no_daemon" = 0 ] || set -- --no-daemon "$@"
+fi
+
+# Hook payloads omit the effort, and Claude's may omit the model, so record
+# the launch arguments as defaults. Claude uses --model/--effort; Codex uses
+# -m/--model and -c model_reasoning_effort=VALUE. The omp extension ignores both.
+rr_model=${RR_MODEL:-}
+rr_effort=${RR_EFFORT:-}
+rr_pending=
+for rr_arg in "$@"; do
+	case "$rr_pending" in
+	model) rr_model=$rr_arg ;;
+	effort) rr_effort=$rr_arg ;;
+	config)
+		case "$rr_arg" in
+		model_reasoning_effort=*)
+			rr_effort=${rr_arg#model_reasoning_effort=}
+			rr_effort=${rr_effort#\"}
+			rr_effort=${rr_effort%\"}
+			;;
+		esac
+		;;
+	esac
+	rr_pending=
+	case "$rr_arg" in
+	--) break ;;
+	--model=*) rr_model=${rr_arg#--model=} ;;
+	--effort=*) rr_effort=${rr_arg#--effort=} ;;
+	--model | -m) rr_pending=model ;;
+	--effort) rr_pending=effort ;;
+	--config | -c) rr_pending=config ;;
+	esac
+done
+
+rr_server=${REXURRECT_SERVER:-"unix://$HOME/Library/Application Support/rex/server.sock"}
+rr_state=${REXURRECT_STATE_DIR:-"$HOME/Library/Application Support/rexurrect"}
+rr_status=0
+RR_HOST=$rr_host RR_HARNESS=$rr_command RR_LAUNCHER_PID=$$ RR_MODEL=$rr_model RR_EFFORT=$rr_effort \
+	REXURRECT_SERVER=$rr_server REXURRECT_STATE_DIR=$rr_state \
+	"$rr_agent" "$@" || rr_status=$?
+
+# The SessionEnd hook is capped by its host; this second attempt waits the
+# normal lock time and only clears a receipt registered under this command.
+if command -v rexurrect >/dev/null 2>&1; then
+	rexurrect receipt clear --server "$rr_server" --state-dir "$rr_state" \
+		--session "$REX_SESSION" --block "$REX_BLOCK" --command "$rr_command" || exit $?
+fi
+exit "$rr_status"

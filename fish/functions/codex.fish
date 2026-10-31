@@ -5,6 +5,7 @@ function codex -w codex -d 'Codex CLI with Rex receipt ownership'
         case '*'
             set -fx RR_HARNESS ''
             set -fx RR_HOST ''
+            set -fx RR_LAUNCHER_PID ''
             command codex $argv
     end
 end

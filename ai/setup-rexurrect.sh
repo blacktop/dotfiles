@@ -2,13 +2,38 @@
 # Install the portable rexurrect plugin into each existing agent profile.
 # An optional destination root follows the other ai/sync-* scripts.
 set -eu
+script_dir=$(CDPATH='' cd -- "$(dirname "$0")" && pwd)
 destination_root=${1:-$HOME}
 plugin=rexurrect@rexurrect
 
-command -v jq >/dev/null 2>&1 || {
-	printf 'rexurrect plugin setup requires jq.\n' >&2
+die() {
+	printf 'rexurrect plugin setup: %s\n' "$*" >&2
 	exit 1
 }
+for binary in jq rex rexurrect; do
+	command -v "$binary" >/dev/null 2>&1 || die "requires $binary on PATH"
+done
+rex version >/dev/null
+rexurrect version >/dev/null
+set_help=$(rexurrect receipt set --help 2>&1)
+clear_help=$(rexurrect receipt clear --help 2>&1)
+for flag in host command call-timeout lock-timeout; do
+	printf '%s\n' "$set_help" | grep -Eq -- "(^|[[:space:]])--?$flag([[:space:]]|$)" ||
+		die "update rexurrect: receipt set lacks --$flag"
+done
+for flag in command call-timeout lock-timeout; do
+	printf '%s\n' "$clear_help" | grep -Eq -- "(^|[[:space:]])--?$flag([[:space:]]|$)" ||
+		die "update rexurrect: receipt clear lacks --$flag"
+done
+if command -v codex >/dev/null 2>&1; then
+	codex_help=$(codex --help)
+	printf '%s\n' "$codex_help" | grep -Eq -- '(^|[[:space:]])--no-daemon([[:space:]]|$)' ||
+		die 'update Codex: --no-daemon is required (CLI 0.163.0 or newer)'
+fi
+"$script_dir/install-rexurrect-launch.sh" "$destination_root"
+
+# Receipt format 2 requires the portable plugin released as 0.2.0.
+version_filter='def compatible: (.version // "0" | split(".") | map(tonumber? // 0)) >= [0,2,0];'
 
 for variant in claude claude-ddb claude-team; do
 	profile="$destination_root/.$variant"
@@ -30,11 +55,17 @@ for variant in claude claude-ddb claude-team; do
 		env CLAUDE_CONFIG_DIR="$profile" claude plugin install "$plugin" --scope user
 		installed=$(env CLAUDE_CONFIG_DIR="$profile" claude plugin list --json)
 	fi
+	if ! printf '%s' "$installed" | jq -e --arg plugin "$plugin" "$version_filter"'any(.[]; .id == $plugin and .scope == "user" and compatible)' >/dev/null; then
+		env CLAUDE_CONFIG_DIR="$profile" claude plugin marketplace update rexurrect
+		env CLAUDE_CONFIG_DIR="$profile" claude plugin update "$plugin" --scope user
+		installed=$(env CLAUDE_CONFIG_DIR="$profile" claude plugin list --json)
+	fi
 	if ! printf '%s' "$installed" | jq -e --arg plugin "$plugin" 'any(.[]; .id == $plugin and .scope == "user" and .enabled == true)' >/dev/null; then
 		env CLAUDE_CONFIG_DIR="$profile" claude plugin enable "$plugin" --scope user
 		installed=$(env CLAUDE_CONFIG_DIR="$profile" claude plugin list --json)
 	fi
-	printf '%s' "$installed" | jq -e --arg plugin "$plugin" 'any(.[]; .id == $plugin and .scope == "user" and .enabled == true)' >/dev/null
+	printf '%s' "$installed" | jq -e --arg plugin "$plugin" "$version_filter"'any(.[]; .id == $plugin and .scope == "user" and .enabled == true and compatible)' >/dev/null ||
+		die "$variant: compatible plugin 0.2.0 or newer is not enabled"
 	printf '%s: rexurrect plugin installed and enabled\n' "$variant"
 done
 
@@ -54,33 +85,19 @@ for variant in codex codex-team codex-api; do
 		env CODEX_HOME="$profile" codex plugin marketplace add blacktop/rexurrect --json
 	fi
 	installed=$(env CODEX_HOME="$profile" codex plugin list --marketplace rexurrect --json)
-	if ! printf '%s' "$installed" | jq -e --arg plugin "$plugin" 'any(.installed[]; .pluginId == $plugin and .enabled == true)' >/dev/null; then
+	if ! printf '%s' "$installed" | jq -e --arg plugin "$plugin" 'any(.installed[]; .pluginId == $plugin)' >/dev/null; then
 		env CODEX_HOME="$profile" codex plugin add "$plugin" --json
 		installed=$(env CODEX_HOME="$profile" codex plugin list --marketplace rexurrect --json)
 	fi
-	printf '%s' "$installed" | jq -e --arg plugin "$plugin" 'any(.installed[]; .pluginId == $plugin and .enabled == true)' >/dev/null
-	printf '%s: rexurrect plugin installed and enabled\n' "$variant"
-done
-
-# ai/setup.sh can run without a full Fish setup. Keep its new autoload helpers
-# available, while preserving helpers with custom executable selection.
-function_source=$(CDPATH='' cd -- "$(dirname "$0")/../fish/functions" && pwd)
-function_destination="$destination_root/.config/fish/functions"
-mkdir -p "$function_destination"
-for name in _rexurrect_codex.fish _rexurrect_claude.fish; do
-	source="$function_source/$name"
-	target="$function_destination/$name"
-	if [ -L "$target" ]; then
-		[ "$(readlink "$target")" = "$source" ] || {
-			printf 'Kept foreign Fish helper link: %s\n' "$target" >&2
-			exit 1
-		}
-	elif [ -e "$target" ]; then
-		cmp -s "$source" "$target" || {
-			printf 'Fish helper differs from the packaged version; review it before replacing it: %s\n' "$target" >&2
-			exit 1
-		}
-	else
-		ln -s "$source" "$target"
+	if ! printf '%s' "$installed" | jq -e --arg plugin "$plugin" "$version_filter"'any(.installed[]; .pluginId == $plugin and compatible)' >/dev/null; then
+		env CODEX_HOME="$profile" codex plugin marketplace upgrade rexurrect --json
+		env CODEX_HOME="$profile" codex plugin add "$plugin" --json
+		installed=$(env CODEX_HOME="$profile" codex plugin list --marketplace rexurrect --json)
+	elif ! printf '%s' "$installed" | jq -e --arg plugin "$plugin" 'any(.installed[]; .pluginId == $plugin and .enabled == true)' >/dev/null; then
+		env CODEX_HOME="$profile" codex plugin add "$plugin" --json
+		installed=$(env CODEX_HOME="$profile" codex plugin list --marketplace rexurrect --json)
 	fi
+	printf '%s' "$installed" | jq -e --arg plugin "$plugin" "$version_filter"'any(.installed[]; .pluginId == $plugin and .enabled == true and compatible)' >/dev/null ||
+		die "$variant: compatible plugin 0.2.0 or newer is not enabled"
+	printf '%s: rexurrect plugin installed and enabled\n' "$variant"
 done

@@ -30,6 +30,7 @@ function claude -w claude -d 'Claude Code with its own GitHub token for sandboxe
     else
         set -fx RR_HARNESS ''
         set -fx RR_HOST ''
+        set -fx RR_LAUNCHER_PID ''
         command claude $argv
     end
 end

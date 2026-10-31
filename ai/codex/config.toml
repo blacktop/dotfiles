@@ -308,9 +308,6 @@ url = "https://mcp.exa.ai/mcp"
 [plugins."github@openai-curated"]
 enabled = true
 
-[plugins."rexurrect@rexurrect"]
-enabled = true
-
 [plugins."build-ios-apps@openai-curated"]
 enabled = true
 

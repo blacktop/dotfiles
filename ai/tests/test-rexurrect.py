@@ -10,7 +10,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 FISH = shutil.which("fish")
-LAUNCHER = shutil.which("rexurrect-launch")
 UUID = "01234567-89ab-4cde-8fab-0123456789ab"
 
 STUB = r"""#!/usr/bin/python3
@@ -29,6 +28,7 @@ if name in ("claude", "codex"):
     entry["route"] = os.environ.get("CLAUDE_CONFIG_DIR" if name == "claude" else "CODEX_HOME", "")
     entry["harness"] = os.environ.get("RR_HARNESS", "")
     entry["host"] = os.environ.get("RR_HOST", "")
+    entry["launcher_pid"] = bool(os.environ.get("RR_LAUNCHER_PID", ""))
     entry["model"] = os.environ.get("RR_MODEL", "")
     entry["effort"] = os.environ.get("RR_EFFORT", "")
 with open(os.environ["RR_TEST_LOG"], "a") as stream:
@@ -50,14 +50,19 @@ exit $status
 
 class RexReceiptTests(unittest.TestCase):
     def setUp(self):
-        if not FISH or not LAUNCHER:
-            self.skipTest("fish and rexurrect-launch must be installed")
+        self.assertIsNotNone(FISH, "fish must be installed")
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.scratch = Path(self.temp.name)
-        self.bin = self.scratch / "bin"
-        self.bin.mkdir()
-        (self.bin / "rexurrect-launch").symlink_to(LAUNCHER)
+        result = subprocess.run(
+            ["sh", str(ROOT / "ai/install-rexurrect-launch.sh"), str(self.scratch)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.bin = self.scratch / ".local/bin"
+        self.assertTrue((self.bin / "rexurrect-launch").is_file())
         for name in ("security", "jq", "rexurrect", "claude", "codex"):
             binary = self.bin / name
             binary.write_text(STUB)
@@ -129,6 +134,7 @@ class RexReceiptTests(unittest.TestCase):
                         {
                             "program": "claude",
                             "host": "claude",
+                            "launcher_pid": True,
                             "args": args,
                             "route": route,
                             "harness": harness,
@@ -146,7 +152,10 @@ class RexReceiptTests(unittest.TestCase):
         ):
             for args, model in (
                 ([], ""),
-                (["resume", UUID, "-m", "astra-cyber-preview", "two words"], "astra-cyber-preview"),
+                (
+                    ["resume", UUID, "-m", "astra-cyber-preview", "two words"],
+                    "astra-cyber-preview",
+                ),
             ):
                 with self.subTest(harness=harness, args=args):
                     result, calls = self.launch(
@@ -159,6 +168,7 @@ class RexReceiptTests(unittest.TestCase):
                             {
                                 "program": "codex",
                                 "host": "codex",
+                                "launcher_pid": True,
                                 "args": ["--no-daemon", *args],
                                 "route": route,
                                 "harness": harness,
@@ -186,6 +196,7 @@ class RexReceiptTests(unittest.TestCase):
                     self.assertEqual(calls[0]["args"], ["two words"])
                     self.assertEqual(calls[0]["harness"], "")
                     self.assertEqual(calls[0]["host"], "")
+                    self.assertFalse(calls[0]["launcher_pid"])
 
     def test_manual_accounts_keep_their_route(self):
         for harness, changes, route in (
@@ -204,12 +215,21 @@ class RexReceiptTests(unittest.TestCase):
         ):
             with self.subTest(harness=harness):
                 result, calls = self.launch(
-                    harness, "--help", changes=changes | {"RR_HOST": "codex", "RR_HARNESS": "codex-team"}
+                    harness,
+                    "--help",
+                    changes=changes
+                    | {
+                        "RR_HOST": "codex",
+                        "RR_HARNESS": "codex-team",
+                        "RR_LAUNCHER_PID": "12345",
+                    },
                 )
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual(len(calls), 1)
                 self.assertEqual(calls[0]["route"], route)
                 self.assertEqual(calls[0]["harness"], "")
+                self.assertEqual(calls[0]["host"], "")
+                self.assertFalse(calls[0]["launcher_pid"])
 
     def test_cleanup_failure_and_missing_binary(self):
         for harness in ("claude", "codex-team"):
