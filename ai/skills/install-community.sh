@@ -38,6 +38,7 @@ install_skill https://github.com/jamesrochabrun/skills swiftui-animation
 install_skill https://github.com/existential-birds/beagle swiftui-code-review
 install_skill https://github.com/wshobson/agents mobile-ios-design
 # Design
+install_skill https://github.com/emilkowalski/skills apple-design
 # Keep the portable default for Codex; Claude also exposes its official plugin.
 install_skill https://github.com/anthropics/skills frontend-design
 install_skill https://github.com/leonxlnx/taste-skill
