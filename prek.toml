@@ -1,0 +1,6 @@
+[[repos]]
+repo = "local"
+hooks = [
+    { id = "ai-shell", name = "AI shellcheck and shfmt", entry = "sh -c 'shellcheck -x \"$@\" && shfmt -d \"$@\"' --", language = "system", files = "^ai/(setup\\.sh|prune-retired\\.sh|sync[^/]*\\.sh|hooks/[^/]*\\.sh|skills/install-community\\.sh|host-lockdown/[^/]*\\.sh|tests/[^/]*\\.sh)$" },
+    { id = "offline-checksums", name = "offline checksums", entry = "sh -c 'cd offline && shasum -a 256 *.sh *.conf | diff -u checksums.sha256 -'", language = "system", files = "^offline/.*\\.(sh|conf)$|^offline/checksums\\.sha256$", pass_filenames = false },
+]
