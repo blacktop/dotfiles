@@ -1,6 +1,7 @@
 """Check optional macOS setup failures without changing host settings."""
 
 import os
+import pty
 import shlex
 import subprocess
 import tempfile
@@ -293,6 +294,148 @@ printf 'status:%d changed:%d\\n' "$status" "$PREFERENCES_CHANGED"
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("status:77 changed:0", result.stdout)
+
+    def test_hardening_is_a_separate_dry_run(self):
+        env = os.environ.copy()
+        env["MACOS_SETUP_MODE"] = ""
+        for harden in (False, True):
+            with self.subTest(harden=harden):
+                args = ["/bin/bash", str(SETUP), "--all", "--dry-run"]
+                if harden:
+                    args.append("--harden")
+                result = subprocess.run(
+                    args,
+                    env=env,
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=15,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual("--setglobalstate on" in result.stdout, harden)
+                self.assertEqual("-screenLock immediate" in result.stdout, harden)
+                self.assertEqual("IncludeDevelopMenu" in result.stdout, not harden)
+                if harden:
+                    self.assertIn("--getstealthmode", result.stdout)
+                    self.assertIn("fdesetup status", result.stdout)
+                    self.assertNotIn("--setremotelogin", result.stdout)
+                    self.assertNotIn("QuarantineEvents", result.stdout)
+
+    def test_firewall_preserves_block_all_and_observes_failed_changes(self):
+        result = self.run_script(
+            """
+MODE=all
+FW_GLOBAL='Firewall is blocking all non-essential incoming connections. (State = 2)'
+FW_STEALTH='Firewall stealth mode is off'
+FW_READ_STATUS=0
+function /usr/libexec/ApplicationFirewall/socketfilterfw {
+    case "$1" in
+    --getglobalstate) printf '%s\\n' "$FW_GLOBAL"; return "$FW_READ_STATUS" ;;
+    --getstealthmode) printf '%s\\n' "$FW_STEALTH" ;;
+    --setglobalstate) FW_GLOBAL='Firewall is enabled. (State = 1)' ;;
+    --setstealthmode) FW_STEALTH='Firewall stealth mode is on' ;;
+    *) return 99 ;;
+    esac
+}
+sudo_run() {
+    printf '%s\\n' "$*" >> "$TEST_CALLS"
+    "$@"
+}
+run_section Firewall 'Test firewall' configure_firewall
+run_section Again 'Repeat firewall' configure_firewall
+FW_GLOBAL='Firewall is set to block all non-essential incoming connections. (State = 2)'
+run_section Older 'Older block-all status' configure_firewall
+FW_GLOBAL='Firewall is disabled. (State = 0)'
+run_section Disabled 'Known disabled state' configure_firewall
+FW_GLOBAL='Unfamiliar firewall state'
+run_section Unknown 'Unknown status' configure_firewall
+FW_GLOBAL='Firewall is enabled. (State = 1)'
+FW_READ_STATUS=71
+run_section Failed 'Failed read' configure_firewall
+FW_READ_STATUS=0
+FW_STEALTH='Firewall stealth mode is off'
+sudo_run() { return 0; }
+run_section Ineffective 'Unchanged firewall' configure_firewall
+printf 'counts:%d:%d:%d\\n' "$APPLIED_COUNT" "$SKIPPED_COUNT" "$INCOMPLETE_COUNT"
+"""
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            self.calls,
+            [
+                "/usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on",
+                "/usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on",
+            ],
+        )
+        self.assertIn("counts:4:0:3", result.stdout)
+        self.assertIn("Firewall stealth mode not verified", result.stderr)
+
+    def test_root_hardening_respects_existing_mode(self):
+        source = (SETUP.parent.parent / "setup.sh").read_text()
+        block = source.split(
+            "# Optional security settings, separate from the ordinary macOS preferences.\n",
+            1,
+        )[1].split("# Offline profile", 1)[0]
+        target = self.root / "macos/setup.sh"
+        target.parent.mkdir()
+        target.write_text('#!/bin/sh\nprintf "%s\\n" "$*" >> "$TEST_CALLS"\n')
+        target.chmod(0o755)
+        script = (
+            "set -e\nconfirm_step() { return 0; }\nDOTFILES_ROOT="
+            + shlex.quote(str(self.root))
+            + "\n"
+            + block
+        )
+        env = os.environ.copy()
+        env.update(MACOS_SETUP_MODE="all", TEST_CALLS=str(self.log))
+        master, slave = pty.openpty()
+        try:
+            result = subprocess.run(
+                ["/bin/bash", "-c", script],
+                env=env,
+                stdin=slave,
+                stdout=slave,
+                stderr=subprocess.PIPE,
+                check=False,
+                text=True,
+                timeout=15,
+            )
+        finally:
+            os.close(slave)
+            os.close(master)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.log.read_text().splitlines(), ["--harden"])
+
+    def test_unattended_screen_lock_never_prompts_for_password(self):
+        result = self.run_script(
+            """
+MODE=all
+function /usr/sbin/sysadminctl {
+    printf '%s\\n' "$*" >> "$TEST_CALLS"
+    [[ "$*" == '-screenLock status' ]] || return 99
+    printf '%s\\n' 'screenLock delay is 300 seconds'
+}
+run() { printf '%s\\n' "$*" >> "$TEST_CALLS"; }
+run_section Lock 'Screen lock' configure_screen_security
+printf 'incomplete:%d\\n' "$INCOMPLETE_COUNT"
+"""
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("incomplete:1", result.stdout)
+        self.assertIn("Immediately", result.stderr)
+        self.assertFalse(any("-password" in call for call in self.calls))
+
+    def test_failed_status_cannot_pass_from_its_output(self):
+        result = self.run_script(
+            """
+status_command() { printf '%s\\n' enabled; return 71; }
+check_security_setting Protection enabled 'Review manually.' status_command
+printf 'incomplete:%d\\n' "$SECTION_INCOMPLETE"
+"""
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("incomplete:1", result.stdout)
+        self.assertIn("Review manually", result.stderr)
 
     def test_unhandled_failure_still_stops_setup(self):
         result = self.run_script(

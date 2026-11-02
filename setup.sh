@@ -229,6 +229,19 @@ if confirm_step "Configure macOS defaults?" "SETUP_MACOS_DEFAULTS"; then
     fi
 fi
 
+# Optional security settings, separate from the ordinary macOS preferences.
+if confirm_step "Harden macOS security settings? Review firewall, screen lock, and updates." "SETUP_MACOS_HARDENING" false; then
+    if [[ -t 0 && -t 1 ]]; then
+        "$DOTFILES_ROOT/macos/setup.sh" --harden
+    else
+        "$DOTFILES_ROOT/macos/setup.sh" --harden --all
+    fi
+else
+    status=$?
+    ((status == 1)) || exit "$status"
+    info "Skipping macOS hardening (set SETUP_MACOS_HARDENING=yes to enable non-interactively)"
+fi
+
 # Offline profile
 if confirm_step "Apply offline firewall (Tailscale-only + update window)?" "SETUP_OFFLINE_FIREWALL"; then
     echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "Enabling offline pf profile")"

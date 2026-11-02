@@ -7,6 +7,7 @@ REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 TARGET_MACOS_MAJOR=26
 MODE="${MACOS_SETUP_MODE:-}"
 DRY_RUN=0
+HARDEN_ONLY=0
 SUDO_READY=0
 APPLIED_COUNT=0
 SKIPPED_COUNT=0
@@ -21,7 +22,7 @@ GUM="$(command -v gum || true)"
 
 usage() {
 	cat <<'EOF'
-Usage: macos/setup.sh [--all | --review] [--dry-run]
+Usage: macos/setup.sh [--harden] [--all | --review] [--dry-run]
                       [--list | --help | --version]
 
 Configure a personal Mac running macOS 26 Tahoe.
@@ -29,6 +30,7 @@ Configure a personal Mac running macOS 26 Tahoe.
 Modes:
   --all       Apply every section without per-section confirmation.
   --review    Ask before applying each section (requires Gum and a TTY).
+  --harden    Run only the optional security sections and protection checks.
 
 Options:
   --dry-run   Print commands without changing the Mac or requesting sudo.
@@ -38,6 +40,11 @@ Options:
 
 With no mode, an interactive Gum survey offers Apply all, Review each, or
 Cancel. For unattended use, pass --all or set MACOS_SETUP_MODE=all.
+Ordinary --all does not include hardening. Preview it with
+  bash macos/setup.sh --harden --all --dry-run
+Hardening may ask for your login password to set the screen-lock delay.
+FileVault, Gatekeeper, Lockdown Mode, and Recovery settings are checked or
+explained for manual review; existing sharing services remain configured.
 
 Interactive setup also offers to open Full Disk Access settings. Grant access
 to the terminal app running setup, then quit and reopen it. sudo cannot grant
@@ -58,6 +65,12 @@ Automatic software updates
 Terminal
 Touch ID for sudo
 Time Machine exclusions
+
+Optional --harden sections:
+Application firewall and stealth mode
+Immediate screen lock and safer file defaults
+Automatic software updates
+Core protection status and manual security review
 EOF
 }
 
@@ -411,6 +424,132 @@ configure_updates() {
 	defaults_write com.apple.commerce AutoUpdate -bool true
 }
 
+check_security_setting() {
+	local label=$1 expected=$2 remedy=$3 output
+	shift 3
+	if ((DRY_RUN)); then
+		print_command "$@"
+		return 0
+	fi
+	if output=$(LC_ALL=C "$@" 2>&1) && [[ ${output} == *"${expected}"* ]]; then
+		ok "${label}: ${output}"
+	else
+		warn "${label} not verified: ${output:-no status returned}. ${remedy}"
+		SECTION_INCOMPLETE=1
+	fi
+}
+
+firewall_state() {
+	local setting=$1 output
+	if ! output=$(LC_ALL=C /usr/libexec/ApplicationFirewall/socketfilterfw "--get${setting}" 2>&1); then
+		printf '%s\n' "${output}" >&2
+		return 1
+	fi
+	case "${setting}:${output}" in
+	globalstate:'Firewall is enabled. (State = 1)' | \
+		globalstate:'Firewall is blocking all non-essential incoming connections. (State = 2)' | \
+		globalstate:'Firewall is set to block all non-essential incoming connections. (State = 2)' | \
+		stealthmode:'Firewall stealth mode is on') printf 'on\n' ;;
+	globalstate:'Firewall is disabled. (State = 0)' | \
+		stealthmode:'Firewall stealth mode is off') printf 'off\n' ;;
+	*)
+		printf 'Unrecognized %s: %s\n' "${setting}" "${output}" >&2
+		return 1
+		;;
+	esac
+}
+
+enable_firewall_setting() {
+	local label=$1 setting=$2 state
+	local firewall=/usr/libexec/ApplicationFirewall/socketfilterfw
+	if ((DRY_RUN)); then
+		sudo_run "${firewall}" "--set${setting}" on
+		print_command "${firewall}" "--get${setting}"
+		return 0
+	fi
+	# Only change a recognized off state; preserve block-all and unknown states.
+	if ! state=$(firewall_state "${setting}" 2>&1); then
+		warn "${label} not verified: ${state}. Review System Settings > Network > Firewall."
+		SECTION_INCOMPLETE=1
+		return 0
+	fi
+	if [[ ${state} == off ]]; then
+		if ! sudo_run "${firewall}" "--set${setting}" on; then
+			warn "Could not enable ${label}. Review System Settings > Network > Firewall."
+			SECTION_INCOMPLETE=1
+			return 0
+		fi
+		state=$(firewall_state "${setting}" 2>&1) || state="unknown: ${state}"
+	fi
+	if [[ ${state} == on ]]; then
+		ok "${label}: enabled"
+	else
+		warn "${label} not verified: ${state}. Review System Settings > Network > Firewall."
+		SECTION_INCOMPLETE=1
+	fi
+}
+
+configure_firewall() {
+	enable_firewall_setting 'Application firewall' globalstate
+	enable_firewall_setting 'Firewall stealth mode' stealthmode
+}
+
+configure_screen_security() {
+	local screen_lock_status
+	if ((DRY_RUN)) || ! screen_lock_status=$(LC_ALL=C /usr/sbin/sysadminctl -screenLock status 2>&1) ||
+		[[ ${screen_lock_status} != *'screenLock delay is immediate'* ]]; then
+		if ((! DRY_RUN)) && [[ ! -t 0 || ! -t 1 ]]; then
+			warn 'Set System Settings > Lock Screen > Require password after screen saver begins or display is turned off to Immediately.'
+			SECTION_INCOMPLETE=1
+		elif ! run /usr/sbin/sysadminctl -screenLock immediate -password -; then
+			warn 'Could not set the screen-lock delay. Review System Settings > Lock Screen.'
+			SECTION_INCOMPLETE=1
+		fi
+	fi
+	check_security_setting 'Screen lock' 'screenLock delay is immediate' \
+		'Review System Settings > Lock Screen.' /usr/sbin/sysadminctl -screenLock status
+	defaults_write NSGlobalDomain AppleShowAllExtensions -bool true
+	defaults_write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
+	RESTART_FINDER=1
+}
+
+run_hardening() {
+	run_section \
+		'Application firewall' \
+		'Enable the application firewall and stealth mode; retain existing app exceptions and sharing services.' \
+		configure_firewall
+	run_section \
+		'Screen lock and files' \
+		'Require a password immediately, show file extensions, and save new documents locally by default.' \
+		configure_screen_security
+	run_section \
+		'Automatic software updates' \
+		'Enable automatic checks, downloads, macOS installs, security data, and App Store updates.' \
+		configure_updates
+
+	heading 'Core protection status'
+	SECTION_INCOMPLETE=0
+	check_security_setting Gatekeeper 'assessments enabled' \
+		'Review Privacy & Security > Allow applications from.' /usr/sbin/spctl --status
+	check_security_setting FileVault 'FileVault is On.' \
+		'Enable FileVault in Privacy & Security and store its recovery method safely.' /usr/bin/fdesetup status
+	check_security_setting 'System Integrity Protection' 'System Integrity Protection status: enabled.' \
+		"Review this Mac's security policy in macOS Recovery." /usr/bin/csrutil status
+	check_security_setting 'Authenticated root' 'Authenticated Root status: enabled.' \
+		"Review this Mac's security policy in macOS Recovery." /usr/bin/csrutil authenticated-root status
+	if ((SECTION_INCOMPLETE)); then
+		INCOMPLETE_COUNT=$((INCOMPLETE_COUNT + 1))
+	fi
+
+	heading 'Manual security review'
+	info 'Privacy & Security: consider Lockdown Mode; enable automatic Background Security Improvements.'
+	info 'Lock Screen: choose short display-off and screen-saver timeouts.'
+	info 'General > Sharing: disable services you do not use, including Remote Login, Screen Sharing, File Sharing, and Printer Sharing.'
+	info 'Network > Firewall > Options: review automatic signed-app exceptions; block all incoming connections only if this Mac does not need inbound services.'
+	info 'macOS Recovery: verify Full Security for the startup disk.'
+	info 'Broader, version-specific baselines: https://pages.nist.gov/macos_security/'
+}
+
 configure_terminal() {
 	local theme="${REPO_ROOT}/init/Nord.terminal"
 	app_defaults_write com.apple.Terminal StringEncodings -array 4 || return 0
@@ -505,6 +644,9 @@ finalize_preferences() {
 
 while (($#)); do
 	case "$1" in
+	--harden)
+		HARDEN_ONLY=1
+		;;
 	--all)
 		[[ -z "${MODE}" || "${MODE}" == all ]] || die '--all conflicts with --review or MACOS_SETUP_MODE'
 		MODE=all
@@ -555,6 +697,13 @@ fi
 heading "Setup macOS ${macos_version}"
 if ((DRY_RUN)); then
 	warn 'Dry run: commands will be printed but not executed'
+fi
+if ((HARDEN_ONLY)); then
+	run_hardening
+	finalize_preferences
+	heading 'macOS hardening finished'
+	printf 'Applied: %d  Skipped: %d  Incomplete: %d  Mode: %s\n' "${APPLIED_COUNT}" "${SKIPPED_COUNT}" "${INCOMPLETE_COUNT}" "${MODE}"
+	exit "$((INCOMPLETE_COUNT > 0))"
 fi
 preflight_full_disk_access "${requested_mode}"
 

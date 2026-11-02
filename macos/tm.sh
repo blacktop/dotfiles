@@ -42,6 +42,7 @@ exclusions=(
     "${HOME}/Library/pnpm/store"
     "${HOME}/go"
     "${APPLE_FIRMWARE_DIR:-${HOME}/Apple}"
+    "${HOME}/Documents/VMs"
     "${HOME}/Virtual Machines.localized"
     "${HOME}/.codex/worktrees"
     "${HOME}/.codex-team/worktrees"
