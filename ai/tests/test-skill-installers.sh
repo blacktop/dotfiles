@@ -41,7 +41,7 @@ CALL_LOG="$scratch/calls"
 export CALL_LOG
 
 DISABLE_TELEMETRY='' DO_NOT_TRACK='' sh "$root/ai/skills/install-community.sh" >"$scratch/success.out" 2>"$scratch/success.err"
-[ "$(wc -l <"$CALL_LOG" | tr -d ' ')" = 29 ]
+[ "$(wc -l <"$CALL_LOG" | tr -d ' ')" = 30 ]
 grep -Fqx -- '-y skills@1.7.0 add https://github.com/anthropics/skills --skill frontend-design --agent amp -g -y' "$CALL_LOG"
 grep -Fqx -- '-y skills@1.7.0 add https://github.com/anomalyco/opentui --skill opentui --agent amp -g -y' "$CALL_LOG"
 grep -Fqx -- '-y skills@1.7.0 add https://github.com/leonxlnx/taste-skill --agent amp -g -y' "$CALL_LOG"
