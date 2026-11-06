@@ -25,6 +25,7 @@ exclusions=(
     "${HOME}/.cache"
     "${HOME}/.cargo"
     "${HOME}/.codeql"
+    "$HOME/.copilot"
     "${HOME}/.cursor"
     "${HOME}/.diffusionbee"
     "${HOME}/.gradle"
