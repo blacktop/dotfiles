@@ -59,6 +59,14 @@ Shorter is not better if it is slower or less safe. Do not simplify away:
 
 A check is "defensive" only when you have shown no caller can produce the state it guards. At a trust boundary (user input, network, files, FFI, another process), keep it. If a removal would change performance characteristics or safety, leave it and mention it in the report.
 
+## Comments
+
+- Never add comments that explain the change, such as what was removed, renamed,
+  or done differently before. That belongs in the commit message or PR
+  description. Delete such comments if present.
+- Keep comments short and only for what the code cannot show, such as a hidden
+  constraint or a non-obvious reason. Do not explain self-explanatory code.
+
 ## Tests
 
 A test earns its place when it would fail for a bug a user would care about and no other test fails for the same bug. Everything else is code that slows the suite, breaks on refactors and gives false confidence. Read `tests.md` for what to delete, how to show a deletion is safe, and what never to remove.
