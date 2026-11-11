@@ -57,6 +57,20 @@
    when panic-strategy behavior matters because the Rust test harness does not
    honor `panic = "abort"`.
 
+## Skill Execution
+
+Run the in-scope commands prescribed by an invoked skill yourself. Existing
+task authorization covers its routine checks and guarded lifecycle steps.
+
+If a permitted command needs approval or encounters a sandbox restriction, use
+the tool's normal approval/escalation mechanism yourself. Ask for a missing
+decision only after the action is concrete and reviewable. Do not turn a skill
+example, approval requirement, or anticipated denial into a user-terminal task.
+Hand off execution only when a specific human interaction is required or an
+observed restriction has no permitted agent-side recovery. Report the exact
+command, error, and required user action. Preserve hard credential restrictions,
+ownership holds, signing requirements, and the skill's safety gates.
+
 ## Final Handoff
 
 Before finishing a task:

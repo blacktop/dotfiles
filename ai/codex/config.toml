@@ -35,7 +35,10 @@ fetches, reusable build caches, and Git staging, commits, local \
 branches and merges. Git may update the assigned checkout's Git directory and its \
 resolved common metadata directory. The PM may create worktrees, integrate reviewed \
 work, and remove clean integrated worktrees without force; workers checkpoint their \
-assigned branches. Do not require approval for each internal Git metadata file. \
+assigned branches. PM lifecycle work legitimately writes outside the PM's own checkout: \
+lane worktrees under ~/.local/share/tmux-pm/worktrees, and the shared Git metadata \
+(worktree registrations, refs, objects, tmux-pm lane records) of every repository the \
+PM was assigned, including through the installed tmux-pm worktree-lifecycle helper. Do not require approval for each internal Git metadata file. \
 Deny remote pushes, destructive resets or cleaning, forced worktree removal, forced \
 branch replacement/deletion, credential probing, edits to another worker's source \
 files, and force-adding ignored files. Do not bypass hooks or sandbox restrictions \
@@ -135,6 +138,17 @@ allow_local_binding = true
 "${HOME}/Library/Caches/kache/daemon.sock" = "allow"
 "${HOME}/Library/Application Support/rex/server.sock" = "allow"
 
+# Opt-in profile for a tmux-pm PM, which creates, checks and retires lanes under
+# the shared worktree root. Workers stay on dev so one lane cannot write another.
+# Start that session with: codex-pm, or codex -c 'default_permissions="pm"'.
+# Pass --add-dir <repo> for each additional repository the PM coordinates.
+[permissions.pm]
+description = "Development plus the tmux-pm lane worktree root"
+extends = "dev"
+
+[permissions.pm.filesystem]
+"~/.local/share/tmux-pm/worktrees" = "write"
+
 # Opt-in cloud administration profile. Network destinations and local sockets
 # are unrestricted here so SDKs, providers, emulators and tunnels work normally.
 # Other SSH keys and unrelated secret stores remain denied by dev.
@@ -158,6 +172,46 @@ allow_local_binding = true
 # Terraform/go-plugin binds random plugin* sockets in the native temp directory.
 # TCP binding permission alone does not allow AF_UNIX bind/connect on macOS.
 dangerously_allow_all_unix_sockets = true
+
+# Opt-in access for the existing Touch ID / Secure Enclave Git signer.
+# These exact names come from git/setup.sh; the broad ~/.ssh deny remains.
+# Administrator-managed deny_read requirements still take precedence.
+# TODO: Recheck future Codex releases for scoped Mach-lookup support for
+# com.apple.securityd.xpc. Codex 0.166 denies it to ssh-sk-helper, and an
+# equivalent user-terminal signing probe succeeds. If upstream adds support,
+# review the service-level access, retain the SSH/Keychain file denies and
+# Touch ID, and verify a harmless signing probe before enabling it here.
+[permissions.signing]
+description = "Development with the existing Touch ID Git signer"
+extends = "dev"
+
+[permissions.signing.filesystem]
+"~/.ssh/ssh-sign-sep.sh" = "read"
+"~/.ssh/id_ecdsa_sk_rk" = "read"
+"~/.ssh/id_ecdsa_sk_rk.pub" = "read"
+"~/.ssh/allowed_signers" = "read"
+
+# VM identities are documented in ida-mcp-rs/AGENTS.md. Resolve current guest
+# addresses with vmrun; do not widen this grant to ~/.ssh or all identity files.
+[permissions.vm-ssh]
+description = "Development, Touch ID Git signing, and the Linux/Windows test VMs"
+extends = "signing"
+
+[permissions.vm-ssh.filesystem]
+"~/.ssh/id_linux_vm" = "read"
+"~/.ssh/win_vm" = "read"
+
+# Permission profiles have one parent. Keep this duplicate list explicit so
+# cloud work can sign without receiving the unrelated VM identity grants.
+[permissions.gcloud-signing]
+description = "Cloud administration with the existing Touch ID Git signer"
+extends = "gcloud"
+
+[permissions.gcloud-signing.filesystem]
+"~/.ssh/ssh-sign-sep.sh" = "read"
+"~/.ssh/id_ecdsa_sk_rk" = "read"
+"~/.ssh/id_ecdsa_sk_rk.pub" = "read"
+"~/.ssh/allowed_signers" = "read"
 
 # ── Shell environment ────────────────────────────────────────────────────────
 [shell_environment_policy]
@@ -288,8 +342,9 @@ env_vars = ["CONTEXT7_API_KEY"]
 
 [mcp_servers.mcp_tts]
 command = "/opt/homebrew/bin/mcp-tts"
-args = ["--verbose"]
-env_vars = ["ELEVENLABS_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"]
+args = ["--verbose", "--rex-tab-label"]
+# Rex activity belongs to the calling terminal in every Codex account.
+env_vars = ["ELEVENLABS_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY", "REX_SESSION", "REX_BLOCK", "REX_SERVER"]
 
 # Local speech alerts must also work in unattended sessions that cannot prompt.
 [mcp_servers.mcp_tts.tools.say_tts]

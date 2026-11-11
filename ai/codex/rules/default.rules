@@ -127,6 +127,65 @@ prefix_rule(
 # ssh with a remote command. Cargo builds stay sandboxed.
 prefix_rule(pattern = ["gcloud"], decision = "allow")
 
+# Public entry points of the installed skills. These command approvals preserve
+# the selected sandbox, credential restrictions, and each skill's authority and
+# account gates. Keep exact paths and interpreter forms: no directory glob,
+# arbitrary Python/shell command, internal lane helper, or generic guarded-job
+# runner receives host approval here. That runner's payload needs its own grant.
+skill_root = "/Users/blacktop/.agents/skills/"
+skill_shell_entrypoints = [
+    skill_root + "design-director/scripts/seed.sh",
+    skill_root + "design-director/scripts/screenshot.sh",
+    skill_root + "tmux-pm/scripts/checkup-timer.sh",
+    skill_root + "tmux-pm/scripts/dispatch-worker.sh",
+    skill_root + "tmux-pm/scripts/launch-pane.sh",
+    skill_root + "tmux-pm/scripts/submit-prompt.sh",
+    skill_root + "tmux-pm/scripts/validate-directive.sh",
+    skill_root + "tmux-pm/scripts/worker-gate.sh",
+    skill_root + "tmux-pm/scripts/worktree-lifecycle.sh",
+    skill_root + "tmux-pm/scripts/test-tmux-pm.sh",
+]
+skill_python_entrypoints = [
+    skill_root + "design-director/scripts/check-assessment.py",
+    skill_root + "high-tide/scripts/context_percent.py",
+    skill_root + "rust-profiling/scripts/analyze_profile.py",
+    skill_root + "save-session/scripts/save_session.py",
+    skill_root + "swiftui-expert-skill/scripts/analyze_trace.py",
+    skill_root + "swiftui-expert-skill/scripts/record_trace.py",
+    skill_root + "tmux-pm/scripts/test-integration.py",
+    skill_root + "tmux-pm/scripts/test-guarded-jobs.py",
+    skill_root + ".system/imagegen/scripts/image_gen.py",
+    skill_root + ".system/imagegen/scripts/remove_chroma_key.py",
+    skill_root + ".system/skill-creator/scripts/generate_openai_yaml.py",
+    skill_root + ".system/skill-creator/scripts/init_skill.py",
+    skill_root + ".system/skill-creator/scripts/quick_validate.py",
+    skill_root + ".system/skill-installer/scripts/install-skill-from-github.py",
+    skill_root + ".system/skill-installer/scripts/list-skills.py",
+]
+skill_node_entrypoints = [
+    skill_root + "design-taste-frontend/scripts/assets.mjs",
+    skill_root + "design-taste-frontend/scripts/draw.mjs",
+    skill_root + "design-taste-frontend/scripts/inspect.mjs",
+    skill_root + "design-taste-frontend/scripts/lint.mjs",
+    skill_root + ".system/openai-docs/scripts/fetch-codex-manual.mjs",
+]
+prefix_rule(
+    pattern = [skill_shell_entrypoints + skill_python_entrypoints + skill_node_entrypoints],
+    decision = "allow",
+)
+prefix_rule(
+    pattern = [["sh", "/bin/sh", "bash", "/bin/bash", "/opt/homebrew/bin/bash"], skill_shell_entrypoints],
+    decision = "allow",
+)
+prefix_rule(
+    pattern = [["python3", "/usr/bin/python3", "/opt/homebrew/bin/python3"], skill_python_entrypoints],
+    decision = "allow",
+)
+prefix_rule(
+    pattern = [["node", "/usr/bin/node", "/opt/homebrew/bin/node"], skill_node_entrypoints],
+    decision = "allow",
+)
+
 # Local Git metadata is writable. Retain these named escalation allowances for
 # platform integrations that still need them. The list is not `git` alone:
 # global options (`-c alias.x=!cmd`,
