@@ -9,17 +9,40 @@ set -o errexit -o nounset
 KEYCHAIN_SERVICE="dev.blacktop.ai-mcp-api-key"
 LEGACY_KEYCHAIN_SERVICE="mcp-api-key"
 
-# Read a key from macOS Keychain (empty string if not found)
+# Retry inaccessible Keychain operations once after a user-approved unlock.
+keychain_command() {
+    local status
+    if security "$@" 2>/dev/null; then return 0; else status=$?; fi
+    # errSecItemNotFound (-25300) becomes exit status 44.
+    if [ "$1" = find-generic-password ] && [ "$status" -eq 44 ]; then return 44; fi
+
+    warn "macOS Keychain access failed (security exit $status)." >&2
+    if [ -t 0 ] && [ -t 2 ] && gum confirm "Unlock the default keychain and retry?" >&2; then
+        # security prompts for the password itself; setup never handles it.
+        if security unlock-keychain >&2; then
+            if security "$@" 2>/dev/null; then return 0; else status=$?; fi
+            if [ "$1" = find-generic-password ] && [ "$status" -eq 44 ]; then return 44; fi
+        fi
+    fi
+    warn "Run 'security unlock-keychain' in your Mac's terminal, then rerun 'bash ai/mcp-setup.sh'." >&2
+    warn "If access still fails over SSH, run setup from the Mac's logged-in desktop session." >&2
+    return 1
+}
+
+# Read a key from the specified service; only a missing item is an empty result.
 keychain_get() {
-    security find-generic-password -a "$1" -s "$KEYCHAIN_SERVICE" -w 2>/dev/null ||
-        security find-generic-password -a "$1" -s "$LEGACY_KEYCHAIN_SERVICE" -w 2>/dev/null ||
-        true
+    local status
+    if keychain_command find-generic-password -a "$1" -s "$2" -w; then
+        return 0
+    else
+        status=$?
+    fi
+    [ "$status" -eq 44 ]
 }
 
 # Store a key in macOS Keychain (update if exists)
 keychain_set() {
-    security delete-generic-password -a "$1" -s "$KEYCHAIN_SERVICE" 2>/dev/null || true
-    security add-generic-password -a "$1" -s "$KEYCHAIN_SERVICE" -w "$2"
+    keychain_command add-generic-password -U -a "$1" -s "$KEYCHAIN_SERVICE" -w "$2"
 }
 
 # Resolve an API key from (in order): $<NAME>_API_KEY env var, macOS Keychain, gum prompt.
@@ -31,19 +54,28 @@ prompt_key() {
     env_name="$(printf '%s' "$name" | tr '[:lower:]' '[:upper:]')_API_KEY"
     local env_value=""
     env_value="${!env_name:-}"
+    local existing
+    existing=$(keychain_get "$name" "$KEYCHAIN_SERVICE") || return 1
 
     if [ -n "$env_value" ]; then
-        keychain_set "$name" "$env_value"
+        if [ "$env_value" != "$existing" ]; then
+            keychain_set "$name" "$env_value" || return 1
+        fi
         ok "$label from \$$env_name (synced to Keychain)"
         printf -v "KEY_$name" '%s' "$env_value"
         return 0
     fi
 
-    local existing
-    existing=$(keychain_get "$name")
     if [ -n "$existing" ]; then
-        keychain_set "$name" "$existing"
         ok "$label already in Keychain"
+        printf -v "KEY_$name" '%s' "$existing"
+        return 0
+    fi
+
+    existing=$(keychain_get "$name" "$LEGACY_KEYCHAIN_SERVICE") || return 1
+    if [ -n "$existing" ]; then
+        keychain_set "$name" "$existing" || return 1
+        ok "$label migrated to Keychain"
         printf -v "KEY_$name" '%s' "$existing"
         return 0
     fi
@@ -56,7 +88,7 @@ prompt_key() {
         return 0
     fi
 
-    keychain_set "$name" "$value"
+    keychain_set "$name" "$value" || return 1
     ok "$label stored in Keychain"
     printf -v "KEY_$name" '%s' "$value"
 }
