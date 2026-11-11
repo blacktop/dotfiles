@@ -6,6 +6,6 @@ function codex -w codex -d 'Codex CLI with Rex receipt ownership'
             set -fx RR_HARNESS ''
             set -fx RR_HOST ''
             set -fx RR_LAUNCHER_PID ''
-            command codex $argv
+            rexurrect-launch codex codex $argv
     end
 end
