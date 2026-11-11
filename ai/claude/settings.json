@@ -177,6 +177,8 @@
         "~/.bun/install/cache",
         "~/.local/share/uv",
         "~/Library/pnpm",
+        "~/Library/Caches/node-gyp",
+        "~/Library/Caches/corepack",
         "~/Library/Caches/org.swift.swiftpm"
       ],
       "denyWrite": [
