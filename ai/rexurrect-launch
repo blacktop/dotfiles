@@ -49,6 +49,42 @@ rr_subcommand() {
 	done
 }
 
+# A linked worktree keeps its index, refs and objects in the repository's
+# shared Git directory, outside the checkout Codex may write. Grant both real
+# directories so a session started in any worktree can stage and commit.
+# Management subcommands do not take --add-dir and open no workspace.
+if [ "$rr_host" = codex ]; then
+	case "$(rr_subcommand "$@")" in
+	agents | login | logout | mcp | plugin | app-server | remote-control | app | completion | \
+		update | doctor | sandbox | debug | apply | queue | archive | delete | migrate-rollouts | \
+		migrate-nfs-db | unarchive | cloud | exec-server | features | help) ;;
+	*)
+		# Codex opens the directory -C/--cd names, which need not be this one.
+		rr_root=.
+		rr_pending=
+		for rr_arg in "$@"; do
+			[ -z "$rr_pending" ] || rr_root=$rr_arg
+			rr_pending=
+			case "$rr_arg" in
+			--) break ;;
+			-C | --cd) rr_pending=1 ;;
+			--cd=*) rr_root=${rr_arg#--cd=} ;;
+			esac
+		done
+		rr_git_common=$(git -C "$rr_root" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) ||
+			rr_git_common=
+		rr_git_dir=$(git -C "$rr_root" rev-parse --absolute-git-dir 2>/dev/null) || rr_git_dir=
+		if [ -d "$rr_git_common" ] && [ -d "$rr_git_dir" ]; then
+			rr_git_common=$(CDPATH='' cd -- "$rr_git_common" && pwd -P)
+			rr_git_dir=$(CDPATH='' cd -- "$rr_git_dir" && pwd -P)
+			if [ "$rr_git_dir" != "$rr_git_common" ]; then
+				set -- --add-dir "$rr_git_common" --add-dir "$rr_git_dir" "$@"
+			fi
+		fi
+		;;
+	esac
+fi
+
 # Any preset marker means a launcher or an agent session is above us;
 # Claude and Codex tool shells carry CLAUDECODE or CODEX_THREAD_ID even when the
 # markers were filtered out. Those launches, launches outside a Rex pane, and
