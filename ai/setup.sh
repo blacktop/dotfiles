@@ -126,35 +126,16 @@ fi
 # Create config directories (including unified ~/.agents for hooks and skills)
 mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.claude-ddb" "$HOME/.codex" "$HOME/.codex-team" "$HOME/.codex-api" "$HOME/.agents/hooks" "$HOME/.agents/skills"
 
-echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync shared AI hooks..."
-rsync -a --exclude='.DS_Store' --exclude='__pycache__' "$SCRIPT_DIR/hooks/" "$HOME/.agents/hooks/"
-# rsync never deletes, so drop what this repository installed and later retired.
-"$SCRIPT_DIR/prune-retired.sh" "$SCRIPT_DIR/hooks" "$HOME/.agents/hooks"
+# Per-host, opt-in and recorded in a local marker that sync.sh honours.
+if [ -e "$HOME/.agents/yolo" ]; then
+	warn "YOLO mode is on for this host; remove ~/.agents/yolo and re-run to harden"
+elif [ -t 0 ] && gum confirm --default=false \
+	"Run agents on this host in YOLO mode? This turns OFF the sandbox and approval prompts and allows git push. Guards stay for rm, sudo, disk tools, force-push, publishing and secret stores."; then
+	: >"$HOME/.agents/yolo"
+fi
 
-# Sync claude + claude-team + claude-ddb from the same source tree.
-for variant in claude claude-team claude-ddb; do
-	msg "Sync $variant config..."
-	rsync -a --exclude='.DS_Store' --exclude='skills' --exclude='settings.json' --exclude='CLAUDE.md' \
-		"$SCRIPT_DIR/claude/" "$HOME/.$variant/"
-	"$SCRIPT_DIR/prune-retired.sh" "$SCRIPT_DIR/claude" "$HOME/.$variant"
-done
-# settings.json is merged, not copied: repository keys win, profile-only keys survive.
-"$SCRIPT_DIR/sync-claude-settings.sh"
-
-# Sync the three Codex profiles from the same source tree.
-for variant in codex codex-team codex-api; do
-	msg "Sync $variant config..."
-	rsync -a --exclude='.DS_Store' --exclude='skills' --exclude='config.toml' --exclude='AGENTS.md' \
-		"$SCRIPT_DIR/codex/" "$HOME/.$variant/"
-	# This also drops the old per-profile check-git-push.py; the Codex hook now
-	# uses the shared copy in ~/.agents/hooks.
-	"$SCRIPT_DIR/prune-retired.sh" "$SCRIPT_DIR/codex" "$HOME/.$variant"
-done
-# config.toml is rebuilt from the template plus the state Codex itself writes.
-"$SCRIPT_DIR/sync-codex-config.sh"
-
-# Compose public instructions with optional private instructions, once per sync.
-"$SCRIPT_DIR/sync-instructions.sh"
+# Hooks, settings, Codex config and instructions.
+"$SCRIPT_DIR/sync.sh"
 
 echo "$(gum style --bold --foreground "#BE05D0" "  -") Sync skills..."
 "$SCRIPT_DIR/sync-skills.sh"
@@ -219,7 +200,12 @@ fi
 "$SCRIPT_DIR/mcp-setup.sh"
 
 # Per-host, opt-in: root-owned policy files that no profile or agent can override.
-"$SCRIPT_DIR/host-lockdown/install.sh"
+# They forbid Claude's bypass mode, so a YOLO host must not have them.
+if [ ! -e "$HOME/.agents/yolo" ]; then
+	"$SCRIPT_DIR/host-lockdown/install.sh"
+elif [ -e "/Library/Application Support/ClaudeCode/managed-settings.json" ]; then
+	warn 'Host lockdown still blocks YOLO mode for Claude. Undo with: sudo rm "/Library/Application Support/ClaudeCode/managed-settings.json"'
+fi
 
 echo ""
 echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "AI agents ready")"

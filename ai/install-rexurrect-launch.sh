@@ -1,5 +1,6 @@
 #!/bin/sh
-# Install the unmodified launcher shipped by rexurrect v0.3.3 (ca7cbd84).
+# Install the launcher from rexurrect v0.3.3 (ca7cbd84) plus the Codex grant for a
+# linked worktree's Git directories.
 set -eu
 script_dir=$(CDPATH='' cd -- "$(dirname "$0")" && pwd)
 destination_root=${1:-$HOME}
@@ -17,6 +18,8 @@ if ! { [ -x "$target" ] && cmp -s "$source" "$target"; }; then
 		case "$installed_hash" in
 		# Unmodified upstream launcher from v0.2.0-v0.3.1.
 		6c166c1f5e6476b9022d136be38eeb94c27611c860918b0851170265599d591f) ;;
+		# Unmodified upstream launcher from v0.3.3, which this repository installed.
+		2d1f6dbc5f84b483870b3d387143c18fb5fb87959e728bdd598aeb7f232cbb11) ;;
 		*)
 			printf 'Kept custom rexurrect-launch file: %s\n' "$target" >&2
 			exit 1

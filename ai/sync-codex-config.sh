@@ -6,8 +6,8 @@ set -eu
 script_dir=$(CDPATH='' cd -- "$(dirname "$0")" && pwd)
 destination_root=${1:-$HOME}
 template="$script_dir/codex/config.toml"
-# Top-level keys the CLI writes when you pick a model.
-kept_keys='^(model|review_model|model_reasoning_effort|service_tier)[[:space:]]*='
+# Profile-specific model choices and context limits; explicit template values win.
+kept_keys='^(model|review_model|model_reasoning_effort|model_context_window|model_auto_compact_token_limit|service_tier)[[:space:]]*='
 # Tables Codex writes; a header the template also defines is never kept.
 kept_tables='^\[+(projects\.|plugins\.|marketplaces\.|mcp_servers\.|notice[].]|desktop[].]|hooks\.state\.")'
 # Tables the template owns or retired, dropped even though Codex wrote them: MCP
@@ -26,11 +26,30 @@ for profile in codex codex-team codex-api; do
 	installed="$directory/config.toml"
 	work=$(mktemp -d "$directory/.config.XXXXXX")
 	sed -e "s|\${HOME}|$HOME|g" -e "s|\${CODEX_HOME}|$directory|g" "$template" >"$work/template"
+	# A host that opted in through ai/setup.sh runs Codex unrestricted: no sandbox
+	# and no approvals. The command hook stays and applies its YOLO checks there.
+	if [ -e "$destination_root/.agents/yolo" ]; then
+		awk '
+			/^default_permissions[[:space:]]*=/ { $0 = "default_permissions = \":danger-full-access\"" }
+			/^approval_policy[[:space:]]*=/ { $0 = "approval_policy = \"never\"" }
+			{ print }
+		' "$work/template" >"$work/yolo"
+		mv -f "$work/yolo" "$work/template"
+	fi
 	[ -f "$installed" ] || : >"$work/installed"
 	[ ! -f "$installed" ] || cp "$installed" "$work/installed"
 	{
 		awk '/^\[/ { exit } { print }' "$work/template"
-		awk '/^\[/ { exit } { print }' "$work/installed" | grep -E "$kept_keys" || true
+		KEPT_KEYS="$kept_keys" awk '
+			function key(line) { sub(/[[:space:]]*=.*/, "", line); return line }
+			NR == FNR {
+				if ($0 ~ /^\[/) in_table = 1
+				if (!in_table && $0 ~ ENVIRON["KEPT_KEYS"]) owned[key($0)] = 1
+				next
+			}
+			/^\[/ { exit }
+			$0 ~ ENVIRON["KEPT_KEYS"] && !(key($0) in owned) { print }
+		' "$work/template" "$work/installed"
 		printf '\n'
 		awk 'found || /^\[/ { found = 1; print }' "$work/template"
 		printf '\n# ── Kept from the installed file ─────────────────────────────────────────────\n'
