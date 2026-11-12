@@ -175,5 +175,16 @@ if status is-interactive; and command -q brew
     set -l rr_bin (command brew --prefix)/bin/rexurrect
     if test -x "$rr_bin"
         "$rr_bin" hook fish | source
+        # rexurrect 0.3.4 hands rm an unmatched claimed.* glob on exit. Fish then
+        # aborts the whole command, prints an error and leaves the pane's delivery
+        # files behind. set tolerates an unmatched glob. Remove once fixed upstream.
+        if functions -q _rr_deliver_exit
+            function _rr_deliver_exit --on-event fish_exit
+                set -l files "$_rr_deliver_dir"/{ready,request,ack} "$_rr_deliver_dir"/claimed.*
+                command rm -f -- $files 2>/dev/null
+                command rmdir -- "$_rr_deliver_dir" 2>/dev/null
+                return 0
+            end
+        end
     end
 end
