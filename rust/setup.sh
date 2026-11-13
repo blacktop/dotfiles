@@ -27,6 +27,24 @@ brew install kunobi-ninja/kunobi/kache
 # sandboxed kache command starts a daemon confined to that agent's sandbox.
 kache init --yes
 
+# Dependency cooldown: resolution skips crate versions published in the last
+# three days, when most malicious releases are caught. An existing value is kept.
+set_publish_cooldown() {
+    config=$1
+    setting='global-min-publish-age = "3 days"'
+    if grep -q '^global-min-publish-age' "$config" 2>/dev/null; then
+        return 0
+    fi
+    if grep -q '^\[registry\]' "$config" 2>/dev/null; then
+        awk -v setting="$setting" '{ print } /^\[registry\]/ { print setting }' \
+            "$config" >"$config.tmp"
+        mv "$config.tmp" "$config"
+    else
+        printf '\n[registry]\n%s\n' "$setting" >>"$config"
+    fi
+}
+set_publish_cooldown "${CARGO_HOME:-$HOME/.cargo}/config.toml"
+
 # Optional scheduled cleanup of large, inactive Rust target directories.
 should_install_cargo_cleaner() {
     case "$(printf '%s' "${SETUP_CARGO_CLEANER:-}" | tr '[:upper:]' '[:lower:]')" in

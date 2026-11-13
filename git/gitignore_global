@@ -68,3 +68,5 @@ CONTINUITY.md
 
 # ── Reference codebases ─────────────────────────────────────────────────────
 OPC/
+
+**/.claude/settings.local.json

@@ -254,7 +254,6 @@ log_user_prompt = false
 apps = false                   # No connected ChatGPT Apps
 computer_use = false           # Never launch the Computer Use.app helper (macOS TCC prompts)
 memories = true                # Persistent agent memories
-multi_agent = false            # Opt in per project; child hosts multiply session cost
 network_proxy = false          # Host firewall handles network policy
 prevent_idle_sleep = true      # Keep Mac awake during turns
 
@@ -262,6 +261,7 @@ prevent_idle_sleep = true      # Keep Mac awake during turns
 # Agent roles are auto-discovered from $CODEX_HOME/agents/*.toml — define each role
 # as a standalone file with a `name` field; do not duplicate them here.
 [agents]
+enabled = false                # Opt in per project; child hosts multiply session cost
 max_concurrent_threads_per_session = 12
 max_depth = 2
 

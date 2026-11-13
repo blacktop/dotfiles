@@ -225,9 +225,38 @@ Colocated `*.test.ts` files. Supply chain: `pnpm audit --audit-level=moderate` b
 - `thiserror` for libraries, `anyhow` for applications
 - `tracing` for logging (`error!`/`warn!`/`info!`/`debug!`), not println
 
+**Current std (Rust 1.100+):**
+- A newer language or std feature is available only at or above the repo's
+  `rust-version`. Do not raise the MSRV to use one unless asked.
+- Use the never type for what cannot happen: `Result<T, !>` for an infallible
+  result and `let Ok(value) = result;` to take it, not `Infallible`, an empty
+  enum, or an `unreachable!()` arm.
+- For cleanup or rollback that must run on every exit path (`?`, early return,
+  panic), use `std::mem::DropGuard`, and `DropGuard::dismiss` on success. Do not
+  hand-write a `Drop` struct, add `scopeguard`, or repeat cleanup before each return.
+- In unsafe code, create a zero-sized value with `std::mem::conjure_zst`, not
+  `transmute(())` or `MaybeUninit::uninit().assume_init()`. Its `// SAFETY:`
+  comment must say why creating that token breaks no invariant the type guards.
+- Use `trim_prefix`/`trim_suffix` on `str`, slices and `Path` to drop an
+  optional affix; keep `strip_prefix` when the code must know whether it matched.
+
+**Cargo (1.100+):**
+- Fix `cargo::unused_dependencies` warnings by removing the dependency. They
+  appear only when every target is built (`--workspace --all-targets`) and never
+  for dev-dependencies. Cargo's own lints are configured in `[lints.cargo]`.
+- Keep a dependency cooldown: `[registry] global-min-publish-age = "3 days"` in
+  `.cargo/config.toml`. Do not override it with
+  `CARGO_RESOLVER_INCOMPATIBLE_PUBLISH_AGE=allow` unless the user asks.
+  `cargo install` ignores the cooldown, so pin it: `cargo install name@x.y.z --locked`.
+- Do not hard-code paths inside the build directory (`target/*/deps`, `build`,
+  `incremental`); its layout changed in 1.100. Use the final artifact path or
+  `cargo build --message-format=json`.
+
 **Optimization:**
 - Write efficient code by default — correct algorithm, appropriate data structures, no unnecessary allocations
 - Profile before micro-optimizing; measure after
+- `Vec`/`Box` accept a custom `Allocator` (`Vec::new_in`, `Box::new_in`). Reach
+  for an arena or pool allocator only when a profile shows allocation cost
 
 **Failure model and production hardening:**
 - Decide `panic = "unwind"` versus `"abort"` at the final binary/deployment
