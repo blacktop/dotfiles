@@ -23,7 +23,7 @@ if [ -d "$legacy_assistant_plugin" ]; then
     /usr/bin/trash "$legacy_assistant_plugin"
 fi
 
-# Status-bar helper scripts (e.g. Apple Music now-playing) referenced by #()
+# Status-bar helper scripts referenced by #()
 mkdir -p "$HOME/.config/tmux/scripts"
 cp "$script_dir"/scripts/* "$HOME/.config/tmux/scripts/"
 TMUX_PLUGIN_MANAGER_PATH="$HOME/.tmux/plugins" ~/.tmux/plugins/tpm/bin/install_plugins
