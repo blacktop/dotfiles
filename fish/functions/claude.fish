@@ -5,6 +5,8 @@ function claude -w claude -d 'Claude Code with its own GitHub token for sandboxe
             set rr_harness claude
         case "$HOME/.claude-ddb"
             set rr_harness claude-ddb
+        case "$HOME/.claude-team"
+            set rr_harness claude-team
     end
     if test -n "$rr_harness"; and set -q REX_SESSION[1] REX_BLOCK[1]; and test -n "$REX_SESSION"; and test -n "$REX_BLOCK"; and command -sq jq
         set -l rr_config "$HOME/.$rr_harness/settings.json"

@@ -264,6 +264,12 @@ the Keychain into the `claude` process and points `GH_CONFIG_DIR` at
 `~/.config/gh-claude`, which need not exist; gh stops when it cannot read
 `~/.config/gh`, which stays denied.
 
+Codex gets the same token from `ai/rexurrect-launch`. Its shells receive only
+core variables and never a name containing `TOKEN`, so the launcher passes
+`-c shell_environment_policy.set.GH_TOKEN=…` and the matching `GH_CONFIG_DIR`,
+which apply after those filters. The token is therefore visible in the Codex
+process's arguments (`ps`). Management subcommands such as `codex mcp` get none.
+
 There is no token substitution or TLS interception. Commands inside and outside
 the sandbox inherit the real dedicated token, as do hooks and MCP servers, so
 scope it narrowly. Network policy does not confine it to a particular hostname.

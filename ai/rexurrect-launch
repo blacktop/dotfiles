@@ -81,6 +81,24 @@ if [ "$rr_host" = codex ]; then
 				set -- --add-dir "$rr_git_common" --add-dir "$rr_git_dir" "$@"
 			fi
 		fi
+		# Codex passes its shells only core variables and drops names containing
+		# TOKEN, so the dedicated GitHub token goes in as a config override,
+		# which applies after those filters. GH_CONFIG_DIR keeps gh away from
+		# the denied ~/.config/gh; the directory need not exist.
+		rr_gh_token=$(security find-generic-password -a "${USER:-$(id -un)}" \
+			-s claude-gh-token -w 2>/dev/null) || rr_gh_token=
+		case "$rr_gh_token" in
+		'')
+			printf 'codex: no claude-gh-token Keychain item, so gh is signed out (see ai/README.md)\n' >&2
+			;;
+		*[!A-Za-z0-9_]*)
+			printf 'codex: claude-gh-token is not a GitHub token, so gh is signed out\n' >&2
+			;;
+		*)
+			set -- -c "shell_environment_policy.set.GH_TOKEN=\"$rr_gh_token\"" \
+				-c "shell_environment_policy.set.GH_CONFIG_DIR='$HOME/.config/gh-claude'" "$@"
+			;;
+		esac
 		;;
 	esac
 fi

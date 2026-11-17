@@ -17,10 +17,16 @@ import json, os, sys
 from pathlib import Path
 name, args = Path(sys.argv[0]).name, sys.argv[1:]
 if name == "security":
-    sys.exit(44)
+    token = os.environ.get("RR_TEST_GH_TOKEN", "")
+    if not token:
+        sys.exit(44)
+    assert args == ["find-generic-password", "-a", os.environ["USER"], "-s", "claude-gh-token", "-w"]
+    print(token)
+    sys.exit(0)
 if name == "jq":
     assert args[-1] in (str(Path.home() / ".claude/settings.json"),
-                       str(Path.home() / ".claude-ddb/settings.json"))
+                       str(Path.home() / ".claude-ddb/settings.json"),
+                       str(Path.home() / ".claude-team/settings.json"))
     print(os.environ[{'.model // ""': "RR_TEST_MODEL", '.effortLevel // ""': "RR_TEST_EFFORT"}[args[1]]])
     sys.exit(0)
 entry = {"program": name, "args": args}
@@ -125,8 +131,24 @@ class RexReceiptTests(unittest.TestCase):
                 "claude-opus-4-8",
                 "high",
             ),
+            # A fresh launch records the account's own settings as defaults.
+            (
+                "claude-team",
+                [],
+                str(Path.home() / ".claude-team"),
+                "claude-fable-5-1[1m]",
+                "xhigh",
+            ),
+            # The line rexurrect replays after a restart keeps its model and effort.
+            (
+                "claude-team",
+                ["--resume", UUID, "--model", "claude-mythos-5-2", "--effort", "high"],
+                str(Path.home() / ".claude-team"),
+                "claude-mythos-5-2",
+                "high",
+            ),
         ):
-            with self.subTest(harness=harness):
+            with self.subTest(harness=harness, args=args):
                 result, calls = self.launch(harness, *args)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual(
@@ -214,8 +236,41 @@ class RexReceiptTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(calls[0]["args"], ["--no-daemon", "-C", str(repo)])
 
+    def test_codex_sessions_receive_the_dedicated_github_token(self):
+        token = "github_pat_11ABC_def456"
+        overrides = [
+            "-c",
+            f'shell_environment_policy.set.GH_TOKEN="{token}"',
+            "-c",
+            f"shell_environment_policy.set.GH_CONFIG_DIR='{Path.home()}/.config/gh-claude'",
+        ]
+        for harness, args, expected, changes in (
+            ("codex", ["resume", UUID], ["--no-daemon", *overrides, "resume", UUID], {}),
+            ("codex-team", [], ["--no-daemon", *overrides], {}),
+            # A nested launch runs plainly but its shells still need gh.
+            ("codex", ["exec", "hi"], [*overrides, "exec", "hi"], {"CLAUDECODE": "1"}),
+            # Management subcommands open no workspace and run no agent shell.
+            ("codex", ["mcp", "list"], ["--no-daemon", "mcp", "list"], {}),
+        ):
+            with self.subTest(harness=harness, args=args):
+                result, calls = self.launch(
+                    harness, *args, changes={"USER": "tester", "RR_TEST_GH_TOKEN": token} | changes
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(calls[0]["args"], expected)
+                self.assertEqual(result.stderr, "")
+        # A missing or malformed Keychain value never reaches the command line.
+        for stored, reason in (("", "no claude-gh-token"), ('x" y', "not a GitHub token")):
+            with self.subTest(stored=stored):
+                result, calls = self.launch(
+                    "codex", changes={"USER": "tester", "RR_TEST_GH_TOKEN": stored}
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(calls[0]["args"], ["--no-daemon"])
+                self.assertIn(reason, result.stderr)
+
     def test_nested_and_conflicting_launches_do_not_claim_receipts(self):
-        for harness in ("claude", "claude-ddb", "codex", "codex-team"):
+        for harness in ("claude", "claude-ddb", "claude-team", "codex", "codex-team"):
             for changes in (
                 {"CLAUDECODE": "1"},
                 {"CODEX_THREAD_ID": UUID},
@@ -235,7 +290,6 @@ class RexReceiptTests(unittest.TestCase):
 
     def test_manual_accounts_keep_their_route(self):
         for harness, changes, route in (
-            ("claude-team", {}, str(Path.home() / ".claude-team")),
             ("codex-api", {}, str(Path.home() / ".codex-api")),
             (
                 "claude",

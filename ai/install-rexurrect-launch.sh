@@ -1,6 +1,6 @@
 #!/bin/sh
 # Install the launcher from rexurrect v0.3.3 (ca7cbd84) plus the Codex grant for a
-# linked worktree's Git directories.
+# linked worktree's Git directories and the dedicated GitHub token for Codex.
 set -eu
 script_dir=$(CDPATH='' cd -- "$(dirname "$0")" && pwd)
 destination_root=${1:-$HOME}
@@ -20,6 +20,8 @@ if ! { [ -x "$target" ] && cmp -s "$source" "$target"; }; then
 		6c166c1f5e6476b9022d136be38eeb94c27611c860918b0851170265599d591f) ;;
 		# Unmodified upstream launcher from v0.3.3, which this repository installed.
 		2d1f6dbc5f84b483870b3d387143c18fb5fb87959e728bdd598aeb7f232cbb11) ;;
+		# This repository's launcher before it passed Codex the GitHub token.
+		2d2e6b6b498a6141f46776f7af5b68ac258d81cd0ae57cb8ecd79edd5f7d57df) ;;
 		*)
 			printf 'Kept custom rexurrect-launch file: %s\n' "$target" >&2
 			exit 1
