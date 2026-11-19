@@ -42,6 +42,10 @@ install_skill https://github.com/emilkowalski/skills apple-design
 # Keep the portable default for Codex; Claude also exposes its official plugin.
 install_skill https://github.com/anthropics/skills frontend-design
 install_skill https://github.com/leonxlnx/taste-skill
+# Writing. The private humanizer skill owns the name `humanizer`, so
+# blader/humanizer is not installed here.
+install_skill https://github.com/seyedehsanhadi/sloptrim sloptrim
+install_skill https://github.com/hardikpandya/stop-slop stop-slop
 # Productivity
 install_skill https://github.com/ayghri/i-have-adhd i-have-adhd
 # CLI/TUI

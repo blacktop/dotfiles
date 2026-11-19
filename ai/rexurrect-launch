@@ -171,6 +171,13 @@ done
 
 rr_server=${REXURRECT_SERVER:-"unix://$HOME/Library/Application Support/rex/server.sock"}
 rr_state=${REXURRECT_STATE_DIR:-"$HOME/Library/Application Support/rexurrect"}
+# An agent that cannot be executed, as when its binary is missing while an
+# update replaces it, runs no session: the pane's receipt still names the
+# conversation to resume, so stop here and leave it alone.
+if ! command -v "$rr_agent" >/dev/null 2>&1; then
+	printf 'rexurrect-launch: %s: command not found; the receipt of this pane is kept\n' "$rr_agent" >&2
+	exit 127
+fi
 rr_status=0
 RR_HOST=$rr_host RR_HARNESS=$rr_command RR_LAUNCHER_PID=$$ RR_MODEL=$rr_model RR_EFFORT=$rr_effort \
 	REXURRECT_SERVER=$rr_server REXURRECT_STATE_DIR=$rr_state \

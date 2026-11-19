@@ -334,6 +334,23 @@ class RexReceiptTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual([call["program"] for call in calls], ["codex"])
 
+    def test_an_agent_that_cannot_start_keeps_the_receipt(self):
+        plain_file = self.scratch / "not-executable"
+        plain_file.write_text(STUB)
+        plain_file.chmod(0o644)
+        for variable, harness in (("REXURRECT_CLAUDE", "claude"), ("REXURRECT_CODEX", "codex-team")):
+            for agent in (str(self.scratch / "missing"), str(plain_file), "rr-no-such-agent"):
+                with self.subTest(harness=harness, agent=agent):
+                    result, calls = self.launch(harness, changes={variable: agent})
+                    self.assertEqual(result.returncode, 127, result.stderr)
+                    self.assertIn(
+                        f"rexurrect-launch: {agent}: command not found; "
+                        "the receipt of this pane is kept",
+                        result.stderr,
+                    )
+                    # No session ran, so the receipt must not be cleared.
+                    self.assertEqual(calls, [])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -22,6 +22,8 @@ if ! { [ -x "$target" ] && cmp -s "$source" "$target"; }; then
 		2d1f6dbc5f84b483870b3d387143c18fb5fb87959e728bdd598aeb7f232cbb11) ;;
 		# This repository's launcher before it passed Codex the GitHub token.
 		2d2e6b6b498a6141f46776f7af5b68ac258d81cd0ae57cb8ecd79edd5f7d57df) ;;
+		# This repository's launcher before it kept the receipt of an agent that cannot start.
+		287cedf7ca2bf0f120fb2bd5d042ddf92401e415fdf978e2cee12407749e904d) ;;
 		*)
 			printf 'Kept custom rexurrect-launch file: %s\n' "$target" >&2
 			exit 1
