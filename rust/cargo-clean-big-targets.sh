@@ -3,10 +3,16 @@ set -eu
 
 usage() {
     printf '%s\n' \
-        'Usage: cargo-clean-big-targets [--dry-run] [--root PATH]' \
+        'Usage: cargo-clean-big-targets [--dry-run] [--root PATH]...' \
         '                               [--min-mib N] [--inactive-days N]' \
+        '                               [--lane-min-mib N] [--lane-inactive-days N]' \
         '' \
-        'Clean conventional Rust target directories that are both large and inactive.'
+        'Clean conventional Rust target directories that are both large and inactive.' \
+        '' \
+        'A target inside an agent lane (under a tmux-pm worktree root or any' \
+        'docs/.ai folder) is judged by the lane limits, which are much lower: a' \
+        'lane is rebuilt from the compiler cache, and nothing else removes its' \
+        'build when the lane ends.'
 }
 
 log() {
@@ -26,9 +32,12 @@ is_positive_integer() {
 }
 
 dry_run=0
-scan_root=${CARGO_CLEAN_ROOT:-"$HOME/Developer"}
+lane_root=$HOME/.local/share/tmux-pm/worktrees
+scan_roots=
 min_mib=${CARGO_CLEAN_MIN_MIB:-10240}
 inactive_days=${CARGO_CLEAN_INACTIVE_DAYS:-14}
+lane_min_mib=${CARGO_CLEAN_LANE_MIN_MIB:-256}
+lane_inactive_days=${CARGO_CLEAN_LANE_INACTIVE_DAYS:-3}
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -38,7 +47,18 @@ while [ "$#" -gt 0 ]; do
         ;;
     --root)
         [ "$#" -ge 2 ] || die '--root requires a path'
-        scan_root=$2
+        scan_roots="${scan_roots}${2}
+"
+        shift 2
+        ;;
+    --lane-min-mib)
+        [ "$#" -ge 2 ] || die '--lane-min-mib requires a positive integer'
+        lane_min_mib=$2
+        shift 2
+        ;;
+    --lane-inactive-days)
+        [ "$#" -ge 2 ] || die '--lane-inactive-days requires a positive integer'
+        lane_inactive_days=$2
         shift 2
         ;;
     --min-mib)
@@ -64,15 +84,15 @@ done
 
 is_positive_integer "$min_mib" || die 'minimum size must be a positive integer in MiB'
 is_positive_integer "$inactive_days" || die 'inactive days must be a positive integer'
+is_positive_integer "$lane_min_mib" || die 'lane minimum size must be a positive integer in MiB'
+is_positive_integer "$lane_inactive_days" || die 'lane inactive days must be a positive integer'
 
-case "$scan_root" in
-/*) ;;
-*) die 'scan root must be an absolute path' ;;
-esac
-
-if [ ! -d "$scan_root" ]; then
-    log "Scan root does not exist; nothing to do: $scan_root"
-    exit 0
+# Roots: every --root given, else CARGO_CLEAN_ROOTS (colon-separated), else the
+# project folder and the PM tool's lane folder. The lane folder is outside
+# ~/Developer and held most of the build output when the disk filled in 2026-11.
+if [ -z "$scan_roots" ]; then
+    default_roots=$HOME/Developer:$lane_root
+    scan_roots=$(printf '%s\n' "${CARGO_CLEAN_ROOTS:-$default_roots}" | /usr/bin/tr ':' '\n')
 fi
 
 cargo_bin=${CARGO_CLEAN_CARGO_BIN:-"$HOME/.cargo/bin/cargo"}
@@ -81,16 +101,28 @@ if [ ! -x "$cargo_bin" ]; then
 fi
 [ -n "$cargo_bin" ] || die 'cargo was not found'
 
-threshold_kib=$((min_mib * 1024))
 candidates=$(/usr/bin/mktemp -t cargo-clean-targets)
 metadata=$(/usr/bin/mktemp -t cargo-clean-metadata)
 trap '/bin/rm -f "$candidates" "$metadata"' EXIT HUP INT TERM
 
-if ! /usr/bin/find "$scan_root" \
-    \( -type d \( -name .git -o -name .jj -o -name .direnv -o -name node_modules -o -name vendor \) -prune \) -o \
-    \( -type d -name target -print -prune \) >"$candidates"; then
-    die "failed to scan: $scan_root"
-fi
+while IFS= read -r scan_root; do
+    [ -n "$scan_root" ] || continue
+    case "$scan_root" in
+    /*) ;;
+    *) die "scan root must be an absolute path: $scan_root" ;;
+    esac
+    if [ ! -d "$scan_root" ]; then
+        log "Scan root does not exist; skipped: $scan_root"
+        continue
+    fi
+    if ! /usr/bin/find "$scan_root" \
+        \( -type d \( -name .git -o -name .jj -o -name .direnv -o -name node_modules -o -name vendor \) -prune \) -o \
+        \( -type d -name target -print -prune \) >>"$candidates"; then
+        die "failed to scan: $scan_root"
+    fi
+done <<EOF
+$scan_roots
+EOF
 
 scanned=0
 oversized=0
@@ -116,10 +148,21 @@ while IFS= read -r target; do
         ;;
     esac
 
-    [ "$size_kib" -ge "$threshold_kib" ] || continue
+    case "$target" in
+    "$lane_root"/* | */docs/.ai/*)
+        limit_mib=$lane_min_mib
+        limit_days=$lane_inactive_days
+        ;;
+    *)
+        limit_mib=$min_mib
+        limit_days=$inactive_days
+        ;;
+    esac
+
+    [ "$size_kib" -ge $((limit_mib * 1024)) ] || continue
     oversized=$((oversized + 1))
 
-    if /usr/bin/find "$target" -type f -mtime "-$inactive_days" -print -quit 2>/dev/null | /usr/bin/grep -q .; then
+    if /usr/bin/find "$target" -type f -mtime "-$limit_days" -print -quit 2>/dev/null | /usr/bin/grep -q .; then
         log "SKIP recent target: $target (${size_kib} KiB)"
         continue
     fi

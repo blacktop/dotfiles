@@ -18,18 +18,20 @@
         <string>__HOME__</string>
         <key>PATH</key>
         <string>__HOME__/.cargo/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
-        <key>CARGO_CLEAN_ROOT</key>
-        <string>__HOME__/Developer</string>
+        <key>CARGO_CLEAN_ROOTS</key>
+        <string>__HOME__/Developer:__HOME__/.local/share/tmux-pm/worktrees</string>
         <key>CARGO_CLEAN_MIN_MIB</key>
         <string>10240</string>
         <key>CARGO_CLEAN_INACTIVE_DAYS</key>
         <string>14</string>
+        <key>CARGO_CLEAN_LANE_MIN_MIB</key>
+        <string>256</string>
+        <key>CARGO_CLEAN_LANE_INACTIVE_DAYS</key>
+        <string>3</string>
     </dict>
 
     <key>StartCalendarInterval</key>
     <dict>
-        <key>Weekday</key>
-        <integer>0</integer>
         <key>Hour</key>
         <integer>4</integer>
         <key>Minute</key>

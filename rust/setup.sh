@@ -45,6 +45,18 @@ set_publish_cooldown() {
 }
 set_publish_cooldown "${CARGO_HOME:-$HOME/.cargo}/config.toml"
 
+# Smaller debug builds: line tables for our own crates, no debug information
+# for dependencies. Measured 41% smaller on macho-rs; backtraces keep file and
+# line. An existing [profile.dev] section is kept as it is.
+set_dev_profile() {
+    config=$1
+    if grep -q '^\[profile\.dev\]' "$config" 2>/dev/null; then
+        return 0
+    fi
+    printf '\n[profile.dev]\ndebug = "line-tables-only"\n\n[profile.dev.package."*"]\ndebug = false\n' >>"$config"
+}
+set_dev_profile "${CARGO_HOME:-$HOME/.cargo}/config.toml"
+
 # Optional scheduled cleanup of large, inactive Rust target directories.
 should_install_cargo_cleaner() {
     case "$(printf '%s' "${SETUP_CARGO_CLEANER:-}" | tr '[:upper:]' '[:lower:]')" in
@@ -54,7 +66,7 @@ should_install_cargo_cleaner() {
 
     [ -t 0 ] && [ -t 1 ] && command -v gum >/dev/null 2>&1 || return 1
     gum confirm --default=false \
-        "Install cargo-clean-big-targets? Weekly cleanup of Rust targets over 10 GiB inactive for 14 days."
+        "Install cargo-clean-big-targets? Daily cleanup of inactive Rust targets: over 10 GiB after 14 days, agent-lane builds over 256 MiB after 3 days."
 }
 
 if should_install_cargo_cleaner; then
