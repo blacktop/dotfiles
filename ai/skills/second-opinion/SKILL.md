@@ -1,6 +1,6 @@
 ---
 name: second-opinion
-description: Run an external LLM code review with the Codex CLI. Use when the user asks for a second opinion, external review, Codex review, or wants a model-vs-model review of current changes, a branch diff, a specific commit, or a GitHub pull request.
+description: Run an external LLM code review with the Codex CLI or the Antigravity CLI (Gemini 4 Neon). Use when the user asks for a second opinion, external review, Codex, Gemini or Antigravity review, or wants a model-vs-model review of current changes, a branch diff, a specific commit, or a GitHub pull request.
 ---
 
 # Second Opinion
@@ -30,6 +30,7 @@ Infer as much as possible from the user's message:
 
 - scope: `uncommitted`, `branch diff`, `commit`, or `PR`
 - focus: `general`, `security`, `performance`, `error handling`, `architecture`, or a custom concern
+- reviewer: `Codex`, `Antigravity`, or both; when the user names none, pick one that is not the model running this session
 
 Ask one concise follow-up only if a missing detail blocks the run.
 
@@ -37,6 +38,7 @@ Ask one concise follow-up only if a missing detail blocks the run.
 
 - Read [references/workflow.md](references/workflow.md) for scope detection, diff sizing, review-brief construction, and synthesis rules.
 - Read [references/codex.md](references/codex.md) for the Codex CLI commands and flags.
+- Read [references/antigravity.md](references/antigravity.md) for the `agy` command, model and result checks.
 
 ## Core workflow
 
@@ -49,8 +51,8 @@ Ask one concise follow-up only if a missing detail blocks the run.
    - how to inspect the diff locally
    - that the review is read-only
    - what output format to return
-5. Run the Codex review.
-6. Present Codex's findings first, then where you agree and disagree with them.
+5. Run the review with each chosen reviewer.
+6. Present each reviewer's findings first, then where you agree and disagree with them.
 7. Never auto-apply suggested fixes unless the user explicitly asks.
 
 ## Safety defaults
@@ -66,10 +68,10 @@ Ask one concise follow-up only if a missing detail blocks the run.
 
 Present results in this order:
 
-1. Codex's findings, highest severity first.
-2. Explicit `No findings` if Codex returns nothing substantive.
+1. Each reviewer's findings, highest severity first.
+2. Explicit `No findings` if a reviewer returns nothing substantive.
 3. A short synthesis:
-   - where you agree with Codex
+   - where you agree with the reviewers
    - where you disagree, and why
    - what looks worth acting on first
 
