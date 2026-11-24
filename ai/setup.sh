@@ -157,11 +157,14 @@ fi
 # Antigravity installs from Google's curated marketplaces, which need an agy
 # sign-in. Chrome DevTools drives a local Chrome; EGM reviews designs and
 # documents with fresh-context reviewers; VirusTotal looks up hashes, URLs,
-# domains and IPs once its MCP server is authenticated in /mcp. The rest of the
-# catalog needs a SaaS account or repeats an MCP server that mcp-setup.sh registers.
+# domains and IPs once it is signed in under /plugin. The rest of the catalog
+# needs a SaaS account or repeats an MCP server that mcp-setup.sh registers.
+# agy installs only <plugin>@<marketplace> or a directory.
 if command -v agy >/dev/null 2>&1; then
 	echo "$(gum style --bold --foreground "#BE05D0" "  -") Install agy plugins..."
-	for plugin in chrome-devtools-plugin egm virustotal@antigravity-plugins-partners; do
+	for plugin in chrome-devtools-plugin@antigravity-plugins-official \
+		egm@antigravity-plugins-official \
+		virustotal@antigravity-plugins-partners; do
 		if agy plugin list --json | jq -e --arg name "${plugin%@*}" 'any(.[]; .name == $name)' >/dev/null; then
 			continue
 		fi

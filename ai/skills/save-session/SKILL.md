@@ -53,12 +53,11 @@ python3 ~/.agents/skills/save-session/scripts/save_session.py \
 **Session storage:** `~/.codex/sessions/`
 
 **How to find:**
+- Run `echo "$CODEX_THREAD_ID"`; Codex exports the current thread ID, which `codex resume` takes, to its shell tool environment
 - Use `/status` command within Codex
 - Copy from session picker
 - List files in `~/.codex/sessions/`
 - Or pass `--session-id auto` (uses latest `~/.codex/shell_snapshots/*.sh` filename; verify if multiple sessions are active)
-
-**Note:** Session ID is not currently exposed to the model itself (see GitHub issue #5912)
 
 **Resume:** `codex resume SESSION_ID`
 

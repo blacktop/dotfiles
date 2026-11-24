@@ -85,7 +85,8 @@ and is visible to that home only.
 the MCP servers Claude gets (`~/.gemini/config/mcp_config.json`, with IDA off
 until `agy mcp enable ida`), and three plugins from Google's marketplaces:
 `chrome-devtools-plugin`, `egm` and `virustotal`. Installing them needs an `agy`
-sign-in, and VirusTotal also needs its MCP server authenticated once in `/mcp`.
+sign-in, and VirusTotal also needs a one-time sign-in: open `/plugin`, expand
+`virustotal` under Installed and choose Sign in.
 
 The model is left to `/model`, as it is for Claude and Codex. Gemini 4 Neon is
 already agy's default on Google AI Pro and Ultra. The `second-opinion` skill

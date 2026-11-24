@@ -164,9 +164,14 @@ Pick the syntax for where the command runs, and say where:
 For Apple iOS/macOS research and tooling (`ipsw`, DSC/dyld_shared_cache work,
 kernelcache/KC analysis, extracted firmware), start artifact discovery in the
 directory named by the `$APPLE_FIRMWARE_DIR` environment variable (resolve it
-with `echo $APPLE_FIRMWARE_DIR`; it currently points at `~/Apple`). Do not scan
+with `echo $APPLE_FIRMWARE_DIR`; it currently points at `~/FW`). Do not scan
 the whole filesystem looking for IPSWs, extracted DSCs, or kernelcaches; search
 that directory first and ask before widening the search.
+
+`$APPLE_FIRMWARE_DIR` holds Apple firmware and what is extracted from it: IPSWs,
+OTAs, DMGs, dyld caches, kernelcaches and their extracted trees. Nothing else
+goes there: no test inputs such as IPAs, no tool output or decrypted results,
+no logs and no scratch.
 
 ## Secrets & Local Shell State
 

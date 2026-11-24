@@ -42,7 +42,7 @@ exclusions=(
     "${HOME}/Library/Developer/Xcode/iOS DeviceSupport"
     "${HOME}/Library/pnpm/store"
     "${HOME}/go"
-    "${APPLE_FIRMWARE_DIR:-${HOME}/Apple}"
+    "${APPLE_FIRMWARE_DIR:-${HOME}/FW}"
     "${HOME}/Documents/VMs"
     "${HOME}/Virtual Machines.localized"
     "${HOME}/.codex/worktrees"
