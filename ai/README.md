@@ -51,6 +51,48 @@ env PRIVATE_SKILLS_DIR=/path/to/private-skills sh ai/sync-instructions.sh
 
 Keep private instruction files and skill content out of this repository.
 
+# Skill directories
+
+User skills live in one place, `~/.agents/skills`. `ai/sync-skill-dirs.sh` gives
+each profile the directory its agent expects:
+
+- A Claude profile reads only its own `skills/`, so that is a link to
+  `~/.agents/skills`.
+- A Codex home reads `~/.agents/skills` itself, so its `skills/` is a real
+  directory that holds only `.system`, the skills bundled with Codex.
+- Antigravity (`agy` and the App) reads `~/.agents/skills` through the discovery
+  manifest `~/.gemini/config/skills.json`, which names the directory by its
+  absolute path.
+
+Keep the Codex directories real. A Codex session reinstalls `.system` whenever
+the fingerprint stored there belongs to another build, and that write makes
+every session watching the directory reload its skills. While the three homes
+linked `skills/` to the shared directory, sessions on different builds rewrote
+one `.system` in turn and woke every Codex session on the host every few
+seconds.
+
+Two builds that use the same home still replace each other's `.system` whenever
+one of them loads its skills, as when a session left running across a Codex
+upgrade sits beside one started after it. If the sessions of one home turn busy
+again after an upgrade, restart the ones started before it.
+
+A skill installed with Codex's `$skill-installer` lands in that home's `skills/`
+and is visible to that home only.
+
+# Antigravity
+
+`ai/setup.sh` gives `agy` the same instructions as Codex (`~/.gemini/AGENTS.md`),
+the MCP servers Claude gets (`~/.gemini/config/mcp_config.json`, with IDA off
+until `agy mcp enable ida`), and two plugins from Google's marketplace:
+`chrome-devtools-plugin` and `egm`. Installing them needs an `agy` sign-in.
+
+The model is left to `/model`, as it is for Claude and Codex. Gemini 4 Neon is
+already agy's default on Google AI Pro and Ultra. The `second-opinion` skill
+names `gemini-4-neon-xhigh` for its Antigravity reviews.
+
+None of the hooks, permission rules or the dedicated GitHub token that Claude
+and Codex get apply to `agy`.
+
 # Agent permissions
 
 The filesystem sandbox limits writes and access to credential stores. Network
