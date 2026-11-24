@@ -10,13 +10,14 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-for profile in claude claude-team claude-ddb codex codex-team codex-api; do
+# Antigravity reads ~/.gemini/AGENTS.md, so it shares the Codex instructions.
+for profile in claude claude-team claude-ddb codex codex-team codex-api gemini; do
 	case "$profile" in
 	claude*)
 		family=claude
 		document=CLAUDE.md
 		;;
-	codex*)
+	codex* | gemini)
 		family=codex
 		document=AGENTS.md
 		;;

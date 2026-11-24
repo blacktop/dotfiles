@@ -5,22 +5,8 @@ set -o errexit -o nounset
 SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname "$0")" && pwd)
 AGENTS_SKILLS="$HOME/.agents/skills"
 
-# Create the standardized skills directory
-mkdir -p "$AGENTS_SKILLS"
-
-# Claude Code looks at $CLAUDE_CONFIG_DIR/skills/; codex CLI looks at $CODEX_HOME/skills/.
-# Symlink each normal variant to the unified ~/.agents/skills location so skills live in one place.
-for agent_dir in "$HOME/.claude" "$HOME/.claude-team" "$HOME/.claude-ddb" "$HOME/.codex" "$HOME/.codex-team" "$HOME/.codex-api"; do
-	[ -d "$agent_dir" ] || continue
-	skills_path="$agent_dir/skills"
-	if [ ! -L "$skills_path" ]; then
-		if [ -d "$skills_path" ]; then
-			cp -a "$skills_path/." "$AGENTS_SKILLS/"
-			rm -rf "$skills_path"
-		fi
-		ln -s "$AGENTS_SKILLS" "$skills_path"
-	fi
-done
+# Create the shared directory and point each profile at it the way its agent reads it.
+"$SCRIPT_DIR/sync-skill-dirs.sh"
 
 # Install community skills (installs directly to ~/.agents/skills). Fetching them
 # is the slow part of setup, so a terminal run may skip it once they have been

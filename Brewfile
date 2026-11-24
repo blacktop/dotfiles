@@ -139,6 +139,7 @@ brew "blacktop/tap/xpost"
 
 # Casks
 cask "010-editor"
+cask "antigravity-cli" # agy
 cask "blacktop/tap/ghidra-app"
 cask "blacktop/tap/ida-mcp"
 cask "blacktop/tap/pdf"

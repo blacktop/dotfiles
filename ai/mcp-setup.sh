@@ -167,6 +167,45 @@ else
     unset CLAUDE_CONFIG_DIR
 fi
 
+# ── Antigravity MCP servers ─────────────────────────────────────────────────
+# `agy mcp add` writes ~/.gemini/config/mcp_config.json, which the CLI and the
+# App share. It holds the API keys, so only the user may read it.
+
+if ! command -v agy >/dev/null 2>&1; then
+    warn "agy CLI not found — skipping Antigravity MCP setup"
+else
+    msg "Configuring Antigravity MCP servers..."
+    for name in exa context7 ida mcp-tts; do
+        agy mcp remove "$name" >/dev/null 2>&1 || true
+    done
+
+    agy mcp add exa https://mcp.exa.ai/mcp >/dev/null
+    ok "agy: exa (http, keyless)"
+
+    if [ -n "$KEY_context7" ]; then
+        agy mcp add -e "CONTEXT7_API_KEY=$KEY_context7" context7 \
+            -- npx -y @upstash/context7-mcp@4.1.1 >/dev/null
+        ok "agy: context7 (stdio)"
+    fi
+
+    # Registered but off, as in the Codex template: each session would start its own.
+    if [ -x /opt/homebrew/bin/ida-mcp ]; then
+        agy mcp add ida /opt/homebrew/bin/ida-mcp >/dev/null
+        agy mcp disable ida >/dev/null
+        ok "agy: ida (stdio, disabled; agy mcp enable ida)"
+    fi
+
+    if command -v mcp-tts >/dev/null 2>&1; then
+        set --
+        [ -n "$KEY_elevenlabs" ] && set -- "$@" -e "ELEVENLABS_API_KEY=$KEY_elevenlabs"
+        [ -n "$KEY_openai" ] && set -- "$@" -e "OPENAI_API_KEY=$KEY_openai"
+        [ -n "$KEY_gemini" ] && set -- "$@" -e "GEMINI_API_KEY=$KEY_gemini"
+        agy mcp add "$@" mcp-tts mcp-tts >/dev/null
+        ok "agy: mcp-tts (stdio)"
+    fi
+    chmod 600 "$HOME/.gemini/config/mcp_config.json"
+fi
+
 # ── Reminder ─────────────────────────────────────────────────────────────────
 
 LOCALS_LINES=""

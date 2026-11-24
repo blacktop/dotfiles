@@ -124,7 +124,7 @@ else
 fi
 
 # Create config directories (including unified ~/.agents for hooks and skills)
-mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.claude-ddb" "$HOME/.codex" "$HOME/.codex-team" "$HOME/.codex-api" "$HOME/.agents/hooks" "$HOME/.agents/skills"
+mkdir -p "$HOME/.claude" "$HOME/.claude-team" "$HOME/.claude-ddb" "$HOME/.codex" "$HOME/.codex-team" "$HOME/.codex-api" "$HOME/.gemini" "$HOME/.agents/hooks" "$HOME/.agents/skills"
 
 # Per-host, opt-in and recorded in a local marker that sync.sh honours.
 if [ -e "$HOME/.agents/yolo" ]; then
@@ -152,6 +152,20 @@ if command -v rex >/dev/null 2>&1; then
 	"$SCRIPT_DIR/setup-rexurrect.sh"
 else
 	warn 'Rex CLI not found; skipping rexurrect plugin setup'
+fi
+
+# Antigravity installs from Google's curated marketplace, which needs an agy
+# sign-in. Chrome DevTools drives a local Chrome; EGM reviews designs and
+# documents with fresh-context reviewers. The rest of the catalog needs a SaaS
+# account or repeats an MCP server that mcp-setup.sh registers.
+if command -v agy >/dev/null 2>&1; then
+	echo "$(gum style --bold --foreground "#BE05D0" "  -") Install agy plugins..."
+	for plugin in chrome-devtools-plugin egm; do
+		if agy plugin list --json | jq -e --arg name "$plugin" 'any(.[]; .name == $name)' >/dev/null; then
+			continue
+		fi
+		agy plugin install "$plugin" || warn "agy: failed to install $plugin (run agy once to sign in)"
+	done
 fi
 
 # Install Claude Code plugin marketplaces and plugins.
@@ -209,4 +223,4 @@ fi
 
 echo ""
 echo "$(gum style --bold --foreground "#6F08B2" " ⇒ ") $(gum style --bold "AI agents ready")"
-gum style --faint "    Start new Claude and Codex sessions to load the changes."
+gum style --faint "    Start new Claude, Codex and Antigravity sessions to load the changes."
