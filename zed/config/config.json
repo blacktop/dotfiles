@@ -50,7 +50,7 @@
     "shell": {
       "with_arguments": {
         "program": "/opt/homebrew/bin/fish",
-        "args": ["-c", "tmux new-session -A -s \"$(basename \"$PWD\")\""]
+        "args": ["-c", "tmux -u new-session -A -s \"$(basename \"$PWD\")\""]
       }
     }
   },
