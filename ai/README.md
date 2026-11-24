@@ -83,15 +83,34 @@ and is visible to that home only.
 
 `ai/setup.sh` gives `agy` the same instructions as Codex (`~/.gemini/AGENTS.md`),
 the MCP servers Claude gets (`~/.gemini/config/mcp_config.json`, with IDA off
-until `agy mcp enable ida`), and two plugins from Google's marketplace:
-`chrome-devtools-plugin` and `egm`. Installing them needs an `agy` sign-in.
+until `agy mcp enable ida`), and three plugins from Google's marketplaces:
+`chrome-devtools-plugin`, `egm` and `virustotal`. Installing them needs an `agy`
+sign-in, and VirusTotal also needs its MCP server authenticated once in `/mcp`.
 
 The model is left to `/model`, as it is for Claude and Codex. Gemini 4 Neon is
 already agy's default on Google AI Pro and Ultra. The `second-opinion` skill
 names `gemini-4-neon-xhigh` for its Antigravity reviews.
 
-None of the hooks, permission rules or the dedicated GitHub token that Claude
-and Codex get apply to `agy`.
+`ai/sync-antigravity.sh`, run by `ai/sync.sh`, merges
+`ai/antigravity/settings.json` into `~/.gemini/antigravity-cli/settings.json`.
+It turns on `notifications`, a bell and desktop notification whenever agy needs
+approval or an answer or finishes a turn, and carries rules ported from Claude's
+permissions. Deny rules block destructive commands, `git push`, environment
+dumps, shell-config edits and reads of credential stores; ask rules cover git
+commands that discard work and package publishing. agy matches file rules
+against absolute paths, so the script writes the machine's home in place of
+`${HOME}`. Rules from both sides are kept, and so are the folders each machine
+trusted, which stay out of the repository. The rules are the same on a YOLO
+host. The legacy Gemini CLI's `~/.gemini/settings.json` is not tracked; `agy`
+does not read it.
+
+The same script installs `ai/antigravity/hooks.json` as
+`~/.gemini/config/hooks.json`. Its one hook runs `notify-pane.sh` after every
+`call_mcp_tool`, the tool agy routes all MCP calls through, and posts a Voice
+notification when the call was mcp-tts speech, as Codex does. agy has no hook
+event for an approval prompt, so `notify-attention.sh` does not run for it;
+`notifications` covers that case without speech. The guard hooks and the
+dedicated GitHub token that Claude and Codex get do not apply to `agy`.
 
 # Agent permissions
 

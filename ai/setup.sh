@@ -154,14 +154,15 @@ else
 	warn 'Rex CLI not found; skipping rexurrect plugin setup'
 fi
 
-# Antigravity installs from Google's curated marketplace, which needs an agy
+# Antigravity installs from Google's curated marketplaces, which need an agy
 # sign-in. Chrome DevTools drives a local Chrome; EGM reviews designs and
-# documents with fresh-context reviewers. The rest of the catalog needs a SaaS
-# account or repeats an MCP server that mcp-setup.sh registers.
+# documents with fresh-context reviewers; VirusTotal looks up hashes, URLs,
+# domains and IPs once its MCP server is authenticated in /mcp. The rest of the
+# catalog needs a SaaS account or repeats an MCP server that mcp-setup.sh registers.
 if command -v agy >/dev/null 2>&1; then
 	echo "$(gum style --bold --foreground "#BE05D0" "  -") Install agy plugins..."
-	for plugin in chrome-devtools-plugin egm; do
-		if agy plugin list --json | jq -e --arg name "$plugin" 'any(.[]; .name == $name)' >/dev/null; then
+	for plugin in chrome-devtools-plugin egm virustotal@antigravity-plugins-partners; do
+		if agy plugin list --json | jq -e --arg name "${plugin%@*}" 'any(.[]; .name == $name)' >/dev/null; then
 			continue
 		fi
 		agy plugin install "$plugin" || warn "agy: failed to install $plugin (run agy once to sign in)"

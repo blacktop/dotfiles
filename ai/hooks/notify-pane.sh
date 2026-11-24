@@ -1,13 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
-# Claude and Codex hook: post a macOS notification naming the terminal pane an agent
-# runs in, so a spoken alert heard from another room can be traced to its pane.
+# Claude, Codex and Antigravity hook: post a macOS notification naming the
+# terminal pane an agent runs in, so a spoken alert heard from another room can
+# be traced to its pane.
 #
-#   notify-pane.sh claude|codex [MESSAGE]
+#   notify-pane.sh claude|codex|agy [MESSAGE]
 #
 # The hook JSON arrives on stdin. MESSAGE defaults to the text an mcp-tts call
-# spoke (tool_input.text). A unique explicit Rexurrect receipt takes priority.
+# spoke: tool_input.text, or for agy, whose MCP calls all go through
+# call_mcp_tool, toolCall.args.Arguments.text when ServerName is mcp-tts.
+# A unique explicit Rexurrect receipt takes priority.
 # Otherwise, existing tmux/Zed routing remains available. Codex's shared daemon
 # environment does not prove pane ownership; ambiguous matches are never guessed.
 max_message_chars=240
@@ -15,9 +18,9 @@ max_details_bytes=$((8 * 1024 * 1024))
 
 family=${1:-}
 case "$family" in
-claude | codex) ;;
+claude | codex | agy) ;;
 *)
-	printf 'usage: notify-pane.sh claude|codex [MESSAGE]\n' >&2
+	printf 'usage: notify-pane.sh claude|codex|agy [MESSAGE]\n' >&2
 	exit 1
 	;;
 esac
@@ -29,7 +32,8 @@ if [[ -n "${2:-}" ]]; then
 	details=$2
 else
 	# The sentinel preserves trailing newlines through command substitution.
-	details=$(jq -j '(.tool_input.text // empty), "."' <<<"$input")
+	details=$(jq -j '(.tool_input.text //
+		(.toolCall.args | select(.ServerName? == "mcp-tts") | .Arguments.text) // empty), "."' <<<"$input")
 	details=${details%.}
 fi
 message=$(tr -s '[:space:]' ' ' <<<"$details" | sed 's/^ //; s/ $//')
@@ -38,10 +42,16 @@ message=$(tr -s '[:space:]' ' ' <<<"$details" | sed 's/^ //; s/ $//')
 # Voice rejects oversized Details without posting. Keep the short notification.
 details_bytes=$(printf '%s' "$details" | wc -c)
 ((details_bytes <= max_details_bytes)) || details=$message
-cwd=$(field cwd)
-conversation=$(field session_id)
+if [[ "$family" == agy ]]; then
+	cwd=$(jq -r '.workspacePaths[0] // empty' <<<"$input")
+	conversation=$(field conversationId)
+	transcript=$(field transcriptPath)
+else
+	cwd=$(field cwd)
+	conversation=$(field session_id)
+	transcript=$(field transcript_path)
+fi
 session=$(printf '%s' "$conversation" | tr -cd 'A-Za-z0-9_-')
-transcript=$(field transcript_path)
 
 # The config directory names the account: ~/.claude-ddb/projects/…, ~/.codex-team/sessions/….
 if [[ "$family" == claude ]]; then
@@ -58,6 +68,7 @@ claude:*) label='Claude' ;;
 codex:.codex-team) label='Codex Team' ;;
 codex:.codex-api) label='Codex API' ;;
 codex:*) label='Codex' ;;
+agy:*) label='Antigravity' ;;
 esac
 project=$(basename "${cwd:-unknown}")
 
@@ -120,9 +131,10 @@ pane=''
 candidates=()
 if [[ -n "$rex_session" || -n "$rex_issue" ]]; then
 	: # A Rex receipt must not be replaced by a same-directory tmux guess.
-elif [[ "$family" == claude ]]; then
-	# Claude runs hooks inside its own process, so TMUX_PANE is its pane, and an
-	# absent TMUX_PANE means it is not in tmux (for example Zed's agent panel).
+elif [[ "$family" == claude || "$family" == agy ]]; then
+	# Claude and agy run hooks inside their own process, so TMUX_PANE is their
+	# pane, and an absent TMUX_PANE means it is not in tmux (for example Zed's
+	# agent panel).
 	if [[ -n "${TMUX_PANE:-}" ]] && tmux_running &&
 		tmux display-message -p -t "$TMUX_PANE" '' >/dev/null 2>&1; then
 		pane=$TMUX_PANE

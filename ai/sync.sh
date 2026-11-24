@@ -46,6 +46,9 @@ done
 # config.toml is rebuilt from the template plus the state Codex itself writes.
 "$SCRIPT_DIR/sync-codex-config.sh"
 
+msg "Sync Antigravity hooks and settings..."
+"$SCRIPT_DIR/sync-antigravity.sh"
+
 # Compose public instructions with optional private instructions, once per sync.
 "$SCRIPT_DIR/sync-instructions.sh"
 

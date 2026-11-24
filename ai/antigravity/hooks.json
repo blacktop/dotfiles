@@ -1,0 +1,16 @@
+{
+  "voice-notify": {
+    "PostToolUse": [
+      {
+        "matcher": "call_mcp_tool",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.agents/hooks/notify-pane.sh\" agy; printf '{}'",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
