@@ -8,7 +8,7 @@ function claude -w claude -d 'Claude Code with its own GitHub token for sandboxe
         case "$HOME/.claude-team"
             set rr_harness claude-team
     end
-    if test -n "$rr_harness"; and set -q REX_SESSION[1] REX_BLOCK[1]; and test -n "$REX_SESSION"; and test -n "$REX_BLOCK"; and command -sq jq
+    if test -n "$rr_harness"; and set -q REX_BLOCK[1]; and test -n "$REX_BLOCK"; and command -sq jq
         set -l rr_config "$HOME/.$rr_harness/settings.json"
         set -fx RR_MODEL (jq -r '.model // ""' "$rr_config" 2>/dev/null)
         set -fx RR_EFFORT (jq -r '.effortLevel // ""' "$rr_config" 2>/dev/null)

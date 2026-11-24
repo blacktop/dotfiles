@@ -83,7 +83,6 @@ class RexReceiptTests(unittest.TestCase):
             "RR_TEST_LOG": str(self.log),
             "RR_TEST_MODEL": "claude-fable-5-1[1m]",
             "RR_TEST_EFFORT": "xhigh",
-            "REX_SESSION": "session:" + UUID,
             "REX_BLOCK": "block:" + UUID,
             "REXURRECT_SERVER": "unix:///private/tmp/rex-receipt-test.sock",
             "REXURRECT_STATE_DIR": str(self.scratch / "state"),
@@ -112,8 +111,6 @@ class RexReceiptTests(unittest.TestCase):
                 self.environment["REXURRECT_SERVER"],
                 "--state-dir",
                 self.environment["REXURRECT_STATE_DIR"],
-                "--session",
-                "session:" + UUID,
                 "--block",
                 "block:" + UUID,
                 "--command",
@@ -287,6 +284,25 @@ class RexReceiptTests(unittest.TestCase):
                     self.assertEqual(calls[0]["harness"], "")
                     self.assertEqual(calls[0]["host"], "")
                     self.assertFalse(calls[0]["launcher_pid"])
+
+    def test_the_rex_block_alone_names_the_pane(self):
+        # Terminals of older Rex servers also name their session; it is not used.
+        for harness in ("claude", "codex"):
+            with self.subTest(harness=harness, rex_session=True):
+                result, calls = self.launch(harness, changes={"REX_SESSION": "session:" + UUID})
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(calls[0]["harness"], harness)
+                self.assertEqual(calls[-1], self.cleared(harness))
+        # Outside a Rex pane the agent runs plainly and no receipt is cleared.
+        for harness in ("claude", "codex"):
+            with self.subTest(harness=harness, rex_block=False):
+                result, calls = self.launch(harness, "two words", changes={"REX_BLOCK": ""})
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(len(calls), 1)
+                self.assertEqual(calls[0]["args"], ["two words"])
+                self.assertEqual(calls[0]["harness"], "")
+                self.assertEqual(calls[0]["model"], "")
+                self.assertFalse(calls[0]["launcher_pid"])
 
     def test_manual_accounts_keep_their_route(self):
         for harness, changes, route in (

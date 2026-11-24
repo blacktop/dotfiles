@@ -1,6 +1,7 @@
 #!/bin/sh
 # Install the launcher from rexurrect v0.3.3 (ca7cbd84) plus the Codex grant for a
-# linked worktree's Git directories and the dedicated GitHub token for Codex.
+# linked worktree's Git directories and the dedicated GitHub token for Codex. It
+# names the pane by REX_BLOCK alone, which needs a rexurrect newer than v0.3.6.
 set -eu
 script_dir=$(CDPATH='' cd -- "$(dirname "$0")" && pwd)
 destination_root=${1:-$HOME}
@@ -24,6 +25,8 @@ if ! { [ -x "$target" ] && cmp -s "$source" "$target"; }; then
 		2d2e6b6b498a6141f46776f7af5b68ac258d81cd0ae57cb8ecd79edd5f7d57df) ;;
 		# This repository's launcher before it kept the receipt of an agent that cannot start.
 		287cedf7ca2bf0f120fb2bd5d042ddf92401e415fdf978e2cee12407749e904d) ;;
+		# This repository's launcher before it named the pane by REX_BLOCK alone.
+		4961822256ce5b47196f1b6661a2e69f880f4a1d50aa1910589ab61ba7267168) ;;
 		*)
 			printf 'Kept custom rexurrect-launch file: %s\n' "$target" >&2
 			exit 1

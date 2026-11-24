@@ -154,20 +154,35 @@ skill_python_entrypoints = [
     skill_root + "swiftui-expert-skill/scripts/record_trace.py",
     skill_root + "tmux-pm/scripts/test-integration.py",
     skill_root + "tmux-pm/scripts/test-guarded-jobs.py",
-    skill_root + ".system/imagegen/scripts/image_gen.py",
-    skill_root + ".system/imagegen/scripts/remove_chroma_key.py",
-    skill_root + ".system/skill-creator/scripts/generate_openai_yaml.py",
-    skill_root + ".system/skill-creator/scripts/init_skill.py",
-    skill_root + ".system/skill-creator/scripts/quick_validate.py",
-    skill_root + ".system/skill-installer/scripts/install-skill-from-github.py",
-    skill_root + ".system/skill-installer/scripts/list-skills.py",
 ]
 skill_node_entrypoints = [
     skill_root + "design-taste-frontend/scripts/assets.mjs",
     skill_root + "design-taste-frontend/scripts/draw.mjs",
     skill_root + "design-taste-frontend/scripts/inspect.mjs",
     skill_root + "design-taste-frontend/scripts/lint.mjs",
-    skill_root + ".system/openai-docs/scripts/fetch-codex-manual.mjs",
+]
+# Codex installs its bundled skills in each home, not in the shared directory.
+bundled_skill_roots = [
+    "/Users/blacktop/.codex/skills/.system/",
+    "/Users/blacktop/.codex-team/skills/.system/",
+    "/Users/blacktop/.codex-api/skills/.system/",
+]
+skill_python_entrypoints += [
+    root + script
+    for root in bundled_skill_roots
+    for script in [
+        "imagegen/scripts/image_gen.py",
+        "imagegen/scripts/remove_chroma_key.py",
+        "skill-creator/scripts/generate_openai_yaml.py",
+        "skill-creator/scripts/init_skill.py",
+        "skill-creator/scripts/quick_validate.py",
+        "skill-installer/scripts/install-skill-from-github.py",
+        "skill-installer/scripts/list-skills.py",
+    ]
+]
+skill_node_entrypoints += [
+    root + "openai-docs/scripts/fetch-codex-manual.mjs"
+    for root in bundled_skill_roots
 ]
 prefix_rule(
     pattern = [skill_shell_entrypoints + skill_python_entrypoints + skill_node_entrypoints],
