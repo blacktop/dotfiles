@@ -3,15 +3,15 @@ set -eu
 
 binary=$(command -v rex || true)
 destination="$HOME/.local/bin/rex"
-legacy='/Applications/Rex Beta.app/Contents/Helpers/Rex Server.app/Contents/MacOS/rex'
 [ -n "$binary" ] || [ ! -x "$destination" ] || binary=$destination
 
 if [ -n "$binary" ]; then
 	printf 'Using Rex CLI at %s\n' "$binary"
 else
 	for candidate in \
+		'/Applications/Rex.app/Contents/Helpers/Rex Server.rex/Contents/MacOS/rex' \
 		'/Applications/Rex Beta.app/Contents/Helpers/Rex Server.rex/Contents/MacOS/rex' \
-		"$legacy"; do
+		'/Applications/Rex Beta.app/Contents/Helpers/Rex Server.app/Contents/MacOS/rex'; do
 		[ -x "$candidate" ] || continue
 		binary=$candidate
 		break
@@ -20,7 +20,8 @@ else
 		printf 'Rex is not installed; skipping setup.\n'
 		exit 0
 	fi
-	if [ -L "$destination" ] && [ "$(readlink "$destination")" = "$legacy" ]; then
+	# A link left behind when the Rex app was renamed or removed points nowhere.
+	if [ -L "$destination" ] && [ ! -e "$destination" ]; then
 		ln -sfn "$binary" "$destination"
 		printf 'Updated Rex CLI link at %s\n' "$destination"
 	elif [ -e "$destination" ] || [ -L "$destination" ]; then
