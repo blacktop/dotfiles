@@ -65,8 +65,10 @@ host_settings='
 		else . end;
 '
 # Paths removed from the repository copy; a merge alone would leave them behind.
+# autoUpdatesChannel goes too: the profiles share one native install, so a
+# channel set in one profile moves every profile's claude to that channel.
 retired_paths='[["alwaysThinkingEnabled"], ["includeCoAuthoredBy"],
-	["skipDangerousModePermissionPrompt"]]'
+	["skipDangerousModePermissionPrompt"], ["autoUpdatesChannel"]]'
 # Installed handlers the repository owns and so replaces or removes: anything in
 # the shared hooks directory (retired scripts such as tts-notify.py included),
 # inline commands the repository has since dropped, and the session hooks of the

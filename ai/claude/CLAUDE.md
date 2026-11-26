@@ -337,6 +337,20 @@ Pick the syntax for where the command runs, and say where:
 
 Pin actions to SHA hashes with version comments: `actions/checkout@<full-sha>  # vX.Y.Z` (use `persist-credentials: false`). Scan workflows with `zizmor` before committing. Configure Dependabot with 7-day cooldowns and grouped updates.
 
+### Homebrew tap releases
+
+A release workflow that publishes to `blacktop/homebrew-tap` (installed with
+`brew install blacktop/tap/<name>`) reads the shared repository secret
+`TAP_GITHUB_TOKEN`. Pass it to GoReleaser under the variable its config reads,
+for example `HOMEBREW_TAP_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}`. Do not add
+another secret name or a `release`-environment secret for the tap: the user
+rotates this one token across every tap repo with the `gh-secret-sync` fish
+function, which sets only `TAP_GITHUB_TOKEN`. When a project gains tap support,
+add it to that function's `repos` list in
+`~/Developer/Mine/blacktop/dotfiles/fish/functions/gh-secret-sync.fish` and ask
+the user to run `gh-secret-sync`. Never ask for or handle the token yourself. A
+project that runs GoReleaser locally to publish needs no secret.
+
 ## Dependencies & External APIs
 
 - If you need to add a new dependency to a project to solve an issue, search the web and find the best, most maintained option. Something most other folks use with the best exposed API. We don't want to be in a situation where we are using an unmaintained dependency, that no one else relies on.
